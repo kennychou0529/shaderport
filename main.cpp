@@ -18,6 +18,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "3rdparty/stb_image_write.h"
 
+#include "texture.cpp"
+
 #define Triggered(EVENT, DURATION)                      \
     static double tdb_timer_##__LINE__ = 0.0f;          \
     if (EVENT) tdb_timer_##__LINE__ = glfwGetTime();    \
@@ -127,12 +129,11 @@ void WindowFocusChanged(GLFWwindow *window, int focused)
 struct framegrab_options_t
 {
     const char *filename_template;
-    int num_frames;
     bool alpha_channel;
     bool draw_cursor;
     bool draw_imgui;
-    bool stream_to_ffmpeg;
-    const char *ffmpeg_exe_path;
+    // bool stream_to_ffmpeg;
+    // const char *ffmpeg_exe_path;
     bool reset_counter;
 };
 
@@ -140,7 +141,11 @@ struct framegrab_t
 {
     framegrab_options_t options;
     bool active;
-    int num_frames;
+    int screenshot_counter;
+
+    GLuint overlay_tex;
+    float overlay_timer;
+    bool overlay_active;
 };
 framegrab_t framegrab = {0};
 
@@ -148,7 +153,7 @@ void StartFrameGrab(framegrab_options_t opt)
 {
     framegrab.options = opt;
     if (opt.reset_counter)
-        framegrab.num_frames = 0;
+        framegrab.screenshot_counter = 0;
     framegrab.active = true;
 }
 
@@ -311,22 +316,69 @@ int main(int argc, char **argv)
         {
             framegrab_options_t opt = {0};
             opt.filename_template = "video%04d.png";
-            opt.num_frames = 1;
-            opt.alpha_channel = true;
-            opt.draw_cursor = false;
+            opt.alpha_channel = false;
+            opt.draw_cursor = true;
             opt.draw_imgui = true;
-            opt.stream_to_ffmpeg = false;
-            opt.ffmpeg_exe_path = "ffmpeg";
+            // opt.stream_to_ffmpeg = false;
+            // opt.ffmpeg_exe_path = "ffmpeg";
             opt.reset_counter = false;
             StartFrameGrab(opt);
+        }
+
+        if (framegrab.overlay_active)
+        {
+            // record start_time instead
+            float t0 = 1.0f - framegrab.overlay_timer;
+            float t1 = 2.0f*t0;
+            float t2 = 2.0f*(t0-0.2f);
+
+            if (t1 < 0.0f) t1 = 0.0f;
+            if (t1 > 1.0f) t1 = 1.0f;
+            if (t2 < 0.0f) t2 = 0.0f;
+            if (t2 > 1.0f) t2 = 1.0f;
+
+            float a = 0.5f+0.5f*sinf((3.14f)*(t1-0.5f));
+            float w = 1.0f - 0.2f*a;
+
+            float b = 0.5f+0.5f*sinf((3.14f)*(t2-0.5f));
+            float x = -2.0f*b*b*b*b;
+
+            glLineWidth(2.0f);
+            glBegin(GL_LINES);
+            glColor4f(1,1,1,0.3f);
+            glVertex2f(-w+x,-w); glVertex2f(+w+x,-w);
+            glVertex2f(+w+x,-w); glVertex2f(+w+x,+w);
+            glVertex2f(+w+x,+w); glVertex2f(-w+x,+w);
+            glVertex2f(-w+x,+w); glVertex2f(-w+x,-w);
+            glEnd();
+
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, framegrab.overlay_tex);
+            glBegin(GL_TRIANGLES);
+            glColor4f(1,1,1,0.8f); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+            glColor4f(1,1,1,0.8f); glTexCoord2f(1,0); glVertex2f(+w+x,-w);
+            glColor4f(1,1,1,0.8f); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,0.8f); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,0.8f); glTexCoord2f(0,1); glVertex2f(-w+x,+w);
+            glColor4f(1,1,1,0.8f); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+
+            framegrab.overlay_timer -= input.frame_time;
+            if (framegrab.overlay_timer < 0.0f)
+            {
+                framegrab.overlay_active = false;
+                glDeleteTextures(1, &framegrab.overlay_tex);
+            }
         }
 
         if (framegrab.active)
         {
             framegrab_options_t opt = framegrab.options;
 
+            // todo: change if video
             char filename[1024];
-            sprintf(filename, opt.filename_template, framegrab.num_frames);
+            sprintf(filename, opt.filename_template, framegrab.screenshot_counter);
 
             if (opt.draw_imgui)
             {
@@ -347,13 +399,30 @@ int main(int argc, char **argv)
             glPixelStorei(GL_PACK_ALIGNMENT, 1);
             glReadBuffer(GL_BACK);
             glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
+
+            #if 1
+            printf("save png %s\n", filename);
+            #else
             stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+            #endif
+
+            // todo: don't do this if recording video
+            {
+                framegrab.overlay_active = true;
+                framegrab.overlay_timer = 1.0f;
+                framegrab.overlay_tex = TexImage2D(data, width, height, format, GL_UNSIGNED_BYTE);
+            }
+
             free(data);
-            framegrab.active = false;
 
             glfwSwapBuffers(window);
 
-            framegrab.num_frames++;
+            framegrab.screenshot_counter++;
+
+            // todo: if (???)
+            {
+                framegrab.active = false;
+            }
         }
         else
         {

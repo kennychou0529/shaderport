@@ -15,6 +15,9 @@
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "fonts/source_sans_pro.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "3rdparty/stb_image_write.h"
+
 #define Triggered(EVENT, DURATION)                      \
     static double tdb_timer_##__LINE__ = 0.0f;          \
     if (EVENT) tdb_timer_##__LINE__ = glfwGetTime();    \
@@ -41,20 +44,20 @@ struct frame_input_t
 void UpdateAndDraw(frame_input_t input)
 {
     glViewport(0, 0, input.window_w, input.window_h);
-    glClearColor(0.1f, 0.12f, 0.15f, 1.0f);
+    glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     for (int j = 0; j < 4; j++)
     {
         glBegin(GL_TRIANGLE_FAN);
         if (j == 0)
-            glColor4f(0.19f, 0.2f, 0.25f, 1);
+            glColor4f(0.19f, 0.2f, 0.25f, 1.0f);
         else if (j == 1)
-            glColor4f(0.38f, 0.31f, 0.51f, 1);
+            glColor4f(0.38f, 0.31f, 0.51f, 1.0f);
         else if (j == 2)
-            glColor4f(0.29f, 0.22f, 0.38f, 1);
+            glColor4f(0.29f, 0.22f, 0.38f, 1.0f);
         else if (j == 3)
-            glColor4f(0.11f, 0.11f, 0.12f, 1);
+            glColor4f(0.11f, 0.11f, 0.12f, 1.0f);
         glVertex2f(-1.0f,-1.0f);
         float t = input.elapsed_time;
         for (int i = 0; i <= 128; i++)
@@ -68,6 +71,12 @@ void UpdateAndDraw(frame_input_t input)
         glVertex2f(+1.0f,-1.0f);
         glEnd();
     }
+
+    glPointSize(32.0f);
+    glBegin(GL_POINTS);
+    glColor4f(1.0f,1.0f,1.0f,0.3f);
+    glVertex2f(0.0f,0.0f);
+    glEnd();
 
     ImGui::Text("The time is: %ds", (int)input.elapsed_time);
 }
@@ -101,16 +110,46 @@ void SetWindowSize(GLFWwindow *window, int width, int height, bool topmost=false
     #endif
 }
 
+bool lost_focus = false;
+bool regained_focus = false;
 void WindowFocusChanged(GLFWwindow *window, int focused)
 {
     if (focused == GL_TRUE)
     {
-        printf("got focus\n");
+        regained_focus = true;
     }
     else if (focused == GL_FALSE)
     {
-        printf("lost focus\n");
+        lost_focus = true;
     }
+}
+
+struct framegrab_options_t
+{
+    const char *filename_template;
+    int num_frames;
+    bool alpha_channel;
+    bool draw_cursor;
+    bool draw_imgui;
+    bool stream_to_ffmpeg;
+    const char *ffmpeg_exe_path;
+    bool reset_counter;
+};
+
+struct framegrab_t
+{
+    framegrab_options_t options;
+    bool active;
+    int num_frames;
+};
+framegrab_t framegrab = {0};
+
+void StartFrameGrab(framegrab_options_t opt)
+{
+    framegrab.options = opt;
+    if (opt.reset_counter)
+        framegrab.num_frames = 0;
+    framegrab.active = true;
 }
 
 int main(int argc, char **argv)
@@ -148,9 +187,10 @@ int main(int argc, char **argv)
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
     {
+        lost_focus = false;
+        regained_focus = false;
         glfwPollEvents();
 
-        ImGui_ImplGlfw_NewFrame();
         frame_input_t input = {0};
         {
             static double last_elapsed_time = 0.0;
@@ -164,6 +204,16 @@ int main(int argc, char **argv)
             input.frame_time = (float)(glfwGetTime() - last_elapsed_time);
             last_elapsed_time = glfwGetTime();
         }
+
+        ImGui_ImplGlfw_NewFrame();
+
+        // Frame preamble
+        {
+            glEnable(GL_BLEND);
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+        }
+
         UpdateAndDraw(input);
 
         OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
@@ -209,6 +259,7 @@ int main(int argc, char **argv)
             }
         }
 
+        #if 0
         // Take screenshot or video dialog
         {
             using namespace ImGui;
@@ -234,22 +285,11 @@ int main(int argc, char **argv)
 
                 if (Button("OK", ImVec2(120,0)) || enter_button)
                 {
-                    // int channels = 3;
-                    // GLenum format = GL_RGB;
-                    // if (checkbox)
-                    // {
-                    //     format = GL_RGBA;
-                    //     channels = 4;
-                    // }
-                    // int width = input.width;
-                    // int height = input.height;
-                    // int stride = width*channels;
-                    // unsigned char *data = (unsigned char*)malloc(height*stride);
-                    // glPixelStorei(GL_PACK_ALIGNMENT, 1);
-                    // glReadBuffer(GL_BACK);
-                    // glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
-                    // stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
-                    // free(data);
+                    framegrab_options_t opt = {0};
+                    opt.filename_template = filename;
+                    opt.num_channels = 3;
+                    opt.num_frames = 1;
+                    StartFrameGrab(opt);
                     CloseCurrentPopup();
                 }
                 SameLine();
@@ -265,9 +305,61 @@ int main(int argc, char **argv)
                 EndPopup();
             }
         }
+        #endif
 
-        ImGui::Render();
-        glfwSwapBuffers(window);
+        if (enter_button)
+        {
+            framegrab_options_t opt = {0};
+            opt.filename_template = "video%04d.png";
+            opt.num_frames = 1;
+            opt.alpha_channel = true;
+            opt.draw_cursor = false;
+            opt.draw_imgui = true;
+            opt.stream_to_ffmpeg = false;
+            opt.ffmpeg_exe_path = "ffmpeg";
+            opt.reset_counter = false;
+            StartFrameGrab(opt);
+        }
+
+        if (framegrab.active)
+        {
+            framegrab_options_t opt = framegrab.options;
+
+            char filename[1024];
+            sprintf(filename, opt.filename_template, framegrab.num_frames);
+
+            if (opt.draw_imgui)
+            {
+                if (opt.draw_cursor)
+                    ImGui::GetIO().MouseDrawCursor = true;
+                else
+                    ImGui::GetIO().MouseDrawCursor = false;
+                ImGui::Render();
+                ImGui::GetIO().MouseDrawCursor = true;
+            }
+
+            GLenum format = opt.alpha_channel ? GL_RGBA : GL_RGB;
+            int channels = opt.alpha_channel ? 4 : 3;
+            int width = input.window_w;
+            int height = input.window_h;
+            int stride = width*channels;
+            unsigned char *data = (unsigned char*)malloc(height*stride);
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            glReadBuffer(GL_BACK);
+            glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
+            stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+            free(data);
+            framegrab.active = false;
+
+            glfwSwapBuffers(window);
+
+            framegrab.num_frames++;
+        }
+        else
+        {
+            ImGui::Render();
+            glfwSwapBuffers(window);
+        }
 
         if (escape_button && !escape_eaten)
         {

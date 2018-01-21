@@ -168,6 +168,32 @@ void StartFrameGrab(framegrab_options_t opt)
     framegrab.active = true;
 }
 
+void TakeScreenshot(
+    const char *filename, bool imgui=false, bool cursor=false, bool reset=false, bool alpha=false)
+{
+    framegrab_options_t opt = {0};
+    opt.filename_template = filename;
+    opt.reset_num_screenshots = reset;
+    opt.draw_imgui = imgui;
+    opt.draw_cursor = cursor;
+    opt.alpha_channel = alpha;
+    StartFrameGrab(opt);
+}
+
+void RecordVideoToImageSequence(
+    const char *filename, int frame_cap, bool imgui=false, bool cursor=false, bool reset=false, bool alpha=false)
+{
+    framegrab_options_t opt = {0};
+    opt.filename_template = filename;
+    opt.reset_num_frames = reset;
+    opt.draw_imgui = imgui;
+    opt.draw_cursor = cursor;
+    opt.alpha_channel = alpha;
+    opt.is_video = true;
+    opt.video_frame_cap = frame_cap;
+    StartFrameGrab(opt);
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -446,10 +472,9 @@ int main(int argc, char **argv)
                 ImGui::Render();
                 ImGui::GetIO().MouseDrawCursor = true;
             }
-            else if (opt.draw_cursor)
+            else
             {
-                // todo: implement this
-                assert(false);
+                // todo: draw a crosshair thing if we still wanted a cursor
             }
             GLenum format = opt.alpha_channel ? GL_RGBA : GL_RGB;
             int channels = opt.alpha_channel ? 4 : 3;

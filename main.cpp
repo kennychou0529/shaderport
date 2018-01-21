@@ -43,10 +43,13 @@ struct frame_input_t
     int mouse_y;
     float elapsed_time;
     float frame_time;
+    bool recording_video;
 };
 
 void UpdateAndDraw(frame_input_t input)
 {
+    static float anim_time = 0.0f;
+    anim_time += 1.0f/60.0f;
     glViewport(0, 0, input.window_w, input.window_h);
     glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -63,7 +66,7 @@ void UpdateAndDraw(frame_input_t input)
         else if (j == 3)
             glColor4f(0.11f, 0.11f, 0.12f, 1.0f);
         glVertex2f(-1.0f,-1.0f);
-        float t = input.elapsed_time;
+        float t = anim_time;
         for (int i = 0; i <= 128; i++)
         {
             float s = i/128.0f;
@@ -134,16 +137,20 @@ struct framegrab_options_t
     bool alpha_channel;
     bool draw_cursor;
     bool draw_imgui;
+    bool is_video;
     // bool stream_to_ffmpeg;
     // const char *ffmpeg_exe_path;
-    bool reset_counter;
+    bool reset_num_screenshots;
+    bool reset_num_video_frames;
+    int video_frame_cap;
 };
 
 struct framegrab_t
 {
     framegrab_options_t options;
     bool active;
-    int screenshot_counter;
+    int num_screenshots;
+    int num_video_frames;
 
     GLuint overlay_tex;
     float overlay_timer;
@@ -154,8 +161,10 @@ framegrab_t framegrab = {0};
 void StartFrameGrab(framegrab_options_t opt)
 {
     framegrab.options = opt;
-    if (opt.reset_counter)
-        framegrab.screenshot_counter = 0;
+    if (opt.reset_num_screenshots)
+        framegrab.num_screenshots = 0;
+    if (opt.reset_num_video_frames)
+        framegrab.num_video_frames = 0;
     framegrab.active = true;
 }
 
@@ -218,6 +227,7 @@ int main(int argc, char **argv)
             input.frame_time = (float)(glfwGetTime() - last_elapsed_time);
             #endif
             last_elapsed_time = glfwGetTime();
+            input.recording_video = framegrab.active;
         }
 
         ImGui_ImplGlfw_NewFrame();
@@ -325,13 +335,16 @@ int main(int argc, char **argv)
         if (enter_button)
         {
             framegrab_options_t opt = {0};
-            opt.filename_template = "video%04d";
+            opt.filename_template = "video%04d.bmp";
             opt.alpha_channel = false;
             opt.draw_cursor = true;
             opt.draw_imgui = true;
+            // opt.is_video = true;
+            // opt.video_frame_cap = 16;
             // opt.stream_to_ffmpeg = false;
             // opt.ffmpeg_exe_path = "ffmpeg";
-            opt.reset_counter = false;
+            opt.reset_num_screenshots = false;
+            opt.reset_num_video_frames = true;
             StartFrameGrab(opt);
         }
 
@@ -415,9 +428,17 @@ int main(int argc, char **argv)
                 // did user specify any extension at all?
             }
 
-            // todo: change if video
             char filename[1024];
-            sprintf(filename, opt.filename_template, framegrab.screenshot_counter);
+            if (opt.is_video)
+            {
+                // todo: check if filename template has %...d?
+                sprintf(filename, opt.filename_template, framegrab.num_video_frames);
+            }
+            else
+            {
+                // todo: check if filename template has %...d?
+                sprintf(filename, opt.filename_template, framegrab.num_screenshots);
+            }
 
             if (opt.draw_imgui)
             {
@@ -425,7 +446,11 @@ int main(int argc, char **argv)
                 ImGui::Render();
                 ImGui::GetIO().MouseDrawCursor = true;
             }
-
+            else if (opt.draw_cursor)
+            {
+                // todo: implement this
+                assert(false);
+            }
             GLenum format = opt.alpha_channel ? GL_RGBA : GL_RGB;
             int channels = opt.alpha_channel ? 4 : 3;
             int width = input.window_w;
@@ -444,11 +469,16 @@ int main(int argc, char **argv)
             else
                 printf("save bmp anyway %s\n", filename);
             #else
-            stbi_write_bmp(filename, width, height, channels, data);
-            // stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+            if (save_as_bmp)
+                stbi_write_bmp(filename, width, height, channels, data);
+            else if (save_as_png)
+                stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+            else
+                stbi_write_bmp(filename, width, height, channels, data);
+
             #endif
 
-            // todo: don't do this if recording video
+            if (!opt.is_video)
             {
                 framegrab.overlay_active = true;
                 framegrab.overlay_timer = 1.0f;
@@ -459,10 +489,17 @@ int main(int argc, char **argv)
 
             glfwSwapBuffers(window);
 
-            framegrab.screenshot_counter++;
-
-            // todo: if (???)
+            if (opt.is_video)
             {
+                framegrab.num_video_frames++;
+                if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
+                {
+                    framegrab.active = false;
+                }
+            }
+            else
+            {
+                framegrab.num_screenshots++;
                 framegrab.active = false;
             }
         }
@@ -475,6 +512,15 @@ int main(int argc, char **argv)
         if (escape_button && !escape_eaten)
         {
             glfwSetWindowShouldClose(window, true);
+        }
+
+        {
+            GLenum error = glGetError();
+            if (error != GL_NO_ERROR)
+            {
+                printf("OpenGL error: %x (%x)\n", error);
+                glfwSetWindowShouldClose(window, true);
+            }
         }
     }
 

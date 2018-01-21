@@ -4,16 +4,14 @@
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-#include <SDL.h>
-#include <SDL_syswm.h>
-#include <SDL_opengl.h>
 #include "imgui.h"
+#include "../fonts/source_sans_pro.h"
 
 // Data
-static double       imgui_Time = 0.0f;
-static bool         imgui_MousePressed[3] = { false, false, false };
-static float        imgui_MouseWheel = 0.0f;
-static GLuint       imgui_FontTexture = 0;
+static double       g_Time = 0.0f;
+static bool         g_MousePressed[3] = { false, false, false };
+static float        g_MouseWheel = 0.0f;
+static GLuint       g_FontTexture = 0;
 
 // This is the main rendering function that you have to implement and provide to ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
 // If text or lines are blurry when integrating ImGui in your engine:
@@ -34,7 +32,7 @@ void ImGui_ImplSdl_RenderDrawLists(ImDrawData* draw_data)
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
     glEnable(GL_TEXTURE_2D);
-    //glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context
+    glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context
 
     // Handle cases of screen coordinates != from framebuffer coordinates (e.g. retina displays)
     ImGuiIO& io = ImGui::GetIO();
@@ -112,16 +110,16 @@ bool ImGui_ImplSdl_ProcessEvent(SDL_Event* event)
     case SDL_MOUSEWHEEL:
         {
             if (event->wheel.y > 0)
-                imgui_MouseWheel = 1;
+                g_MouseWheel = 1;
             if (event->wheel.y < 0)
-                imgui_MouseWheel = -1;
+                g_MouseWheel = -1;
             return true;
         }
     case SDL_MOUSEBUTTONDOWN:
         {
-            if (event->button.button == SDL_BUTTON_LEFT) imgui_MousePressed[0] = true;
-            if (event->button.button == SDL_BUTTON_RIGHT) imgui_MousePressed[1] = true;
-            if (event->button.button == SDL_BUTTON_MIDDLE) imgui_MousePressed[2] = true;
+            if (event->button.button == SDL_BUTTON_LEFT) g_MousePressed[0] = true;
+            if (event->button.button == SDL_BUTTON_RIGHT) g_MousePressed[1] = true;
+            if (event->button.button == SDL_BUTTON_MIDDLE) g_MousePressed[2] = true;
             return true;
         }
     case SDL_TEXTINPUT:
@@ -146,16 +144,18 @@ bool ImGui_ImplSdl_ProcessEvent(SDL_Event* event)
 
 bool ImGui_ImplSdl_CreateDeviceObjects()
 {
-    ImGuiStyle &style = ImGui::GetStyle();
-    style.FrameRounding = 2.0f;
-    style.GrabRounding = 2.0f;
-
     ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = VDB_IMGUI_INI_FILENAME;
 
-    #ifdef VDB_CUSTOM_FONT
-    io.Fonts->AddFontFromFileTTF(VDB_CUSTOM_FONT);
-    #endif
+    // ImGuiStyle &style = ImGui::GetStyle();
+    // style.FrameRounding = 2.0f;
+    // style.GrabRounding = 2.0f;
+
+    // ImGuiIO& io = ImGui::GetIO();
+    // io.IniFilename = VDB_IMGUI_INI_FILENAME;
+
+    io.Fonts->AddFontFromMemoryCompressedTTF((const char*)source_sans_pro_compressed_data, source_sans_pro_compressed_size, 18.0f);
+    // ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF();
+    // io.Fonts->AddFontFromFileTTF("fonts/sourcesanspro_semibold", 18.0f);
 
     // Build texture atlas
     unsigned char* pixels;
@@ -165,14 +165,14 @@ bool ImGui_ImplSdl_CreateDeviceObjects()
     // Upload texture to graphics system
     GLint last_texture;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-    glGenTextures(1, &imgui_FontTexture);
-    glBindTexture(GL_TEXTURE_2D, imgui_FontTexture);
+    glGenTextures(1, &g_FontTexture);
+    glBindTexture(GL_TEXTURE_2D, g_FontTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, pixels);
 
     // Store our identifier
-    io.Fonts->TexID = (void *)(intptr_t)imgui_FontTexture;
+    io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
 
     // Restore state
     glBindTexture(GL_TEXTURE_2D, last_texture);
@@ -182,11 +182,11 @@ bool ImGui_ImplSdl_CreateDeviceObjects()
 
 void    ImGui_ImplSdl_InvalidateDeviceObjects()
 {
-    if (imgui_FontTexture)
+    if (g_FontTexture)
     {
-        glDeleteTextures(1, &imgui_FontTexture);
+        glDeleteTextures(1, &g_FontTexture);
         ImGui::GetIO().Fonts->TexID = 0;
-        imgui_FontTexture = 0;
+        g_FontTexture = 0;
     }
 }
 
@@ -217,13 +217,15 @@ bool    ImGui_ImplSdl_Init(SDL_Window *window)
     io.SetClipboardTextFn = ImGui_ImplSdl_SetClipboardText;
     io.GetClipboardTextFn = ImGui_ImplSdl_GetClipboardText;
 
-    // To input using Microsoft IME, give ImGui the hwnd of your application
-// #ifdef _WIN32
-//  SDL_SysWMinfo wmInfo;
-//  SDL_VERSION(&wmInfo.version);
-//  SDL_GetWindowWMInfo(window, &wmInfo);
-//     io.ImeWindowHandle = wmInfo.info.win.window;
-// #endif
+    io.MouseDrawCursor = true;
+
+    // To enter text using Microsoft IME you need to pass window handle
+#ifdef _WIN32
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    SDL_GetWindowWMInfo(window, &wmInfo);
+    io.ImeWindowHandle = wmInfo.info.win.window;
+#endif
 
     return true;
 }
@@ -236,7 +238,7 @@ void ImGui_ImplSdl_Shutdown()
 
 void ImGui_ImplSdl_NewFrame(SDL_Window *window)
 {
-    if (!imgui_FontTexture)
+    if (!g_FontTexture)
         ImGui_ImplSdl_CreateDeviceObjects();
 
     ImGuiIO& io = ImGui::GetIO();
@@ -249,8 +251,8 @@ void ImGui_ImplSdl_NewFrame(SDL_Window *window)
     // Setup time step
     Uint32  time = SDL_GetTicks();
     double current_time = time / 1000.0;
-    io.DeltaTime = imgui_Time > 0.0 ? (float)(current_time - imgui_Time) : (float)(1.0f/60.0f);
-    imgui_Time = current_time;
+    io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f/60.0f);
+    g_Time = current_time;
 
     // Setup inputs
     // (we already got mouse wheel, keyboard keys & characters from SDL_PollEvent())
@@ -261,13 +263,13 @@ void ImGui_ImplSdl_NewFrame(SDL_Window *window)
     else
         io.MousePos = ImVec2(-1,-1);
 
-    io.MouseDown[0] = imgui_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;      // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-    io.MouseDown[1] = imgui_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
-    io.MouseDown[2] = imgui_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
-    imgui_MousePressed[0] = imgui_MousePressed[1] = imgui_MousePressed[2] = false;
+    io.MouseDown[0] = g_MousePressed[0] || (mouseMask & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;      // If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
+    io.MouseDown[1] = g_MousePressed[1] || (mouseMask & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
+    io.MouseDown[2] = g_MousePressed[2] || (mouseMask & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
+    g_MousePressed[0] = g_MousePressed[1] = g_MousePressed[2] = false;
 
-    io.MouseWheel = imgui_MouseWheel;
-    imgui_MouseWheel = 0.0f;
+    io.MouseWheel = g_MouseWheel;
+    g_MouseWheel = 0.0f;
 
     // Hide OS mouse cursor if ImGui is drawing it
     SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);

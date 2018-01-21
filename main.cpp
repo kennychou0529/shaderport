@@ -121,6 +121,7 @@ int main(int, char**)
     int h = 480;
     int x = -1;
     int y = -1;
+
     so_openWindow("vdb", w, h, x, y, gl_major, gl_minor, multisamples, alpha_bits, depth_bits, stencil_bits);
     so_imgui_init();
 

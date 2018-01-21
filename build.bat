@@ -1,30 +1,26 @@
-:: Make sure that vcvarsall has been invoked before calling this script
-:: Change the SDL include and library paths below to suit your system
-:: Make sure that SDL2.dll is inside the .build directory
-
+@REM Build for Visual Studio compiler.
+@REM Run your copy of vcvars32.bat or vcvarsall.bat to setup command-line compiler.
 @echo off
 
-:: Make a .build directory that is hidden
+
 if not exist ".build" mkdir .build
 attrib +h .build /s /d
-
 pushd .build
 
-REM Compiler flags
+
 REM -Od: Turns off optimizations and speeds up compilation
 REM -Zi: Generates debug symbols
 REM -WX: Treat warnings as errors
-REM -W4: Highest level of warnings
 REM -MD: Use DLL run-time library
-set SDLI=-I"C:/Programming/lib-sdl/include"
-set SDLL=-LIBPATH:"C:/Programming/lib-sdl/.build"
-set CF=-Zi -nologo -Od -WX -W4 -wd4100 -wd4189 -wd4996 /MD %SDLI%
+set CF=-Zi -MD -nologo -Od -WX -W3 -wd4100 -wd4189 -wd4996 -wd4055
 
-REM Linker flags
+
 REM -subsystem:console: Open a console
 REM -debug: Create debugging information into .pdb
-set LF=-subsystem:console -debug %SDLL% SDL2main.lib SDL2.lib opengl32.lib user32.lib
+set LF=-debug ../glfw/lib-vc2010-32/glfw3.lib opengl32.lib user32.lib gdi32.lib shell32.lib
 
-cl %CF% ../main.cpp /link %LF% -out:native.exe
+cl %CF% ../test2.cpp /link %LF% -out:native.exe
+
+
 popd
 .build\native.exe

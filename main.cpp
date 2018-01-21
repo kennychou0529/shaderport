@@ -185,7 +185,7 @@ void RecordVideoToImageSequence(
 {
     framegrab_options_t opt = {0};
     opt.filename_template = filename;
-    opt.reset_num_frames = reset;
+    opt.reset_num_video_frames = reset;
     opt.draw_imgui = imgui;
     opt.draw_cursor = cursor;
     opt.alpha_channel = alpha;
@@ -309,54 +309,6 @@ int main(int argc, char **argv)
                 EndPopup();
             }
         }
-
-        #if 0
-        // Take screenshot or video dialog
-        {
-            using namespace ImGui;
-            OneTimeEvent(hotkey,
-                glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
-                glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
-
-            if (hotkey)
-            {
-                OpenPopup("Take screenshot##popup");
-            }
-            if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                static char filename[1024];
-                Triggered(hotkey, 1.0f)
-                {
-                    SetKeyboardFocusHere();
-                }
-                InputText("Filename", filename, sizeof(filename));
-
-                static bool checkbox;
-                Checkbox("32bpp (alpha channel)", &checkbox);
-
-                if (Button("OK", ImVec2(120,0)) || enter_button)
-                {
-                    framegrab_options_t opt = {0};
-                    opt.filename_template = filename;
-                    opt.num_channels = 3;
-                    opt.num_frames = 1;
-                    StartFrameGrab(opt);
-                    CloseCurrentPopup();
-                }
-                SameLine();
-                if (Button("Cancel", ImVec2(120,0)))
-                {
-                    CloseCurrentPopup();
-                }
-                if (escape_button)
-                {
-                    CloseCurrentPopup();
-                    escape_eaten = true;
-                }
-                EndPopup();
-            }
-        }
-        #endif
 
         if (enter_button)
         {
@@ -512,8 +464,6 @@ int main(int argc, char **argv)
 
             free(data);
 
-            glfwSwapBuffers(window);
-
             if (opt.is_video)
             {
                 framegrab.num_video_frames++;
@@ -531,21 +481,109 @@ int main(int argc, char **argv)
         else
         {
             ImGui::Render();
-            glfwSwapBuffers(window);
         }
+
+        // Take screenshot or video dialog
+        {
+            using namespace ImGui;
+            // NewFrame();
+            // Begin("fuck");
+            // Text("hi");
+            // End();
+
+            #if 0
+            OneTimeEvent(hotkey,
+                glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
+                glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
+
+            if (hotkey)
+            {
+                OpenPopup("Take screenshot##popup");
+            }
+            if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                static char filename[1024];
+                Triggered(hotkey, 1.0f)
+                {
+                    SetKeyboardFocusHere();
+                }
+                InputText("Filename", filename, sizeof(filename));
+
+                static bool checkbox;
+                static bool is_video;
+                Checkbox("Transparency (alpha channel)", &checkbox);
+                Checkbox("Video", &is_video);
+
+                static int frame_cap = 0;
+                if (is_video)
+                {
+                    InputInt("Number of frames", &frame_cap);
+                    if (framegrab.active)
+                    {
+                        if (Button("Stop", ImVec2(120,0)) || enter_button)
+                        {
+                            // framegrab_options_t opt = {0};
+                            // opt.filename_template = filename;
+                            // opt.alpha_channel = true;
+                            // StartFrameGrab(opt);
+                        }
+                    }
+                    else
+                    {
+                        if (Button("Start", ImVec2(120,0)) || enter_button)
+                        {
+                            // framegrab_options_t opt = {0};
+                            // opt.filename_template = filename;
+                            // opt.alpha_channel = true;
+                            // StartFrameGrab(opt);
+                        }
+                    }
+                    SameLine();
+                    if (Button("Cancel", ImVec2(120,0)))
+                    {
+                        CloseCurrentPopup();
+                    }
+                }
+                else
+                {
+                    if (Button("OK", ImVec2(120,0)) || enter_button)
+                    {
+                        // framegrab_options_t opt = {0};
+                        // opt.filename_template = filename;
+                        // opt.alpha_channel = true;
+                        // StartFrameGrab(opt);
+                        CloseCurrentPopup();
+                    }
+                    SameLine();
+                    if (Button("Cancel", ImVec2(120,0)))
+                    {
+                        CloseCurrentPopup();
+                    }
+                }
+
+                if (escape_button)
+                {
+                    CloseCurrentPopup();
+                    escape_eaten = true;
+                }
+                EndPopup();
+            }
+            #endif
+            // Render();
+        }
+
+        glfwSwapBuffers(window);
 
         if (escape_button && !escape_eaten)
         {
             glfwSetWindowShouldClose(window, true);
         }
 
+        GLenum error = glGetError();
+        if (error != GL_NO_ERROR)
         {
-            GLenum error = glGetError();
-            if (error != GL_NO_ERROR)
-            {
-                printf("OpenGL error: %x (%x)\n", error);
-                glfwSetWindowShouldClose(window, true);
-            }
+            printf("OpenGL error: %x (%x)\n", error);
+            glfwSetWindowShouldClose(window, true);
         }
     }
 

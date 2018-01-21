@@ -18,6 +18,8 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "3rdparty/stb_image_write.h"
 
+#include <string.h>
+
 #include "texture.cpp"
 
 #define Triggered(EVENT, DURATION)                      \
@@ -206,7 +208,15 @@ int main(int argc, char **argv)
             input.mouse_x = (int)mouse_x;
             input.mouse_y = (int)mouse_y;
             input.elapsed_time = (float)glfwGetTime();
+            #if 1
+            input.frame_time = 1.0f/60.0f;
+            // todo: if frame_time was big (e.g. because app running slow or
+            // we took a screenshot or are recording a video, then things might
+            // not behave the way you want)
+            // todo: do we want frame_time for app to be different from imgui?
+            #else
             input.frame_time = (float)(glfwGetTime() - last_elapsed_time);
+            #endif
             last_elapsed_time = glfwGetTime();
         }
 
@@ -315,7 +325,7 @@ int main(int argc, char **argv)
         if (enter_button)
         {
             framegrab_options_t opt = {0};
-            opt.filename_template = "video%04d.png";
+            opt.filename_template = "video%04d";
             opt.alpha_channel = false;
             opt.draw_cursor = true;
             opt.draw_imgui = true;
@@ -325,7 +335,7 @@ int main(int argc, char **argv)
             StartFrameGrab(opt);
         }
 
-        if (framegrab.overlay_active)
+        if (framegrab.overlay_active && !framegrab.active)
         {
             // record start_time instead
             float t0 = 1.0f - framegrab.overlay_timer;
@@ -345,7 +355,7 @@ int main(int argc, char **argv)
 
             glLineWidth(2.0f);
             glBegin(GL_LINES);
-            glColor4f(1,1,1,0.3f);
+            glColor4f(1,1,1,0.4f);
             glVertex2f(-w+x,-w); glVertex2f(+w+x,-w);
             glVertex2f(+w+x,-w); glVertex2f(+w+x,+w);
             glVertex2f(+w+x,+w); glVertex2f(-w+x,+w);
@@ -355,14 +365,23 @@ int main(int argc, char **argv)
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, framegrab.overlay_tex);
             glBegin(GL_TRIANGLES);
-            glColor4f(1,1,1,0.8f); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
-            glColor4f(1,1,1,0.8f); glTexCoord2f(1,0); glVertex2f(+w+x,-w);
-            glColor4f(1,1,1,0.8f); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,0.8f); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,0.8f); glTexCoord2f(0,1); glVertex2f(-w+x,+w);
-            glColor4f(1,1,1,0.8f); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+            glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+w+x,-w);
+            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-w+x,+w);
+            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
             glEnd();
             glDisable(GL_TEXTURE_2D);
+
+            glBegin(GL_TRIANGLES);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,-w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,+w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
+            glEnd();
 
             framegrab.overlay_timer -= input.frame_time;
             if (framegrab.overlay_timer < 0.0f)
@@ -376,16 +395,33 @@ int main(int argc, char **argv)
         {
             framegrab_options_t opt = framegrab.options;
 
+            bool save_as_bmp = false;
+            bool save_as_png = false;
+
+            if (strstr(opt.filename_template, ".png"))
+            {
+                save_as_png = true;
+                save_as_bmp = false;
+            }
+            else if (strstr(opt.filename_template, ".bmp"))
+            {
+                save_as_bmp = true;
+                save_as_png = false;
+            }
+            else
+            {
+                save_as_bmp = false;
+                save_as_png = false;
+                // did user specify any extension at all?
+            }
+
             // todo: change if video
             char filename[1024];
             sprintf(filename, opt.filename_template, framegrab.screenshot_counter);
 
             if (opt.draw_imgui)
             {
-                if (opt.draw_cursor)
-                    ImGui::GetIO().MouseDrawCursor = true;
-                else
-                    ImGui::GetIO().MouseDrawCursor = false;
+                ImGui::GetIO().MouseDrawCursor = opt.draw_cursor;
                 ImGui::Render();
                 ImGui::GetIO().MouseDrawCursor = true;
             }
@@ -401,9 +437,15 @@ int main(int argc, char **argv)
             glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
 
             #if 1
-            printf("save png %s\n", filename);
+            if (save_as_bmp)
+                printf("save bmp %s\n", filename);
+            else if (save_as_png)
+                printf("save png %s\n", filename);
+            else
+                printf("save bmp anyway %s\n", filename);
             #else
-            stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+            stbi_write_bmp(filename, width, height, channels, data);
+            // stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
             #endif
 
             // todo: don't do this if recording video

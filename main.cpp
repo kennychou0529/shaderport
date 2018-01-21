@@ -15,10 +15,16 @@
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "fonts/source_sans_pro.h"
 
-#define Triggered(EVENT, DURATION) \
-    static double tdb_timer_##__LINE__ = 0.0f; \
-    if (EVENT) tdb_timer_##__LINE__ = glfwGetTime(); \
+#define Triggered(EVENT, DURATION)                      \
+    static double tdb_timer_##__LINE__ = 0.0f;          \
+    if (EVENT) tdb_timer_##__LINE__ = glfwGetTime();    \
     if (glfwGetTime() - tdb_timer_##__LINE__ < DURATION)
+
+#define OneTimeEvent(VAR, EVENT)                     \
+    static bool VAR##_was_active = (EVENT);          \
+    bool VAR##_is_active = (EVENT);                  \
+    bool VAR = VAR##_is_active && !VAR##_was_active; \
+    VAR##_was_active = VAR##_is_active;
 
 struct frame_input_t
 {
@@ -122,7 +128,7 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_DEPTH_BITS,     24);
     glfwWindowHint(GLFW_STENCIL_BITS,   8);
     glfwWindowHint(GLFW_DOUBLEBUFFER,   1);
-    glfwWindowHint(GLFW_SAMPLES,        8);
+    glfwWindowHint(GLFW_SAMPLES,        4);
     GLFWwindow *window = glfwCreateWindow(640, 480, "Visual Debugger", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -136,9 +142,8 @@ int main(int argc, char **argv)
         (const char*)source_sans_pro_compressed_data,
         source_sans_pro_compressed_size, 18.0f);
     ImGui_ImplGlfw_CreateDeviceObjects();
-    ImGui::GetIO().MouseDrawCursor = true;
 
-    SetWindowSize(window,480,480);
+    ImGui::GetIO().MouseDrawCursor = true;
 
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
@@ -161,69 +166,104 @@ int main(int argc, char **argv)
         }
         UpdateAndDraw(input);
 
-        #define OneTimeEvent(Var, Event)                     \
-            static bool Var##_was_active = (Event);          \
-            bool Var##_is_active = (Event);                  \
-            bool Var = Var##_is_active && !Var##_was_active; \
-            Var##_was_active = Var##_is_active;
-
-        OneTimeEvent(screenshot_button,
-            glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
-            glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
         OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
         OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS);
         bool escape_eaten = false;
 
-        if (screenshot_button)
-        {
-            printf("open popup\n");
-            ImGui::OpenPopup("Take screenshot##popup");
-        }
-        if (ImGui::BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        // Set window size dialog
         {
             using namespace ImGui;
-            static char filename[1024];
-            Triggered(screenshot_button, 1.0f)
+            OneTimeEvent(hotkey,
+                         glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
+                         glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
+            if (hotkey)
             {
-                printf("focus %f!\n", glfwGetTime());
-                SetKeyboardFocusHere();
+                OpenPopup("Set window size##popup");
             }
-            InputText("Filename", filename, sizeof(filename));
+            if (BeginPopupModal("Set window size##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                static int width = input.window_w;
+                static int height = input.window_h;
+                static bool topmost = false;
+                InputInt("Width", &width);
+                InputInt("Height", &height);
+                Separator();
+                Checkbox("Topmost", &topmost);
 
-            static bool checkbox;
-            Checkbox("32bpp (alpha channel)", &checkbox);
+                if (Button("OK", ImVec2(120,0)) || enter_button)
+                {
+                    SetWindowSize(window, width, height, topmost);
+                    CloseCurrentPopup();
+                }
+                SameLine();
+                if (Button("Cancel", ImVec2(120,0)))
+                {
+                    CloseCurrentPopup();
+                }
+                if (escape_button)
+                {
+                    CloseCurrentPopup();
+                    escape_eaten = true;
+                }
+                EndPopup();
+            }
+        }
 
-            if (Button("OK", ImVec2(120,0)) || enter_button)
+        // Take screenshot or video dialog
+        {
+            using namespace ImGui;
+            OneTimeEvent(hotkey,
+                glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
+                glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
+
+            if (hotkey)
             {
-                // int channels = 3;
-                // GLenum format = GL_RGB;
-                // if (checkbox)
-                // {
-                //     format = GL_RGBA;
-                //     channels = 4;
-                // }
-                // int width = input.width;
-                // int height = input.height;
-                // int stride = width*channels;
-                // unsigned char *data = (unsigned char*)malloc(height*stride);
-                // glPixelStorei(GL_PACK_ALIGNMENT, 1);
-                // glReadBuffer(GL_BACK);
-                // glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
-                // stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
-                // free(data);
-                CloseCurrentPopup();
+                OpenPopup("Take screenshot##popup");
             }
-            SameLine();
-            if (Button("Cancel", ImVec2(120,0)))
+            if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
             {
-                CloseCurrentPopup();
+                static char filename[1024];
+                Triggered(hotkey, 1.0f)
+                {
+                    SetKeyboardFocusHere();
+                }
+                InputText("Filename", filename, sizeof(filename));
+
+                static bool checkbox;
+                Checkbox("32bpp (alpha channel)", &checkbox);
+
+                if (Button("OK", ImVec2(120,0)) || enter_button)
+                {
+                    // int channels = 3;
+                    // GLenum format = GL_RGB;
+                    // if (checkbox)
+                    // {
+                    //     format = GL_RGBA;
+                    //     channels = 4;
+                    // }
+                    // int width = input.width;
+                    // int height = input.height;
+                    // int stride = width*channels;
+                    // unsigned char *data = (unsigned char*)malloc(height*stride);
+                    // glPixelStorei(GL_PACK_ALIGNMENT, 1);
+                    // glReadBuffer(GL_BACK);
+                    // glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
+                    // stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+                    // free(data);
+                    CloseCurrentPopup();
+                }
+                SameLine();
+                if (Button("Cancel", ImVec2(120,0)))
+                {
+                    CloseCurrentPopup();
+                }
+                if (escape_button)
+                {
+                    CloseCurrentPopup();
+                    escape_eaten = true;
+                }
+                EndPopup();
             }
-            if (escape_button)
-            {
-                CloseCurrentPopup();
-                escape_eaten = true;
-            }
-            ImGui::EndPopup();
         }
 
         ImGui::Render();

@@ -19,7 +19,7 @@ REM -subsystem:console: Open a console
 REM -debug: Create debugging information into .pdb
 set LF=-debug ../glfw/lib-vc2010-32/glfw3.lib opengl32.lib user32.lib gdi32.lib shell32.lib
 
-cl %CF% ../test2.cpp /link %LF% -out:native.exe
+cl %CF% ../main.cpp /link %LF% -out:native.exe
 
 
 popd

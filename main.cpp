@@ -386,6 +386,8 @@ int main(int argc, char **argv)
                 static FILE *ffmpeg = 0;
                 if (!ffmpeg)
                 {
+                    // todo: -pix_fmt for RGB?
+                    assert(opt.alpha_channel);
                     // todo: linux/osx
                     char cmd[1024];
                     sprintf(cmd, "ffmpeg -r %f -f rawvideo -pix_fmt %s -s %dx%d -i - "
@@ -532,7 +534,7 @@ int main(int argc, char **argv)
                         {
                             if (use_ffmpeg)
                             {
-                                RecordVideoToFfmpeg(filename, (int)framerate, frame_cap, draw_imgui, draw_cursor, !not_reset, alpha);
+                                RecordVideoToFfmpeg(filename, framerate, frame_cap, draw_imgui, draw_cursor, !not_reset, alpha);
                             }
                             else
                             {

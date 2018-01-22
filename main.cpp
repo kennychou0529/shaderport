@@ -410,6 +410,7 @@ int main(int argc, char **argv)
                 {
                     framegrab.active = false;
                     _pclose(ffmpeg);
+                    ffmpeg = 0;
                 }
             }
             else

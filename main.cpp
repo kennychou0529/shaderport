@@ -197,6 +197,22 @@ void RecordVideoToImageSequence(
     StartFrameGrab(opt);
 }
 
+void RecordVideoToFfmpeg(
+    const char *filename, int fps, int frame_cap, bool imgui=false, bool cursor=false, bool reset=false, bool alpha=false)
+{
+    framegrab_options_t opt = {0};
+    opt.filename = filename;
+    opt.reset_num_video_frames = reset;
+    opt.draw_imgui = imgui;
+    opt.draw_cursor = cursor;
+    opt.alpha_channel = alpha;
+    opt.is_video = true;
+    opt.use_ffmpeg = true;
+    opt.ffmpeg_fps = fps;
+    opt.video_frame_cap = frame_cap;
+    StartFrameGrab(opt);
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -493,26 +509,34 @@ int main(int argc, char **argv)
                     static bool is_video = false;
                     static bool draw_imgui = false;
                     static bool draw_cursor = false;
-                    Checkbox("Video", &is_video);
+                    Checkbox("Record video", &is_video);
                     Checkbox("Transparency (32bpp)", &alpha);
                     Checkbox("Draw GUI", &draw_imgui);
                     Checkbox("Draw cursor", &draw_cursor);
                     if (is_video)
                     {
-                        static bool reset_video_frame_counter = false;
+                        static bool not_reset = false;
+                        static bool use_ffmpeg = false;
                         static int frame_cap = 0;
-                        Checkbox("Reset frame counter", &reset_video_frame_counter);
+                        static float framerate = 0;
+                        Checkbox("Continue with filename number from last time", &not_reset);
                         InputInt("Number of frames", &frame_cap);
-                        if (framegrab.active)
+                        Checkbox("Stream to ffmpeg", &use_ffmpeg);
+                        if (use_ffmpeg)
+                            InputFloat("Framerate", &framerate);
+                        if (framegrab.active && (Button("Stop", ImVec2(120,0)) || enter_button))
                         {
-                            if (Button("Stop", ImVec2(120,0)) || enter_button)
-                            {
-                            }
+                            framegrab.should_stop = true;
                         }
-                        else
+                        else if (Button("Start", ImVec2(120,0)) || enter_button)
                         {
-                            if (Button("Start", ImVec2(120,0)) || enter_button)
+                            if (use_ffmpeg)
                             {
+                                RecordVideoToFfmpeg(filename, (int)framerate, frame_cap, draw_imgui, draw_cursor, !not_reset, alpha);
+                            }
+                            else
+                            {
+                                RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !not_reset, alpha);
                             }
                         }
                         SameLine();

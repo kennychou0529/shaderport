@@ -139,8 +139,7 @@ struct framegrab_options_t
     bool draw_imgui;
     bool is_video;
     bool use_ffmpeg;
-    int fps; // only used for ffmpeg streaming
-    // const char *ffmpeg_exe_path;
+    int ffmpeg_fps;
     bool reset_num_screenshots;
     bool reset_num_video_frames;
     int video_frame_cap;
@@ -428,7 +427,7 @@ int main(int argc, char **argv)
                     char cmd[1024];
                     sprintf(cmd, "ffmpeg -r %d -f rawvideo -pix_fmt %s -s %dx%d -i - "
                                   "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s",
-                                  opt.fps, // -r
+                                  opt.ffmpeg_fps, // -r
                                   opt.alpha_channel ? "rgba" : "rgb", // -pix_fmt
                                   width, height, // -s
                                   opt.filename);

@@ -330,62 +330,6 @@ int main(int argc, char **argv)
             StartFrameGrab(opt);
         }
 
-        if (framegrab.overlay_active && !framegrab.active)
-        {
-            // record start_time instead
-            float t0 = 1.0f - framegrab.overlay_timer;
-            float t1 = 2.0f*t0;
-            float t2 = 2.0f*(t0-0.2f);
-
-            if (t1 < 0.0f) t1 = 0.0f;
-            if (t1 > 1.0f) t1 = 1.0f;
-            if (t2 < 0.0f) t2 = 0.0f;
-            if (t2 > 1.0f) t2 = 1.0f;
-
-            float a = 0.5f+0.5f*sinf((3.14f)*(t1-0.5f));
-            float w = 1.0f - 0.2f*a;
-
-            float b = 0.5f+0.5f*sinf((3.14f)*(t2-0.5f));
-            float x = -2.0f*b*b*b*b;
-
-            glLineWidth(2.0f);
-            glBegin(GL_LINES);
-            glColor4f(1,1,1,0.4f);
-            glVertex2f(-w+x,-w); glVertex2f(+w+x,-w);
-            glVertex2f(+w+x,-w); glVertex2f(+w+x,+w);
-            glVertex2f(+w+x,+w); glVertex2f(-w+x,+w);
-            glVertex2f(-w+x,+w); glVertex2f(-w+x,-w);
-            glEnd();
-
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, framegrab.overlay_tex);
-            glBegin(GL_TRIANGLES);
-            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
-            glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+w+x,-w);
-            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-w+x,+w);
-            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
-
-            glBegin(GL_TRIANGLES);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,-w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,+w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
-            glEnd();
-
-            framegrab.overlay_timer -= input.frame_time;
-            if (framegrab.overlay_timer < 0.0f)
-            {
-                framegrab.overlay_active = false;
-                glDeleteTextures(1, &framegrab.overlay_tex);
-            }
-        }
-
         if (framegrab.active)
         {
             framegrab_options_t opt = framegrab.options;
@@ -618,6 +562,62 @@ int main(int argc, char **argv)
             }
             #endif
             // Render();
+        }
+
+        if (framegrab.overlay_active && !framegrab.active)
+        {
+            // record start_time instead
+            float t0 = 1.0f - framegrab.overlay_timer;
+            float t1 = 2.0f*t0;
+            float t2 = 2.0f*(t0-0.2f);
+
+            if (t1 < 0.0f) t1 = 0.0f;
+            if (t1 > 1.0f) t1 = 1.0f;
+            if (t2 < 0.0f) t2 = 0.0f;
+            if (t2 > 1.0f) t2 = 1.0f;
+
+            float a = 0.5f+0.5f*sinf((3.14f)*(t1-0.5f));
+            float w = 1.0f - 0.2f*a;
+
+            float b = 0.5f+0.5f*sinf((3.14f)*(t2-0.5f));
+            float x = -2.0f*b*b*b*b;
+
+            glLineWidth(2.0f);
+            glBegin(GL_LINES);
+            glColor4f(1,1,1,0.4f);
+            glVertex2f(-w+x,-w); glVertex2f(+w+x,-w);
+            glVertex2f(+w+x,-w); glVertex2f(+w+x,+w);
+            glVertex2f(+w+x,+w); glVertex2f(-w+x,+w);
+            glVertex2f(-w+x,+w); glVertex2f(-w+x,-w);
+            glEnd();
+
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, framegrab.overlay_tex);
+            glBegin(GL_TRIANGLES);
+            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+            glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+w+x,-w);
+            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-w+x,+w);
+            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+
+            glBegin(GL_TRIANGLES);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,-w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,+w);
+            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
+            glEnd();
+
+            framegrab.overlay_timer -= input.frame_time;
+            if (framegrab.overlay_timer < 0.0f)
+            {
+                framegrab.overlay_active = false;
+                glDeleteTextures(1, &framegrab.overlay_tex);
+            }
         }
 
         glfwSwapBuffers(window);

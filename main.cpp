@@ -140,7 +140,7 @@ struct framegrab_options_t
     bool draw_imgui;
     bool is_video;
     bool use_ffmpeg;
-    int ffmpeg_fps;
+    float ffmpeg_fps;
     bool reset_num_screenshots;
     bool reset_num_video_frames;
     int video_frame_cap;
@@ -198,7 +198,7 @@ void RecordVideoToImageSequence(
 }
 
 void RecordVideoToFfmpeg(
-    const char *filename, int fps, int frame_cap, bool imgui=false, bool cursor=false, bool reset=false, bool alpha=false)
+    const char *filename, float fps, int frame_cap, bool imgui=false, bool cursor=false, bool reset=false, bool alpha=false)
 {
     framegrab_options_t opt = {0};
     opt.filename = filename;
@@ -388,7 +388,7 @@ int main(int argc, char **argv)
                 {
                     // todo: linux/osx
                     char cmd[1024];
-                    sprintf(cmd, "ffmpeg -r %d -f rawvideo -pix_fmt %s -s %dx%d -i - "
+                    sprintf(cmd, "ffmpeg -r %f -f rawvideo -pix_fmt %s -s %dx%d -i - "
                                   "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s",
                                   opt.ffmpeg_fps, // -r
                                   opt.alpha_channel ? "rgba" : "rgb", // -pix_fmt

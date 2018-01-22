@@ -315,20 +315,20 @@ int main(int argc, char **argv)
             }
         }
 
-        if (enter_button)
-        {
-            framegrab_options_t opt = {0};
-            opt.filename = "output.mp4";
-            opt.alpha_channel = true;
-            opt.draw_cursor = true;
-            opt.draw_imgui = true;
-            opt.use_ffmpeg = false;
-            opt.is_video = false;
-            opt.video_frame_cap = 120;
-            opt.reset_num_screenshots = false;
-            opt.reset_num_video_frames = true;
-            StartFrameGrab(opt);
-        }
+        // if (enter_button)
+        // {
+        //     framegrab_options_t opt = {0};
+        //     opt.filename = "output.mp4";
+        //     opt.alpha_channel = true;
+        //     opt.draw_cursor = true;
+        //     opt.draw_imgui = true;
+        //     opt.use_ffmpeg = false;
+        //     opt.is_video = false;
+        //     opt.video_frame_cap = 120;
+        //     opt.reset_num_screenshots = false;
+        //     opt.reset_num_video_frames = true;
+        //     StartFrameGrab(opt);
+        // }
 
         if (framegrab.active)
         {
@@ -471,98 +471,83 @@ int main(int argc, char **argv)
         }
         else
         {
-            ImGui::Render();
-        }
-
-        // Take screenshot or video dialog
-        {
-            using namespace ImGui;
-            // NewFrame();
-            // Begin("fuck");
-            // Text("hi");
-            // End();
-
-            #if 0
-            OneTimeEvent(hotkey,
-                glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
-                glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
-
-            if (hotkey)
+            // Take screenshot or video dialog
             {
-                OpenPopup("Take screenshot##popup");
-            }
-            if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                static char filename[1024];
-                // todo: SetItemDefaultFocus
-                Triggered(hotkey, 1.0f)
+                using namespace ImGui;
+                OneTimeEvent(hotkey,
+                    glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
+                    glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
+
+                if (hotkey)
                 {
-                    SetKeyboardFocusHere();
+                    OpenPopup("Take screenshot##popup");
                 }
-                InputText("Filename", filename, sizeof(filename));
-
-                static bool checkbox;
-                static bool is_video;
-                Checkbox("Transparency (alpha channel)", &checkbox);
-                Checkbox("Video", &is_video);
-
-                static int frame_cap = 0;
-                if (is_video)
+                if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
                 {
-                    InputInt("Number of frames", &frame_cap);
-                    if (framegrab.active)
+                    static char filename[1024];
+                    if (IsWindowAppearing())
+                        SetKeyboardFocusHere();
+                    InputText("Filename", filename, sizeof(filename));
+
+                    static bool alpha = false;
+                    static bool is_video = false;
+                    static bool draw_imgui = false;
+                    static bool draw_cursor = false;
+                    Checkbox("Video", &is_video);
+                    Checkbox("Transparency (32bpp)", &alpha);
+                    Checkbox("Draw GUI", &draw_imgui);
+                    Checkbox("Draw cursor", &draw_cursor);
+                    if (is_video)
                     {
-                        if (Button("Stop", ImVec2(120,0)) || enter_button)
+                        static bool reset_video_frame_counter = false;
+                        static int frame_cap = 0;
+                        Checkbox("Reset frame counter", &reset_video_frame_counter);
+                        InputInt("Number of frames", &frame_cap);
+                        if (framegrab.active)
                         {
-                            // framegrab_options_t opt = {0};
-                            // opt.filename = filename;
-                            // opt.alpha_channel = true;
-                            // StartFrameGrab(opt);
+                            if (Button("Stop", ImVec2(120,0)) || enter_button)
+                            {
+                            }
+                        }
+                        else
+                        {
+                            if (Button("Start", ImVec2(120,0)) || enter_button)
+                            {
+                            }
+                        }
+                        SameLine();
+                        if (Button("Cancel", ImVec2(120,0)))
+                        {
+                            CloseCurrentPopup();
                         }
                     }
                     else
                     {
-                        if (Button("Start", ImVec2(120,0)) || enter_button)
+                        static bool reset_screenshot_counter = false;
+                        Checkbox("Reset screenshot counter", &reset_screenshot_counter);
+                        if (Button("OK", ImVec2(120,0)) || enter_button)
                         {
-                            // framegrab_options_t opt = {0};
-                            // opt.filename = filename;
-                            // opt.alpha_channel = true;
-                            // StartFrameGrab(opt);
+                            TakeScreenshot(filename, draw_imgui, draw_cursor, reset_screenshot_counter, alpha);
+                            CloseCurrentPopup();
+                        }
+                        SameLine();
+                        if (Button("Cancel", ImVec2(120,0)))
+                        {
+                            CloseCurrentPopup();
                         }
                     }
-                    SameLine();
-                    if (Button("Cancel", ImVec2(120,0)))
-                    {
-                        CloseCurrentPopup();
-                    }
-                }
-                else
-                {
-                    if (Button("OK", ImVec2(120,0)) || enter_button)
-                    {
-                        // framegrab_options_t opt = {0};
-                        // opt.filename = filename;
-                        // opt.alpha_channel = true;
-                        // StartFrameGrab(opt);
-                        CloseCurrentPopup();
-                    }
-                    SameLine();
-                    if (Button("Cancel", ImVec2(120,0)))
-                    {
-                        CloseCurrentPopup();
-                    }
-                }
 
-                if (escape_button)
-                {
-                    CloseCurrentPopup();
-                    escape_eaten = true;
+                    if (escape_button)
+                    {
+                        CloseCurrentPopup();
+                        escape_eaten = true;
+                    }
+                    EndPopup();
                 }
-                EndPopup();
             }
-            #endif
-            // Render();
+            ImGui::Render();
         }
+
 
         if (framegrab.overlay_active && !framegrab.active)
         {

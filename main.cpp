@@ -86,6 +86,7 @@ void UpdateAndDraw(frame_input_t input)
     glEnd();
 
     ImGui::Text("The time is: %ds", (int)input.elapsed_time);
+    ImGui::ShowDemoWindow();
 }
 
 void ErrorCallback(int error, const char* description)
@@ -227,6 +228,8 @@ int main(int argc, char **argv)
     ImGui_ImplGlfw_CreateDeviceObjects();
 
     ImGui::GetIO().MouseDrawCursor = true;
+    ImGui::StyleColorsDark();
+    ImGui::GetStyle().FrameRounding = 5.0f;
 
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
@@ -547,6 +550,7 @@ int main(int argc, char **argv)
             if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
             {
                 static char filename[1024];
+                // todo: SetItemDefaultFocus
                 Triggered(hotkey, 1.0f)
                 {
                     SetKeyboardFocusHere();

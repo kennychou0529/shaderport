@@ -269,6 +269,47 @@ void DrawScreenshotTakenOverlayAnimation(float overlay_timer, GLuint overlay_tex
     // }
 }
 
+void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t input, bool window_size_button, bool enter_button, bool escape_button)
+{
+    using namespace ImGui;
+    if (window_size_button)
+    {
+        OpenPopup("Set window size##popup");
+    }
+    if (BeginPopupModal("Set window size##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static int width = 0, height = 0;
+        if (IsWindowAppearing())
+        {
+            width = input.window_w;
+            height = input.window_h;
+        }
+
+        static bool topmost = false;
+        InputInt("Width", &width);
+        InputInt("Height", &height);
+        Separator();
+        Checkbox("Topmost", &topmost);
+
+        if (Button("OK", ImVec2(120,0)) || enter_button)
+        {
+            SetWindowSize(window, width, height, topmost);
+            CloseCurrentPopup();
+        }
+        SameLine();
+        if (Button("Cancel", ImVec2(120,0)))
+        {
+            CloseCurrentPopup();
+        }
+        if (escape_button)
+        {
+            CloseCurrentPopup();
+            *escape_eaten = true;
+        }
+        EndPopup();
+    }
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -319,41 +360,7 @@ int main(int argc, char **argv)
         OneTimeEvent(window_size_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
         bool escape_eaten = false;
 
-        // Set window size dialog
-        {
-            using namespace ImGui;
-            if (window_size_button)
-            {
-                OpenPopup("Set window size##popup");
-            }
-            if (BeginPopupModal("Set window size##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-            {
-                static int width = input.window_w;
-                static int height = input.window_h;
-                static bool topmost = false;
-                InputInt("Width", &width);
-                InputInt("Height", &height);
-                Separator();
-                Checkbox("Topmost", &topmost);
-
-                if (Button("OK", ImVec2(120,0)) || enter_button)
-                {
-                    SetWindowSize(window, width, height, topmost);
-                    CloseCurrentPopup();
-                }
-                SameLine();
-                if (Button("Cancel", ImVec2(120,0)))
-                {
-                    CloseCurrentPopup();
-                }
-                if (escape_button)
-                {
-                    CloseCurrentPopup();
-                    escape_eaten = true;
-                }
-                EndPopup();
-            }
-        }
+        SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);
 
         if (framegrab.active)
         {

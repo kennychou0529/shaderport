@@ -23,7 +23,8 @@
 #include "texture.cpp"
 #include "perframe.cpp"
 #include "framegrab.cpp"
-#include "uglymacro.cpp"
+#include "macro_triggered.h"
+#include "macro_one_time_event.h"
 
 void ErrorCallback(int error, const char* description)
 {

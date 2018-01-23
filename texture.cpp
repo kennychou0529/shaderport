@@ -9,6 +9,9 @@
 //   SetTexture(0, data, 128, 128, GL_RGB, GL_UNSIGNED_BYTE);
 //   DrawTexture(0);
 // EXAMPLE
+//   Drawing a mipmap'd texture
+//   SetTexture(0, data, 128, 128, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR);
+// EXAMPLE
 //                           data_format   data_type
 //   Grayscale 32 bit float: GL_LUMINANCE  GL_FLOAT
 //   RGB       32 bit float: GL_RGB        GL_FLOAT
@@ -18,7 +21,7 @@ void SetTexture(
     void *data,
     int width,
     int height,
-    GLenum data_format,
+    GLenum data_format = GL_RGB,
     GLenum data_type = GL_UNSIGNED_BYTE,
     GLenum mag_filter = GL_LINEAR,
     GLenum min_filter = GL_LINEAR,

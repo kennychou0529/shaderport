@@ -42,7 +42,7 @@ void UpdateAndDraw(frame_input_t input)
     {
         int x,y,n;
         unsigned char *data = stbi_load("C:/Temp/dummy.png", &x, &y, &n, 3);
-        SetTexture(0, data, x, y, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+        SetTexture(0, data, x, y, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR);
         first = false;
     }
 

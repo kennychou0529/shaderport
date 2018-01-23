@@ -198,6 +198,54 @@ void AfterImGuiInit()
     ImGui::GetStyle().FrameRounding = 5.0f;
 }
 
+void DrawScreenshotTakenOverlayAnimation(float overlay_timer, GLuint overlay_tex)
+{
+    float t0 = 1.0f - overlay_timer;
+    float t1 = 2.0f*t0;
+    float t2 = 2.0f*(t0-0.2f);
+
+    if (t1 < 0.0f) t1 = 0.0f;
+    if (t1 > 1.0f) t1 = 1.0f;
+    if (t2 < 0.0f) t2 = 0.0f;
+    if (t2 > 1.0f) t2 = 1.0f;
+
+    float a = 0.5f+0.5f*sinf((3.14f)*(t1-0.5f));
+    float w = 1.0f - 0.2f*a;
+
+    float b = 0.5f+0.5f*sinf((3.14f)*(t2-0.5f));
+    float x = -2.0f*b*b*b*b;
+
+    glLineWidth(2.0f);
+    glBegin(GL_LINES);
+    glColor4f(1,1,1,0.4f);
+    glVertex2f(-w+x,-w); glVertex2f(+w+x,-w);
+    glVertex2f(+w+x,-w); glVertex2f(+w+x,+w);
+    glVertex2f(+w+x,+w); glVertex2f(-w+x,+w);
+    glVertex2f(-w+x,+w); glVertex2f(-w+x,-w);
+    glEnd();
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, overlay_tex);
+    glBegin(GL_TRIANGLES);
+    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+w+x,-w);
+    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
+    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-w+x,+w);
+    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    glBegin(GL_TRIANGLES);
+    glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
+    glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,-w);
+    glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
+    glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
+    glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,+w);
+    glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
+    glEnd();
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -526,51 +574,7 @@ int main(int argc, char **argv)
 
         if (framegrab.overlay_active)
         {
-            // record start_time instead
-            float t0 = 1.0f - framegrab.overlay_timer;
-            float t1 = 2.0f*t0;
-            float t2 = 2.0f*(t0-0.2f);
-
-            if (t1 < 0.0f) t1 = 0.0f;
-            if (t1 > 1.0f) t1 = 1.0f;
-            if (t2 < 0.0f) t2 = 0.0f;
-            if (t2 > 1.0f) t2 = 1.0f;
-
-            float a = 0.5f+0.5f*sinf((3.14f)*(t1-0.5f));
-            float w = 1.0f - 0.2f*a;
-
-            float b = 0.5f+0.5f*sinf((3.14f)*(t2-0.5f));
-            float x = -2.0f*b*b*b*b;
-
-            glLineWidth(2.0f);
-            glBegin(GL_LINES);
-            glColor4f(1,1,1,0.4f);
-            glVertex2f(-w+x,-w); glVertex2f(+w+x,-w);
-            glVertex2f(+w+x,-w); glVertex2f(+w+x,+w);
-            glVertex2f(+w+x,+w); glVertex2f(-w+x,+w);
-            glVertex2f(-w+x,+w); glVertex2f(-w+x,-w);
-            glEnd();
-
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, framegrab.overlay_tex);
-            glBegin(GL_TRIANGLES);
-            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
-            glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+w+x,-w);
-            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-w+x,+w);
-            glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-w+x,-w);
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
-
-            glBegin(GL_TRIANGLES);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,-w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(+w+x,+w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,+w);
-            glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
-            glEnd();
+            DrawScreenshotTakenOverlayAnimation(framegrab.overlay_timer, framegrab.overlay_tex);
 
             // todo: taking a screenshot usually means that frame will have taken a crazy amount of time
             // so using input.frame_time will make the animation go by super fast that one frame...

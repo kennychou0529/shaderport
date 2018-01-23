@@ -478,6 +478,11 @@ int main(int argc, char **argv)
             }
 
             free(data);
+
+            if (screenshot_button)
+            {
+                framegrab.should_stop = true;
+            }
         }
         else
         {

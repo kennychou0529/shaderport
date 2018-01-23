@@ -244,6 +244,19 @@ void DrawScreenshotTakenOverlayAnimation(float overlay_timer, GLuint overlay_tex
     glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,+w);
     glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
     glEnd();
+
+    // todo: draw an overlay once we figure out how to draw imgui stuff that both is and isn't captured
+    // {
+    //     ImGui::SetNextWindowPos(ImVec2(10,10));
+    //     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.3f));
+    //     if (ImGui::Begin("Example: Fixed Overlay", NULL, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings))
+    //     {
+    //         ImGui::Text("Simple overlay\nin the corner of the screen.\n(right-click to change position)");
+    //         ImGui::Separator();
+    //         ImGui::Text("Mouse Position: (%.1f,%.1f)", ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y);
+    //         ImGui::End();
+    //     }
+    // }
 }
 
 int main(int argc, char **argv)
@@ -427,11 +440,20 @@ int main(int argc, char **argv)
                 }
 
                 if (save_as_bmp)
+                {
                     stbi_write_bmp(filename, width, height, channels, data);
+                    printf("Saved %s...\n", filename);
+                }
                 else if (save_as_png)
+                {
                     stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+                    printf("Saved %s...\n", filename);
+                }
                 else
+                {
                     stbi_write_bmp(filename, width, height, channels, data);
+                    printf("Saved %s (bmp)...\n", filename);
+                }
 
                 if (opt.is_video)
                 {

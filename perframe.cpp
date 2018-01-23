@@ -1,11 +1,13 @@
 struct frame_input_t
 {
-    int window_w;
-    int window_h;
-    int window_x;
-    int window_y;
-    int mouse_x;
-    int mouse_y;
+    // Note: for retina displays screen coordinates != framebuffer coordinates
+    int window_x,window_y; // This is the position of the window's client area in screen coordinates
+    int window_w,window_h; // This is the size of the window's client area in screen coordinates
+    int framebuffer_w,framebuffer_h; // This is the size in pixels of the framebuffer in the window
+
+    float mouse_x,mouse_y; // The position of the mouse in the client area in screen coordinates
+    float mouse_u,mouse_v; // -||- in normalized mouse coordinates where (-1,-1):bottom-left (+1,+1):top-right
+
     float elapsed_time;
     float frame_time; // Note: When recording video you probably want to use your own animation timer
                       // that increments at a fixed time step per loop. It is also possible that camera
@@ -15,27 +17,44 @@ struct frame_input_t
     bool regained_focus;
 };
 
-void BeforeUpdateAndDraw(frame_input_t input)
+void ResetGLState(frame_input_t input)
 {
+    glUseProgram(0);
+
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_TEXTURE_2D);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    glViewport(0, 0, (GLsizei)input.framebuffer_w, (GLsizei)input.framebuffer_h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-1.0f, +1.0f, -1.0f, +1.0f, -1.0f, +1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+void BeforeUpdateAndDraw(frame_input_t input)
+{
+    ResetGLState(input);
+    glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void AfterUpdateAndDraw(frame_input_t input)
 {
-    // glUseProgram(0);
-    // todo: set up fixed-function pipeline stuff
-    // e.g. to support DrawScreenshotTakenOverlayAnimation
+    ResetGLState(input);
 }
 
 void UpdateAndDraw(frame_input_t input)
 {
     static float anim_time = 0.0f;
     anim_time += 1.0f/60.0f;
-    glViewport(0, 0, input.window_w, input.window_h);
-    glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     static bool first = true;
     if (first)

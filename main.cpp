@@ -175,12 +175,15 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
     input.regained_focus = regained_focus;
 
     glfwGetWindowPos(window, &input.window_x, &input.window_y);
-    glfwGetFramebufferSize(window, &input.window_w, &input.window_h);
+    glfwGetWindowSize(window, &input.window_w, &input.window_h);
+    glfwGetFramebufferSize(window, &input.framebuffer_w, &input.framebuffer_h);
 
     double mouse_x,mouse_y;
     glfwGetCursorPos(window, &mouse_x, &mouse_y);
-    input.mouse_x = (int)mouse_x;
-    input.mouse_y = (int)mouse_y;
+    input.mouse_x = (float)mouse_x;
+    input.mouse_y = (float)mouse_y;
+    input.mouse_u = -1.0f + 2.0f*input.mouse_x/input.window_w;
+    input.mouse_v = -1.0f + 2.0f*input.mouse_y/input.window_h; // todo: flip?
 
     static double last_elapsed_time = 0.0;
     input.elapsed_time = (float)glfwGetTime();
@@ -528,6 +531,11 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int stride,
     }
 }
 
+void DrawCrosshair(float x, float y)
+{
+
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -597,7 +605,9 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    // todo: draw a crosshair thing if we still wanted a cursor
+                    double mouse_x, mouse_y;
+                    glfwGetCursorPos(window, &mouse_x, &mouse_y);
+                    DrawCrosshair((float)mouse_x, (float)mouse_y);
                 }
                 format = opt.alpha_channel ? GL_RGBA : GL_RGB;
                 channels = opt.alpha_channel ? 4 : 3;

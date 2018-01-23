@@ -28,10 +28,10 @@ void RecordVideoToImageSequence(const char *filename, int frame_cap, bool imgui=
 // frame_cap: Stop after capturing this number of frames (0 for no limit, call StopFramegrab to stop manually)
 // imgui: Enable drawing GUI
 // cursor: Enable drawing a cursor or not (If drawing GUI, the cursor is arrow cursor otherwise you get a crosshair)
-// reset: Reset screenshot frame counter
+// reset: Reset video frame counter
 // alpha: Extract alpha channel from framebuffer
 // filename: If no extension is provided, file will be saved as .bmp.
-//           If %d is present, it will be filled with screenshot counter
+//           If %d is present, it will be filled with video frame counter
 //
 // The function uses _popen to open a pipe, and assumes that the ffmpeg executable is present on the
 // terminal that the application ran from (in the PATH variable). If you're on Windows, you will want

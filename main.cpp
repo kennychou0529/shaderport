@@ -418,6 +418,116 @@ void StartFramegrabDialog(bool *escape_eaten, bool screenshot_button, bool enter
     }
 }
 
+void FramegrabSaveOutput(unsigned char *data, int width, int height, int stride, int channels, GLenum format)
+{
+    framegrab_options_t opt = framegrab.options;
+
+    // write output to ffmpeg or to file
+    if (opt.use_ffmpeg)
+    {
+        static FILE *ffmpeg = 0;
+        if (!ffmpeg)
+        {
+            // todo: -pix_fmt for RGB?
+            assert(opt.alpha_channel);
+            // todo: linux/osx
+            char cmd[1024];
+            sprintf(cmd, "ffmpeg -r %f -f rawvideo -pix_fmt %s -s %dx%d -i - "
+                          "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s",
+                          opt.ffmpeg_fps, // -r
+                          opt.alpha_channel ? "rgba" : "rgb", // -pix_fmt
+                          width, height, // -s
+                          opt.filename);
+            ffmpeg = _popen(cmd, "wb");
+        }
+
+        fwrite(data, height*stride, 1, ffmpeg);
+
+        framegrab.num_video_frames++;
+        if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
+        {
+            framegrab.should_stop = true;
+        }
+        if (framegrab.should_stop)
+        {
+            framegrab.active = false;
+            _pclose(ffmpeg);
+            ffmpeg = 0;
+        }
+    }
+    else
+    {
+        bool save_as_bmp = false;
+        bool save_as_png = false;
+
+        if (strstr(opt.filename, ".png"))
+        {
+            save_as_png = true;
+            save_as_bmp = false;
+        }
+        else if (strstr(opt.filename, ".bmp"))
+        {
+            save_as_bmp = true;
+            save_as_png = false;
+        }
+        else
+        {
+            save_as_bmp = false;
+            save_as_png = false;
+            // did user specify any extension at all?
+        }
+
+        char filename[1024];
+        if (opt.is_video)
+        {
+            // todo: check if filename template has %...d?
+            sprintf(filename, opt.filename, framegrab.num_video_frames);
+        }
+        else
+        {
+            // todo: check if filename template has %...d?
+            sprintf(filename, opt.filename, framegrab.num_screenshots);
+        }
+
+        if (save_as_bmp)
+        {
+            stbi_write_bmp(filename, width, height, channels, data);
+            printf("Saved %s...\n", filename);
+        }
+        else if (save_as_png)
+        {
+            stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
+            printf("Saved %s...\n", filename);
+        }
+        else
+        {
+            stbi_write_bmp(filename, width, height, channels, data);
+            printf("Saved %s (bmp)...\n", filename);
+        }
+
+        if (opt.is_video)
+        {
+            framegrab.num_video_frames++;
+            if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
+            {
+                framegrab.should_stop = true;
+            }
+            if (framegrab.should_stop)
+            {
+                framegrab.active = false;
+            }
+        }
+        else
+        {
+            framegrab.overlay_active = true;
+            framegrab.overlay_timer = 1.0f;
+            framegrab.overlay_tex = TexImage2D(data, width, height, format, GL_UNSIGNED_BYTE);
+            framegrab.num_screenshots++;
+            framegrab.active = false;
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -504,110 +614,7 @@ int main(int argc, char **argv)
                 }
             }
 
-            // write output to ffmpeg or to file
-            if (opt.use_ffmpeg)
-            {
-                static FILE *ffmpeg = 0;
-                if (!ffmpeg)
-                {
-                    // todo: -pix_fmt for RGB?
-                    assert(opt.alpha_channel);
-                    // todo: linux/osx
-                    char cmd[1024];
-                    sprintf(cmd, "ffmpeg -r %f -f rawvideo -pix_fmt %s -s %dx%d -i - "
-                                  "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s",
-                                  opt.ffmpeg_fps, // -r
-                                  opt.alpha_channel ? "rgba" : "rgb", // -pix_fmt
-                                  width, height, // -s
-                                  opt.filename);
-                    ffmpeg = _popen(cmd, "wb");
-                }
-
-                fwrite(data, height*stride, 1, ffmpeg);
-
-                framegrab.num_video_frames++;
-                if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
-                {
-                    framegrab.should_stop = true;
-                }
-                if (framegrab.should_stop)
-                {
-                    framegrab.active = false;
-                    _pclose(ffmpeg);
-                    ffmpeg = 0;
-                }
-            }
-            else
-            {
-                bool save_as_bmp = false;
-                bool save_as_png = false;
-
-                if (strstr(opt.filename, ".png"))
-                {
-                    save_as_png = true;
-                    save_as_bmp = false;
-                }
-                else if (strstr(opt.filename, ".bmp"))
-                {
-                    save_as_bmp = true;
-                    save_as_png = false;
-                }
-                else
-                {
-                    save_as_bmp = false;
-                    save_as_png = false;
-                    // did user specify any extension at all?
-                }
-
-                char filename[1024];
-                if (opt.is_video)
-                {
-                    // todo: check if filename template has %...d?
-                    sprintf(filename, opt.filename, framegrab.num_video_frames);
-                }
-                else
-                {
-                    // todo: check if filename template has %...d?
-                    sprintf(filename, opt.filename, framegrab.num_screenshots);
-                }
-
-                if (save_as_bmp)
-                {
-                    stbi_write_bmp(filename, width, height, channels, data);
-                    printf("Saved %s...\n", filename);
-                }
-                else if (save_as_png)
-                {
-                    stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
-                    printf("Saved %s...\n", filename);
-                }
-                else
-                {
-                    stbi_write_bmp(filename, width, height, channels, data);
-                    printf("Saved %s (bmp)...\n", filename);
-                }
-
-                if (opt.is_video)
-                {
-                    framegrab.num_video_frames++;
-                    if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
-                    {
-                        framegrab.should_stop = true;
-                    }
-                    if (framegrab.should_stop)
-                    {
-                        framegrab.active = false;
-                    }
-                }
-                else
-                {
-                    framegrab.overlay_active = true;
-                    framegrab.overlay_timer = 1.0f;
-                    framegrab.overlay_tex = TexImage2D(data, width, height, format, GL_UNSIGNED_BYTE);
-                    framegrab.num_screenshots++;
-                    framegrab.active = false;
-                }
-            }
+            FramegrabSaveOutput(data, width, height, stride, channels, format);
 
             free(data);
 

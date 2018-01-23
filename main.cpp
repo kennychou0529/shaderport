@@ -315,7 +315,7 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
     }
 }
 
-void StartFramegrabDialog(bool *escape_eaten, bool screenshot_button, bool enter_button, bool escape_button)
+void FramegrabStartDialog(bool *escape_eaten, bool screenshot_button, bool enter_button, bool escape_button)
 {
     using namespace ImGui;
 
@@ -659,7 +659,7 @@ int main(int argc, char **argv)
         {
             // todo: figure out how to render this dialog box on top of everything else
             // but not have it in the screenshot
-            StartFramegrabDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
+            FramegrabStartDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
             ImGui::Render();
         }
 

@@ -139,6 +139,15 @@ void WindowFocusChanged(GLFWwindow *window, int focused)
     lost_focus = focused == GL_FALSE;
 }
 
+bool is_iconified = false;
+void WindowIconifyChanged(GLFWwindow *window, int iconified)
+{
+    if (iconified == GL_TRUE)
+        is_iconified = true;
+    else if (iconified == GL_FALSE)
+        is_iconified = false;
+}
+
 #define Triggered(EVENT, DURATION)                      \
     static double tdb_timer_##__LINE__ = 0.0f;          \
     if (EVENT) tdb_timer_##__LINE__ = glfwGetTime();    \
@@ -282,6 +291,7 @@ int main(int argc, char **argv)
     gladLoadGL();
 
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
+    glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
 
     ImGui_ImplGlfw_Init(window, true);
     AfterImGuiInit();
@@ -289,6 +299,12 @@ int main(int argc, char **argv)
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
     {
+        if (is_iconified && !framegrab.active)
+        {
+            glfwWaitEvents();
+            continue;
+        }
+
         frame_input_t input = PollFrameEvents(window);
 
         ImGui_ImplGlfw_NewFrame();

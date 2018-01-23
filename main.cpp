@@ -42,7 +42,9 @@ struct frame_input_t
     int mouse_x;
     int mouse_y;
     float elapsed_time;
-    float frame_time;
+    float frame_time; // Note: When recording video you probably want to use your own animation timer
+                      // that increments at a fixed time step per loop. It is also possible that camera
+                      // movement based on frame_time will explode...
     bool recording_video;
 };
 
@@ -263,15 +265,7 @@ int main(int argc, char **argv)
             input.mouse_x = (int)mouse_x;
             input.mouse_y = (int)mouse_y;
             input.elapsed_time = (float)glfwGetTime();
-            #if 1
-            input.frame_time = 1.0f/60.0f;
-            // todo: if frame_time was big (e.g. because app running slow or
-            // we took a screenshot or are recording a video, then things might
-            // not behave the way you want)
-            // todo: do we want frame_time for app to be different from imgui?
-            #else
             input.frame_time = (float)(glfwGetTime() - last_elapsed_time);
-            #endif
             last_elapsed_time = glfwGetTime();
             input.recording_video = framegrab.active;
         }
@@ -289,15 +283,14 @@ int main(int argc, char **argv)
 
         OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
         OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS);
+        OneTimeEvent(screenshot_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
+        OneTimeEvent(window_size_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
         bool escape_eaten = false;
 
         // Set window size dialog
         {
             using namespace ImGui;
-            OneTimeEvent(hotkey,
-                         glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
-                         glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
-            if (hotkey)
+            if (window_size_button)
             {
                 OpenPopup("Set window size##popup");
             }
@@ -464,14 +457,14 @@ int main(int argc, char **argv)
         }
         else
         {
+            // todo: figure out how to render this dialog box on top of everything else
+            // but not have it in the screenshot
+
             // Take screenshot or video dialog
             {
                 using namespace ImGui;
-                OneTimeEvent(hotkey,
-                    glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS &&
-                    glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
 
-                if (hotkey)
+                if (screenshot_button)
                 {
                     OpenPopup("Take screenshot##popup");
                 }

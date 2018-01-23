@@ -182,6 +182,22 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
     return input;
 }
 
+void AfterImGuiInit()
+{
+    // Add the cool extra fonts we want here
+    ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(
+        (const char*)source_sans_pro_compressed_data,
+        source_sans_pro_compressed_size, 18.0f);
+
+    // Adding fonts should be done before this is called
+    // (it's called automatically on first frame)
+    // ImGui_ImplGlfw_CreateDeviceObjects();
+
+    ImGui::GetIO().MouseDrawCursor = true;
+    ImGui::StyleColorsDark();
+    ImGui::GetStyle().FrameRounding = 5.0f;
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -207,14 +223,7 @@ int main(int argc, char **argv)
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
 
     ImGui_ImplGlfw_Init(window, true);
-    ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(
-        (const char*)source_sans_pro_compressed_data,
-        source_sans_pro_compressed_size, 18.0f);
-    ImGui_ImplGlfw_CreateDeviceObjects();
-
-    ImGui::GetIO().MouseDrawCursor = true;
-    ImGui::StyleColorsDark();
-    ImGui::GetStyle().FrameRounding = 5.0f;
+    AfterImGuiInit();
 
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
@@ -515,8 +524,7 @@ int main(int argc, char **argv)
             ImGui::Render();
         }
 
-
-        if (framegrab.overlay_active && !framegrab.active)
+        if (framegrab.overlay_active)
         {
             // record start_time instead
             float t0 = 1.0f - framegrab.overlay_timer;

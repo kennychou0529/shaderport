@@ -509,30 +509,56 @@ int main(int argc, char **argv)
                     InputText("Filename", filename, sizeof(filename));
 
                     static bool alpha = false;
-                    static int is_video = 0;
+                    static int mode = 0;
+                    const int mode_single = 0;
+                    const int mode_sequence = 1;
+                    const int mode_ffmpeg = 2;
                     static bool draw_imgui = false;
                     static bool draw_cursor = false;
-                    RadioButton("Take screenshot", &is_video, 0);
+                    RadioButton("Screenshot", &mode, mode_single);
                     SameLine();
-                    RadioButton("Record video", &is_video, 1);
+                    ShowHelpMarker("Take a single screenshot. Put a %d in the filename to use the counter for successive screenshots.");
+                    SameLine();
+                    RadioButton("Sequence", &mode, mode_sequence);
+                    SameLine();
+                    ShowHelpMarker("Record a video of images in succession (e.g. output0000.png, output0001.png, ... etc.). Put a %d in the filename to get frame numbers. Use %0nd to left-pad with n zeroes.");
+                    SameLine();
+                    RadioButton("ffmpeg", &mode, mode_ffmpeg);
+                    SameLine();
+                    ShowHelpMarker("Record a video with raw frames piped directly to ffmpeg, and save the output in the format specified by your filename extension (e.g. mp4). This option can be quicker as it avoids writing to the disk.\nMake sure the 'ffmpeg' executable is visible from the terminal you launched this program in.");
+
                     Checkbox("Alpha (32bpp)", &alpha);
                     SameLine();
                     Checkbox("Draw GUI", &draw_imgui);
                     SameLine();
                     Checkbox("Draw cursor", &draw_cursor);
-                    if (is_video)
+
+                    #if 0
+                    if (mode == mode_single)
+                    {
+                        static bool reset_screenshot_counter = false;
+                        Checkbox("Reset screenshot counter", &reset_screenshot_counter);
+                        if (Button("OK", ImVec2(120,0)) || enter_button)
+                        {
+                            TakeScreenshot(filename, draw_imgui, draw_cursor, reset_screenshot_counter, alpha);
+                            CloseCurrentPopup();
+                        }
+                        SameLine();
+                        if (Button("Cancel", ImVec2(120,0)))
+                        {
+                            CloseCurrentPopup();
+                        }
+                    }
+                    else if (mode == mode_sequence || mode == mode_ffmpeg)
                     {
                         static bool not_reset = false;
-                        static bool use_ffmpeg = false;
                         static int frame_cap = 0;
                         static float framerate = 0;
-                        if (!use_ffmpeg)
+                        if (mode == mode_sequence)
                         {
                             Checkbox("Continue from last frame count", &not_reset);
                             ImGui::SameLine(); ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
                         }
-                        Checkbox("Stream to ffmpeg", &use_ffmpeg);
-                        ImGui::SameLine(); ShowHelpMarker("Pipe the raw frames directly to ffmpeg and save the output in the format specified by your filename extension (e.g. mp4). This option can be quicker as it avoids writing to the disk.\nMake sure the 'ffmpeg' executable is visible from the terminal you launched this program in.");
                         InputInt("Number of frames", &frame_cap);
                         ImGui::SameLine(); ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
                         if (use_ffmpeg)
@@ -558,21 +584,7 @@ int main(int argc, char **argv)
                             CloseCurrentPopup();
                         }
                     }
-                    else
-                    {
-                        static bool reset_screenshot_counter = false;
-                        Checkbox("Reset screenshot counter", &reset_screenshot_counter);
-                        if (Button("OK", ImVec2(120,0)) || enter_button)
-                        {
-                            TakeScreenshot(filename, draw_imgui, draw_cursor, reset_screenshot_counter, alpha);
-                            CloseCurrentPopup();
-                        }
-                        SameLine();
-                        if (Button("Cancel", ImVec2(120,0)))
-                        {
-                            CloseCurrentPopup();
-                        }
-                    }
+                    #endif
 
                     if (escape_button)
                     {

@@ -378,12 +378,14 @@ int main(int argc, char **argv)
                     sprintf(filename, opt.filename, framegrab.num_screenshots);
                 }
 
+                #if 0
                 if (save_as_bmp)
                     stbi_write_bmp(filename, width, height, channels, data);
                 else if (save_as_png)
                     stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
                 else
                     stbi_write_bmp(filename, width, height, channels, data);
+                #endif
 
                 if (opt.is_video)
                 {

@@ -1,3 +1,5 @@
+#include "3rdparty/glad.h"
+
 // TEXTURES
 //   Can be assigned to a 'slot' which can then be bound to render it on meshes.
 //   OpenGL supports many texture formats aside from unsigned 8 bit values, for example,
@@ -49,7 +51,7 @@ GLuint TexImage2D(
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
-    // glGenerateMipmap(GL_TEXTURE_2D); // todo
+    glGenerateMipmap(GL_TEXTURE_2D); // todo
     if (min_filter == GL_LINEAR_MIPMAP_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
     glTexImage2D(GL_TEXTURE_2D, 0,

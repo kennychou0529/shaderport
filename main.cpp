@@ -150,6 +150,38 @@ void WindowFocusChanged(GLFWwindow *window, int focused)
     bool VAR = VAR##_is_active && !VAR##_was_active; \
     VAR##_was_active = VAR##_is_active;
 
+frame_input_t PollFrameEvents(GLFWwindow *window)
+{
+    frame_input_t input = {0};
+
+    // These global variables are set in the callback WindowFocusChanged,
+    // which is called by glfwPollEvents if their corresponding events occur.
+    lost_focus = false;
+    regained_focus = false;
+
+    glfwPollEvents();
+
+    input.lost_focus = lost_focus;
+    input.regained_focus = regained_focus;
+
+    glfwGetWindowPos(window, &input.window_x, &input.window_y);
+    glfwGetFramebufferSize(window, &input.window_w, &input.window_h);
+
+    double mouse_x,mouse_y;
+    glfwGetCursorPos(window, &mouse_x, &mouse_y);
+    input.mouse_x = (int)mouse_x;
+    input.mouse_y = (int)mouse_y;
+
+    static double last_elapsed_time = 0.0;
+    input.elapsed_time = (float)glfwGetTime();
+    input.frame_time = (float)(glfwGetTime() - last_elapsed_time);
+    last_elapsed_time = glfwGetTime();
+
+    input.recording_video = framegrab.active;
+
+    return input;
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -187,24 +219,7 @@ int main(int argc, char **argv)
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
     {
-        lost_focus = false;
-        regained_focus = false;
-        glfwPollEvents();
-
-        frame_input_t input = {0};
-        {
-            static double last_elapsed_time = 0.0;
-            double mouse_x,mouse_y;
-            glfwGetWindowPos(window, &input.window_x, &input.window_y);
-            glfwGetFramebufferSize(window, &input.window_w, &input.window_h);
-            glfwGetCursorPos(window, &mouse_x, &mouse_y);
-            input.mouse_x = (int)mouse_x;
-            input.mouse_y = (int)mouse_y;
-            input.elapsed_time = (float)glfwGetTime();
-            input.frame_time = (float)(glfwGetTime() - last_elapsed_time);
-            last_elapsed_time = glfwGetTime();
-            input.recording_video = framegrab.active;
-        }
+        frame_input_t input = PollFrameEvents(window);
 
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);

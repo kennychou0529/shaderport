@@ -11,6 +11,8 @@ struct frame_input_t
                       // that increments at a fixed time step per loop. It is also possible that camera
                       // movement based on frame_time will explode...
     bool recording_video;
+    bool lost_focus;
+    bool regained_focus;
 };
 
 void BeforeUpdateAndDraw(frame_input_t input)

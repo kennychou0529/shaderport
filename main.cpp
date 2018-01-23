@@ -183,7 +183,7 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
     input.mouse_x = (float)mouse_x;
     input.mouse_y = (float)mouse_y;
     input.mouse_u = -1.0f + 2.0f*input.mouse_x/input.window_w;
-    input.mouse_v = -1.0f + 2.0f*input.mouse_y/input.window_h; // todo: flip?
+    input.mouse_v = +1.0f - 2.0f*input.mouse_y/input.window_h;
 
     static double last_elapsed_time = 0.0;
     input.elapsed_time = (float)glfwGetTime();
@@ -532,9 +532,31 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int channel
     }
 }
 
-void DrawCrosshair(float x, float y)
+void DrawCrosshair(frame_input_t input)
 {
+    float aspect = (float)input.framebuffer_w/input.framebuffer_h;
+    float w = 0.05f;
+    float h = w*aspect;
+    float dx = 2.0f/input.framebuffer_w;
+    float dy = 2.0f/input.framebuffer_h;
 
+    glLineWidth(2.0f);
+    glBegin(GL_LINES);
+    glColor4f(0.0f,0.0f,0.0f,1.0f);
+    glVertex2f(input.mouse_u + dx, input.mouse_v-h - dy);
+    glVertex2f(input.mouse_u + dx, input.mouse_v+h - dy);
+    glVertex2f(input.mouse_u-w + dx, input.mouse_v - dy);
+    glVertex2f(input.mouse_u+w + dx, input.mouse_v - dy);
+    glEnd();
+
+    glLineWidth(2.0f);
+    glBegin(GL_LINES);
+    glColor4f(1.0f,1.0f,1.0f,1.0f);
+    glVertex2f(input.mouse_u, input.mouse_v-h);
+    glVertex2f(input.mouse_u, input.mouse_v+h);
+    glVertex2f(input.mouse_u-w, input.mouse_v);
+    glVertex2f(input.mouse_u+w, input.mouse_v);
+    glEnd();
 }
 
 int main(int argc, char **argv)
@@ -606,9 +628,7 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    double mouse_x, mouse_y;
-                    glfwGetCursorPos(window, &mouse_x, &mouse_y);
-                    DrawCrosshair((float)mouse_x, (float)mouse_y);
+                    DrawCrosshair(input);
                 }
                 format = opt.alpha_channel ? GL_RGBA : GL_RGB;
                 channels = opt.alpha_channel ? 4 : 3;

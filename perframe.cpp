@@ -5,7 +5,7 @@ struct frame_input_t
     int window_w,window_h; // This is the size of the window's client area in screen coordinates
     int framebuffer_w,framebuffer_h; // This is the size in pixels of the framebuffer in the window
 
-    float mouse_x,mouse_y; // The position of the mouse in the client area in screen coordinates
+    float mouse_x,mouse_y; // The position of the mouse in the client area in screen coordinates where (0,0):top-left
     float mouse_u,mouse_v; // -||- in normalized mouse coordinates where (-1,-1):bottom-left (+1,+1):top-right
 
     float elapsed_time;
@@ -37,6 +37,9 @@ void ResetGLState(frame_input_t input)
     glOrtho(-1.0f, +1.0f, -1.0f, +1.0f, -1.0f, +1.0f);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
+    glLineWidth(1.0f);
+    glPointSize(1.0f);
 }
 
 void BeforeUpdateAndDraw(frame_input_t input)

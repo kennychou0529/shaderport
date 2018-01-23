@@ -431,14 +431,12 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int channel
         static FILE *ffmpeg = 0;
         if (!ffmpeg)
         {
-            // todo: -pix_fmt for RGB?
-            assert(opt.alpha_channel);
             // todo: linux/osx
             char cmd[1024];
             sprintf(cmd, "ffmpeg -r %f -f rawvideo -pix_fmt %s -s %dx%d -i - "
                           "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s",
                           opt.ffmpeg_fps, // -r
-                          opt.alpha_channel ? "rgba" : "rgb", // -pix_fmt
+                          opt.alpha_channel ? "rgba" : "rgb24", // -pix_fmt
                           width, height, // -s
                           opt.filename);
             ffmpeg = _popen(cmd, "wb");

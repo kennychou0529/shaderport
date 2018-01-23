@@ -54,6 +54,14 @@ void AfterUpdateAndDraw(frame_input_t input)
     ResetGLState(input);
 }
 
+// todo: are x,y screen or framebuffer coordinates?
+void DrawString(float x, float y, const char *text)
+{
+    ImDrawList *draw = ImGui::GetOverlayDrawList();
+    draw->AddText(ImVec2(x+1,y+1), IM_COL32(0,0,0,255), text);
+    draw->AddText(ImVec2(x,y), IM_COL32(255,255,255,255), text);
+}
+
 void UpdateAndDraw(frame_input_t input)
 {
     static float anim_time = 0.0f;
@@ -69,6 +77,8 @@ void UpdateAndDraw(frame_input_t input)
     }
 
     DrawTexture(0);
+
+    DrawString(200,200, "hello sailor!");
 
     // for (int j = 0; j < 4; j++)
     // {

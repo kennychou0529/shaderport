@@ -61,6 +61,7 @@ struct framegrab_options_t
     bool is_video;
     bool use_ffmpeg;
     float ffmpeg_fps;
+    int ffmpeg_crf;
     bool reset_num_screenshots;
     bool reset_num_video_frames;
     int video_frame_cap;
@@ -118,7 +119,7 @@ void RecordVideoToImageSequence(
 }
 
 void RecordVideoToFfmpeg(
-    const char *filename, float fps, int frame_cap, bool imgui=false, bool cursor=false, bool alpha=false)
+    const char *filename, float fps, int crf, int frame_cap, bool imgui=false, bool cursor=false, bool alpha=false)
 {
     framegrab_options_t opt = {0};
     opt.filename = filename;
@@ -128,6 +129,7 @@ void RecordVideoToFfmpeg(
     opt.is_video = true;
     opt.use_ffmpeg = true;
     opt.ffmpeg_fps = fps;
+    opt.ffmpeg_crf = crf;
     opt.video_frame_cap = frame_cap;
     StartFrameGrab(opt);
 }
@@ -375,7 +377,9 @@ void StartFramegrabDialog(bool *escape_eaten, bool screenshot_button, bool enter
             static bool do_continue = false;
             static int frame_cap = 0;
             static float framerate = 60;
+            static int crf = 21;
             InputInt("Number of frames", &frame_cap);
+            SliderInt("Quality (lower is better)", &crf, 1, 51);
             SameLine();
             ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
 
@@ -398,7 +402,7 @@ void StartFramegrabDialog(bool *escape_eaten, bool screenshot_button, bool enter
             {
                 if (mode == mode_ffmpeg)
                 {
-                    RecordVideoToFfmpeg(filename, framerate, frame_cap, draw_imgui, draw_cursor, alpha);
+                    RecordVideoToFfmpeg(filename, framerate, crf, frame_cap, draw_imgui, draw_cursor, alpha);
                 }
                 else
                 {
@@ -434,10 +438,11 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int channel
             // todo: linux/osx
             char cmd[1024];
             sprintf(cmd, "ffmpeg -r %f -f rawvideo -pix_fmt %s -s %dx%d -i - "
-                          "-threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s",
+                          "-threads 0 -preset fast -y -pix_fmt yuv420p -crf %d -vf vflip %s",
                           opt.ffmpeg_fps, // -r
                           opt.alpha_channel ? "rgba" : "rgb24", // -pix_fmt
                           width, height, // -s
+                          opt.ffmpeg_crf, // -crf
                           opt.filename);
             ffmpeg = _popen(cmd, "wb");
         }

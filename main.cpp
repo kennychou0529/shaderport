@@ -198,11 +198,10 @@ void RecordVideoToImageSequence(
 }
 
 void RecordVideoToFfmpeg(
-    const char *filename, float fps, int frame_cap, bool imgui=false, bool cursor=false, bool reset=false, bool alpha=false)
+    const char *filename, float fps, int frame_cap, bool imgui=false, bool cursor=false, bool alpha=false)
 {
     framegrab_options_t opt = {0};
     opt.filename = filename;
-    opt.reset_num_video_frames = reset;
     opt.draw_imgui = imgui;
     opt.draw_cursor = cursor;
     opt.alpha_channel = alpha;
@@ -533,14 +532,15 @@ int main(int argc, char **argv)
                     SameLine();
                     Checkbox("Draw cursor", &draw_cursor);
 
-                    #if 0
                     if (mode == mode_single)
                     {
-                        static bool reset_screenshot_counter = false;
-                        Checkbox("Reset screenshot counter", &reset_screenshot_counter);
+                        static bool not_reset = false;
+                        Checkbox("Continue from last screenshot", &not_reset);
+                        SameLine();
+                        ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
                         if (Button("OK", ImVec2(120,0)) || enter_button)
                         {
-                            TakeScreenshot(filename, draw_imgui, draw_cursor, reset_screenshot_counter, alpha);
+                            TakeScreenshot(filename, draw_imgui, draw_cursor, !not_reset, alpha);
                             CloseCurrentPopup();
                         }
                         SameLine();
@@ -553,25 +553,31 @@ int main(int argc, char **argv)
                     {
                         static bool not_reset = false;
                         static int frame_cap = 0;
-                        static float framerate = 0;
+                        static float framerate = 60;
+                        InputInt("Number of frames", &frame_cap);
+                        SameLine();
+                        ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
+
                         if (mode == mode_sequence)
                         {
-                            Checkbox("Continue from last frame count", &not_reset);
-                            ImGui::SameLine(); ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
+                            Checkbox("Continue from last frame", &not_reset);
+                            SameLine();
+                            ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
                         }
-                        InputInt("Number of frames", &frame_cap);
-                        ImGui::SameLine(); ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
-                        if (use_ffmpeg)
+                        else if (mode == mode_ffmpeg)
+                        {
                             InputFloat("Framerate", &framerate);
+                        }
+
                         if (framegrab.active && (Button("Stop", ImVec2(120,0)) || enter_button))
                         {
                             framegrab.should_stop = true;
                         }
                         else if (Button("Start", ImVec2(120,0)) || enter_button)
                         {
-                            if (use_ffmpeg)
+                            if (mode == mode_ffmpeg)
                             {
-                                RecordVideoToFfmpeg(filename, framerate, frame_cap, draw_imgui, draw_cursor, !not_reset, alpha);
+                                RecordVideoToFfmpeg(filename, framerate, frame_cap, draw_imgui, draw_cursor, alpha);
                             }
                             else
                             {
@@ -584,7 +590,6 @@ int main(int argc, char **argv)
                             CloseCurrentPopup();
                         }
                     }
-                    #endif
 
                     if (escape_button)
                     {

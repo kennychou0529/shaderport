@@ -378,14 +378,12 @@ int main(int argc, char **argv)
                     sprintf(filename, opt.filename, framegrab.num_screenshots);
                 }
 
-                #if 0
                 if (save_as_bmp)
                     stbi_write_bmp(filename, width, height, channels, data);
                 else if (save_as_png)
                     stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
                 else
                     stbi_write_bmp(filename, width, height, channels, data);
-                #endif
 
                 if (opt.is_video)
                 {
@@ -574,7 +572,11 @@ int main(int argc, char **argv)
             glColor4f(1,1,1,0.3f*(1.0f-a)); glVertex2f(-w+x,-w);
             glEnd();
 
-            framegrab.overlay_timer -= input.frame_time;
+            // todo: taking a screenshot usually means that frame will have taken a crazy amount of time
+            // so using input.frame_time will make the animation go by super fast that one frame...
+            // todo: do we introduce a boolean 'frame_took_longer_than_expected'?
+            // framegrab.overlay_timer -= input.frame_time;
+            framegrab.overlay_timer -= 1.0f/60.0f;
             if (framegrab.overlay_timer < 0.0f)
             {
                 framegrab.overlay_active = false;

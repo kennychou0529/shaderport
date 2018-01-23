@@ -509,12 +509,16 @@ int main(int argc, char **argv)
                     InputText("Filename", filename, sizeof(filename));
 
                     static bool alpha = false;
-                    static bool is_video = false;
+                    static int is_video = 0;
                     static bool draw_imgui = false;
                     static bool draw_cursor = false;
-                    Checkbox("Record video", &is_video);
-                    Checkbox("Transparency (32bpp)", &alpha);
+                    RadioButton("Take screenshot", &is_video, 0);
+                    SameLine();
+                    RadioButton("Record video", &is_video, 1);
+                    Checkbox("Alpha (32bpp)", &alpha);
+                    SameLine();
                     Checkbox("Draw GUI", &draw_imgui);
+                    SameLine();
                     Checkbox("Draw cursor", &draw_cursor);
                     if (is_video)
                     {
@@ -522,9 +526,15 @@ int main(int argc, char **argv)
                         static bool use_ffmpeg = false;
                         static int frame_cap = 0;
                         static float framerate = 0;
-                        Checkbox("Continue with filename number from last time", &not_reset);
-                        InputInt("Number of frames", &frame_cap);
+                        if (!use_ffmpeg)
+                        {
+                            Checkbox("Continue from last frame count", &not_reset);
+                            ImGui::SameLine(); ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
+                        }
                         Checkbox("Stream to ffmpeg", &use_ffmpeg);
+                        ImGui::SameLine(); ShowHelpMarker("Pipe the raw frames directly to ffmpeg and save the output in the format specified by your filename extension (e.g. mp4). This option can be quicker as it avoids writing to the disk.\nMake sure the 'ffmpeg' executable is visible from the terminal you launched this program in.");
+                        InputInt("Number of frames", &frame_cap);
+                        ImGui::SameLine(); ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
                         if (use_ffmpeg)
                             InputFloat("Framerate", &framerate);
                         if (framegrab.active && (Button("Stop", ImVec2(120,0)) || enter_button))

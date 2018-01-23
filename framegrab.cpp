@@ -212,7 +212,7 @@ void FramegrabStartDialog(bool *escape_eaten, bool screenshot_button, bool enter
 
             if (framegrab.active && (Button("Stop", ImVec2(120,0)) || enter_button))
             {
-                framegrab.should_stop = true;
+                StopFramegrab();
             }
             else if (Button("Start", ImVec2(120,0)) || enter_button)
             {
@@ -268,7 +268,7 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int channel
         framegrab.num_video_frames++;
         if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
         {
-            framegrab.should_stop = true;
+            StopFramegrab();
         }
         if (framegrab.should_stop)
         {
@@ -333,7 +333,7 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int channel
             framegrab.num_video_frames++;
             if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
             {
-                framegrab.should_stop = true;
+                StopFramegrab();
             }
             if (framegrab.should_stop)
             {

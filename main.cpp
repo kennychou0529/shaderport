@@ -421,7 +421,7 @@ void StartFramegrabDialog(bool *escape_eaten, bool screenshot_button, bool enter
     }
 }
 
-void FramegrabSaveOutput(unsigned char *data, int width, int height, int stride, int channels, GLenum format)
+void FramegrabSaveOutput(unsigned char *data, int width, int height, int channels, GLenum format)
 {
     framegrab_options_t opt = framegrab.options;
 
@@ -444,7 +444,7 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int stride,
             ffmpeg = _popen(cmd, "wb");
         }
 
-        fwrite(data, height*stride, 1, ffmpeg);
+        fwrite(data, width*height*channels, 1, ffmpeg);
 
         framegrab.num_video_frames++;
         if (opt.video_frame_cap && framegrab.num_video_frames == opt.video_frame_cap)
@@ -499,6 +499,7 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int stride,
         }
         else if (save_as_png)
         {
+            int stride = width*channels;
             stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
             printf("Saved %s...\n", filename);
         }
@@ -594,7 +595,7 @@ int main(int argc, char **argv)
 
             // render frame and get pixel data
             unsigned char *data;
-            int channels,width,height,stride;
+            int channels,width,height;
             GLenum format;
             {
                 if (opt.draw_imgui)
@@ -611,10 +612,8 @@ int main(int argc, char **argv)
                 }
                 format = opt.alpha_channel ? GL_RGBA : GL_RGB;
                 channels = opt.alpha_channel ? 4 : 3;
-                width = input.window_w;
-                height = input.window_h;
-                stride = width*channels;
-                data = (unsigned char*)malloc(height*stride);
+                glfwGetFramebufferSize(window, &width, &height);
+                data = (unsigned char*)malloc(width*height*channels);
                 glPixelStorei(GL_PACK_ALIGNMENT, 1);
                 glReadBuffer(GL_BACK);
                 glReadPixels(0, 0, width, height, format, GL_UNSIGNED_BYTE, data);
@@ -624,7 +623,7 @@ int main(int argc, char **argv)
                 }
             }
 
-            FramegrabSaveOutput(data, width, height, stride, channels, format);
+            FramegrabSaveOutput(data, width, height, channels, format);
 
             free(data);
 

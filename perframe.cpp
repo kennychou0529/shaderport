@@ -24,7 +24,9 @@ void BeforeUpdateAndDraw(frame_input_t input)
 
 void AfterUpdateAndDraw(frame_input_t input)
 {
-
+    // glUseProgram(0);
+    // todo: set up fixed-function pipeline stuff
+    // e.g. to support DrawScreenshotTakenOverlayAnimation
 }
 
 void UpdateAndDraw(frame_input_t input)

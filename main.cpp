@@ -472,7 +472,7 @@ int main(int argc, char **argv)
                 }
                 if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
                 {
-                    static char filename[1024];
+                    static char filename[1024] = { 's','c','r','e','e','n','s','h','o','t','%','0','4','d','.','p','n','g',0 };
                     if (IsWindowAppearing())
                         SetKeyboardFocusHere();
                     InputText("Filename", filename, sizeof(filename));
@@ -504,13 +504,13 @@ int main(int argc, char **argv)
 
                     if (mode == mode_single)
                     {
-                        static bool not_reset = false;
-                        Checkbox("Continue from last screenshot", &not_reset);
+                        static bool do_continue = true;
+                        Checkbox("Continue counting", &do_continue);
                         SameLine();
                         ShowHelpMarker("Enable this to continue the image filename number suffix from the last screenshot captured (in this program session).");
                         if (Button("OK", ImVec2(120,0)) || enter_button)
                         {
-                            TakeScreenshot(filename, draw_imgui, draw_cursor, !not_reset, alpha);
+                            TakeScreenshot(filename, draw_imgui, draw_cursor, !do_continue, alpha);
                             CloseCurrentPopup();
                         }
                         SameLine();
@@ -521,7 +521,7 @@ int main(int argc, char **argv)
                     }
                     else if (mode == mode_sequence || mode == mode_ffmpeg)
                     {
-                        static bool not_reset = false;
+                        static bool do_continue = false;
                         static int frame_cap = 0;
                         static float framerate = 60;
                         InputInt("Number of frames", &frame_cap);
@@ -530,7 +530,7 @@ int main(int argc, char **argv)
 
                         if (mode == mode_sequence)
                         {
-                            Checkbox("Continue from last frame", &not_reset);
+                            Checkbox("Continue from last frame", &do_continue);
                             SameLine();
                             ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
                         }
@@ -551,7 +551,7 @@ int main(int argc, char **argv)
                             }
                             else
                             {
-                                RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !not_reset, alpha);
+                                RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !do_continue, alpha);
                             }
                         }
                         SameLine();

@@ -270,7 +270,7 @@ int main(int argc, char **argv)
         {
             // todo: figure out how to render this dialog box on top of everything else
             // but not have it in the screenshot
-            FramegrabStartDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
+            FramegrabShowDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
             ImGui::Render();
         }
 

@@ -131,7 +131,7 @@ void RecordVideoToFfmpeg(
     StartFrameGrab(opt);
 }
 
-void FramegrabStartDialog(bool *escape_eaten, bool screenshot_button, bool enter_button, bool escape_button)
+void FramegrabShowDialog(bool *escape_eaten, bool screenshot_button, bool enter_button, bool escape_button)
 {
     using namespace ImGui;
 

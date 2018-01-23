@@ -446,7 +446,7 @@ int main(int argc, char **argv)
                     sprintf(filename, opt.filename, framegrab.num_screenshots);
                 }
 
-                #if 1
+                #if 0
                 if (save_as_bmp)
                     printf("save bmp %s\n", filename);
                 else if (save_as_png)
@@ -537,7 +537,7 @@ int main(int argc, char **argv)
                         static bool not_reset = false;
                         Checkbox("Continue from last screenshot", &not_reset);
                         SameLine();
-                        ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
+                        ShowHelpMarker("Enable this to continue the image filename number suffix from the last screenshot captured (in this program session).");
                         if (Button("OK", ImVec2(120,0)) || enter_button)
                         {
                             TakeScreenshot(filename, draw_imgui, draw_cursor, !not_reset, alpha);

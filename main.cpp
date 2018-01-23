@@ -310,6 +310,114 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
     }
 }
 
+void StartFramegrabDialog(bool *escape_eaten, bool screenshot_button, bool enter_button, bool escape_button)
+{
+    using namespace ImGui;
+
+    if (screenshot_button)
+    {
+        OpenPopup("Take screenshot##popup");
+    }
+    if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char filename[1024] = { 's','c','r','e','e','n','s','h','o','t','%','0','4','d','.','p','n','g',0 };
+        if (IsWindowAppearing())
+            SetKeyboardFocusHere();
+        InputText("Filename", filename, sizeof(filename));
+
+        static bool alpha = false;
+        static int mode = 0;
+        const int mode_single = 0;
+        const int mode_sequence = 1;
+        const int mode_ffmpeg = 2;
+        static bool draw_imgui = false;
+        static bool draw_cursor = false;
+        RadioButton("Screenshot", &mode, mode_single);
+        SameLine();
+        ShowHelpMarker("Take a single screenshot. Put a %d in the filename to use the counter for successive screenshots.");
+        SameLine();
+        RadioButton("Sequence", &mode, mode_sequence);
+        SameLine();
+        ShowHelpMarker("Record a video of images in succession (e.g. output0000.png, output0001.png, ... etc.). Put a %d in the filename to get frame numbers. Use %0nd to left-pad with n zeroes.");
+        SameLine();
+        RadioButton("ffmpeg", &mode, mode_ffmpeg);
+        SameLine();
+        ShowHelpMarker("Record a video with raw frames piped directly to ffmpeg, and save the output in the format specified by your filename extension (e.g. mp4). This option can be quicker as it avoids writing to the disk.\nMake sure the 'ffmpeg' executable is visible from the terminal you launched this program in.");
+
+        Checkbox("Alpha (32bpp)", &alpha);
+        SameLine();
+        Checkbox("Draw GUI", &draw_imgui);
+        SameLine();
+        Checkbox("Draw cursor", &draw_cursor);
+
+        if (mode == mode_single)
+        {
+            static bool do_continue = true;
+            Checkbox("Continue counting", &do_continue);
+            SameLine();
+            ShowHelpMarker("Enable this to continue the image filename number suffix from the last screenshot captured (in this program session).");
+            if (Button("OK", ImVec2(120,0)) || enter_button)
+            {
+                TakeScreenshot(filename, draw_imgui, draw_cursor, !do_continue, alpha);
+                CloseCurrentPopup();
+            }
+            SameLine();
+            if (Button("Cancel", ImVec2(120,0)))
+            {
+                CloseCurrentPopup();
+            }
+        }
+        else if (mode == mode_sequence || mode == mode_ffmpeg)
+        {
+            static bool do_continue = false;
+            static int frame_cap = 0;
+            static float framerate = 60;
+            InputInt("Number of frames", &frame_cap);
+            SameLine();
+            ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
+
+            if (mode == mode_sequence)
+            {
+                Checkbox("Continue from last frame", &do_continue);
+                SameLine();
+                ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
+            }
+            else if (mode == mode_ffmpeg)
+            {
+                InputFloat("Framerate", &framerate);
+            }
+
+            if (framegrab.active && (Button("Stop", ImVec2(120,0)) || enter_button))
+            {
+                framegrab.should_stop = true;
+            }
+            else if (Button("Start", ImVec2(120,0)) || enter_button)
+            {
+                if (mode == mode_ffmpeg)
+                {
+                    RecordVideoToFfmpeg(filename, framerate, frame_cap, draw_imgui, draw_cursor, alpha);
+                }
+                else
+                {
+                    RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !do_continue, alpha);
+                }
+            }
+            SameLine();
+            if (Button("Cancel", ImVec2(120,0)))
+            {
+                CloseCurrentPopup();
+            }
+        }
+
+        if (escape_button)
+        {
+            CloseCurrentPopup();
+            *escape_eaten = true;
+        }
+        EndPopup();
+    }
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -512,114 +620,7 @@ int main(int argc, char **argv)
         {
             // todo: figure out how to render this dialog box on top of everything else
             // but not have it in the screenshot
-
-            // Take screenshot or video dialog
-            {
-                using namespace ImGui;
-
-                if (screenshot_button)
-                {
-                    OpenPopup("Take screenshot##popup");
-                }
-                if (BeginPopupModal("Take screenshot##popup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-                {
-                    static char filename[1024] = { 's','c','r','e','e','n','s','h','o','t','%','0','4','d','.','p','n','g',0 };
-                    if (IsWindowAppearing())
-                        SetKeyboardFocusHere();
-                    InputText("Filename", filename, sizeof(filename));
-
-                    static bool alpha = false;
-                    static int mode = 0;
-                    const int mode_single = 0;
-                    const int mode_sequence = 1;
-                    const int mode_ffmpeg = 2;
-                    static bool draw_imgui = false;
-                    static bool draw_cursor = false;
-                    RadioButton("Screenshot", &mode, mode_single);
-                    SameLine();
-                    ShowHelpMarker("Take a single screenshot. Put a %d in the filename to use the counter for successive screenshots.");
-                    SameLine();
-                    RadioButton("Sequence", &mode, mode_sequence);
-                    SameLine();
-                    ShowHelpMarker("Record a video of images in succession (e.g. output0000.png, output0001.png, ... etc.). Put a %d in the filename to get frame numbers. Use %0nd to left-pad with n zeroes.");
-                    SameLine();
-                    RadioButton("ffmpeg", &mode, mode_ffmpeg);
-                    SameLine();
-                    ShowHelpMarker("Record a video with raw frames piped directly to ffmpeg, and save the output in the format specified by your filename extension (e.g. mp4). This option can be quicker as it avoids writing to the disk.\nMake sure the 'ffmpeg' executable is visible from the terminal you launched this program in.");
-
-                    Checkbox("Alpha (32bpp)", &alpha);
-                    SameLine();
-                    Checkbox("Draw GUI", &draw_imgui);
-                    SameLine();
-                    Checkbox("Draw cursor", &draw_cursor);
-
-                    if (mode == mode_single)
-                    {
-                        static bool do_continue = true;
-                        Checkbox("Continue counting", &do_continue);
-                        SameLine();
-                        ShowHelpMarker("Enable this to continue the image filename number suffix from the last screenshot captured (in this program session).");
-                        if (Button("OK", ImVec2(120,0)) || enter_button)
-                        {
-                            TakeScreenshot(filename, draw_imgui, draw_cursor, !do_continue, alpha);
-                            CloseCurrentPopup();
-                        }
-                        SameLine();
-                        if (Button("Cancel", ImVec2(120,0)))
-                        {
-                            CloseCurrentPopup();
-                        }
-                    }
-                    else if (mode == mode_sequence || mode == mode_ffmpeg)
-                    {
-                        static bool do_continue = false;
-                        static int frame_cap = 0;
-                        static float framerate = 60;
-                        InputInt("Number of frames", &frame_cap);
-                        SameLine();
-                        ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
-
-                        if (mode == mode_sequence)
-                        {
-                            Checkbox("Continue from last frame", &do_continue);
-                            SameLine();
-                            ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
-                        }
-                        else if (mode == mode_ffmpeg)
-                        {
-                            InputFloat("Framerate", &framerate);
-                        }
-
-                        if (framegrab.active && (Button("Stop", ImVec2(120,0)) || enter_button))
-                        {
-                            framegrab.should_stop = true;
-                        }
-                        else if (Button("Start", ImVec2(120,0)) || enter_button)
-                        {
-                            if (mode == mode_ffmpeg)
-                            {
-                                RecordVideoToFfmpeg(filename, framerate, frame_cap, draw_imgui, draw_cursor, alpha);
-                            }
-                            else
-                            {
-                                RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !do_continue, alpha);
-                            }
-                        }
-                        SameLine();
-                        if (Button("Cancel", ImVec2(120,0)))
-                        {
-                            CloseCurrentPopup();
-                        }
-                    }
-
-                    if (escape_button)
-                    {
-                        CloseCurrentPopup();
-                        escape_eaten = true;
-                    }
-                    EndPopup();
-                }
-            }
+            StartFramegrabDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
             ImGui::Render();
         }
 

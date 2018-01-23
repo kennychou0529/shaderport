@@ -330,21 +330,6 @@ int main(int argc, char **argv)
             }
         }
 
-        // if (enter_button)
-        // {
-        //     framegrab_options_t opt = {0};
-        //     opt.filename = "output.mp4";
-        //     opt.alpha_channel = true;
-        //     opt.draw_cursor = true;
-        //     opt.draw_imgui = true;
-        //     opt.use_ffmpeg = false;
-        //     opt.is_video = false;
-        //     opt.video_frame_cap = 120;
-        //     opt.reset_num_screenshots = false;
-        //     opt.reset_num_video_frames = true;
-        //     StartFrameGrab(opt);
-        // }
-
         if (framegrab.active)
         {
             framegrab_options_t opt = framegrab.options;
@@ -446,22 +431,12 @@ int main(int argc, char **argv)
                     sprintf(filename, opt.filename, framegrab.num_screenshots);
                 }
 
-                #if 0
-                if (save_as_bmp)
-                    printf("save bmp %s\n", filename);
-                else if (save_as_png)
-                    printf("save png %s\n", filename);
-                else
-                    printf("save bmp anyway %s\n", filename);
-                #else
                 if (save_as_bmp)
                     stbi_write_bmp(filename, width, height, channels, data);
                 else if (save_as_png)
                     stbi_write_png(filename, width, height, channels, data+stride*(height-1), -stride);
                 else
                     stbi_write_bmp(filename, width, height, channels, data);
-
-                #endif
 
                 if (opt.is_video)
                 {

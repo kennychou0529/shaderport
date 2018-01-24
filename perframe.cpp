@@ -135,18 +135,24 @@ void UpdateAndDraw(frame_input_t input)
     anim_time += 1.0f/60.0f;
 
     {
-        // ImGui::GetStyle().AntiAliasedLines = false;
-        // ImGui::GetStyle().AntiAliasedFill = false;
-        ImDrawList *draw = ImGui::GetOverlayDrawList();
-        draw->Flags = 0;
-        for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0,0,0,0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+        ImGui::SetNextWindowPos(ImVec2(0,0));
+        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+        ImGui::Begin("##BatchedDrawUser", NULL, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoSavedSettings);
+        ImDrawList *draw = ImGui::GetWindowDrawList();
+        draw->Flags = 0; // Disable anti-aliasing on both lines and fill shapes. Todo: optional
+        for (int i = 0; i <= 4; i++)
+        for (int j = 0; j <= 4; j++)
         {
             float x = NdcToFbX(-1.0f+2.0f*i/4.0f);
             float y = NdcToFbY(-1.0f+2.0f*j/4.0f);
             // draw->AddRectFilled(ImVec2(x-1,y-1), ImVec2(x+1,y+1), IM_COL32(255,255,255,255));
             draw->AddCircleFilled(ImVec2(x,y), 32.0f, IM_COL32(255,255,255,255));
         }
+        ImGui::End();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
     }
 
     #if 0

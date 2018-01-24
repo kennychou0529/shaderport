@@ -36,6 +36,7 @@ void Log(const char *fmt, ...)
 #include "macro_one_time_event.h"
 
 #include "3rdparty/libtcc.h"
+#include "script/include/vdb.h"
 
 void ErrorCallback(int error, const char* description)
 {
@@ -175,6 +176,44 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
     }
 }
 
+int ScriptTest()
+{
+    // todo: temporary scripting code
+    int (*script_loop)(int) = NULL;
+
+    Log("reloading script\n");
+    TCCState *s;
+    s = tcc_new();
+    tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
+    tcc_add_library_path(s, ".");
+    if (tcc_add_file(s, "../script/test.c", TCC_FILETYPE_C) == -1)
+    {
+        Log("failed to compile script\n");
+        return 0;
+    }
+    if (tcc_relocate(s, TCC_RELOCATE_AUTO) == -1)
+    {
+        Log("failed to compile script\n");
+        return 0;
+    }
+
+    script_loop = (int (*)(int))tcc_get_symbol(s, "loop");
+    if (!script_loop)
+    {
+        Log("failed to compile script: where is the loop function?\n");
+        return 0;
+    }
+
+    tcc_delete(s);
+
+    if (script_loop)
+    {
+        int y = script_loop(5);
+        printf("%d\n", y);
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     glfwSetErrorCallback(ErrorCallback);
@@ -192,6 +231,10 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_DOUBLEBUFFER,   1);
     glfwWindowHint(GLFW_SAMPLES,        4);
     GLFWwindow *window = glfwCreateWindow(640, 480, "Visual Debugger", NULL, NULL);
+
+    // todo: figure out why calling a function GetAddress'd from a script crashes after we create a window
+    // ScriptTest();
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -226,34 +269,6 @@ int main(int argc, char **argv)
         bool escape_eaten = false;
 
         SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);
-
-        // todo: temporary scripting code
-        static void (*script_loop)(frame_input_t) = NULL;
-        if (enter_button)
-        {
-            Log("reloading script\n");
-            TCCState *s;
-            s = tcc_new();
-            tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
-            tcc_add_library_path(s, ".");
-            if (tcc_add_file(s, "../script/test.c", TCC_FILETYPE_C) == -1)
-            {
-                Log("failed to compile script\n");
-            }
-            else if (tcc_relocate(s, TCC_RELOCATE_AUTO) == -1)
-            {
-                Log("failed to compile script\n");
-            }
-            else
-            {
-                script_loop = (void (*)(frame_input_t))tcc_get_symbol(s, "loop");
-            }
-            tcc_delete(s);
-        }
-        if (script_loop)
-        {
-            script_loop(input);
-        }
 
         if (framegrab.active)
         {

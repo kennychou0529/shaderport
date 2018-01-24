@@ -17,6 +17,7 @@ struct frame_input_t
     bool regained_focus;
 };
 
+
 static frame_input_t frame_input = {0}; // global for convenience, is updated in BeforeUpdateAndDraw.
 
 void ResetGLState(frame_input_t input)

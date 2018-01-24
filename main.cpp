@@ -230,7 +230,7 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_STENCIL_BITS,   8);
     glfwWindowHint(GLFW_DOUBLEBUFFER,   1);
     glfwWindowHint(GLFW_SAMPLES,        4);
-    GLFWwindow *window = glfwCreateWindow(640, 480, "Visual Debugger", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(1000, 600, "Visual Debugger", NULL, NULL);
 
     // todo: figure out why calling a function GetAddress'd from a script crashes after we create a window
     // ScriptTest();

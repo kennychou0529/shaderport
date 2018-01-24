@@ -45,8 +45,10 @@ void ResetGLState(frame_input_t input)
     glPointSize(1.0f);
 }
 
+static int draw_string_id = 0;
 void BeforeUpdateAndDraw(frame_input_t input)
 {
+    draw_string_id = 0;
     frame_input = input;
 
     ResetGLState(input);
@@ -65,9 +67,23 @@ void DrawStringCenteredUnformatted(float x, float y, const char *text)
     ImVec2 text_size = ImGui::CalcTextSize(text);
     x -= text_size.x*0.5f;
     y -= text_size.y*0.5f;
+    #if 1
+    char id[32];
+    sprintf(id, "##DrawString%d", draw_string_id++);
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f,1.0f,1.0f,1.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f,0.0f,0.0f,0.4f));
+    ImGui::SetNextWindowPos(ImVec2(x, y));
+    ImGui::Begin(id, 0, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text(text);
+    ImGui::End();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    #else
+    // this will render on top of everything, which I don't really want!
     ImDrawList *draw = ImGui::GetOverlayDrawList();
     draw->AddText(ImVec2(x+1,y+1), IM_COL32(0,0,0,255), text);
     draw->AddText(ImVec2(x,y), IM_COL32(255,255,255,255), text);
+    #endif
 }
 
 void DrawStringCentered(float x, float y, const char *fmt, ...)
@@ -118,6 +134,7 @@ void UpdateAndDraw(frame_input_t input)
     static float anim_time = 0.0f;
     anim_time += 1.0f/60.0f;
 
+    #if 0
     static bool first = true;
     if (first)
     {
@@ -128,13 +145,16 @@ void UpdateAndDraw(frame_input_t input)
     }
 
     DrawTexture(0);
+    #endif
 
+    #if 1
     DrawStringCentered(NdcToFbX(-0.5f),NdcToFbY(-0.5f), "lower-left");
     DrawStringCentered(NdcToFbX(+0.5f),NdcToFbY(-0.5f), "lower-right");
     DrawStringCentered(NdcToFbX(+0.5f),NdcToFbY(+0.5f), "upper-right");
     DrawStringCentered(NdcToFbX(-0.5f),NdcToFbY(+0.5f), "upper-left");
+    #endif
 
-    #if 0
+    #if 1
     for (int j = 0; j < 4; j++)
     {
         glBegin(GL_TRIANGLE_FAN);
@@ -169,7 +189,7 @@ void UpdateAndDraw(frame_input_t input)
         for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
         {
-            DrawStringCentered(20.0f + i*32.0f, 20.0f + j*24.0f, "%.2f", data[i*4 + j]);
+            DrawStringCentered(20.0f + i*40.0f, 30.0f + j*24.0f, "%.2f", data[i*4 + j]);
         }
     }
 

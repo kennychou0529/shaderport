@@ -313,9 +313,14 @@ int main(int argc, char **argv)
         }
         else
         {
-            // todo: figure out how to render this dialog box on top of everything else
-            // but not have it in the screenshot
+            // todo: I currently hide the screenshot/framegrab dialog box if the screenshot is
+            // being taken (or a video is being recorded). Ideally, I'd like the dialog box to
+            // be visible to the user, but invisible to the framegrab. This requires a way to
+            // bisect the ImGui rendering: I have to call Render() in order to draw the gui
+            // elements, but I don't want to render *this* dialog box yet; I want to render it
+            // after I captured the frame.
             FramegrabShowDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
+
             ImGui::Render();
         }
 

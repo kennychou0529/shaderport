@@ -17,6 +17,8 @@ struct frame_input_t
     bool regained_focus;
 };
 
+static frame_input_t frame_input = {0}; // global for convenience, is updated in BeforeUpdateAndDraw.
+
 void ResetGLState(frame_input_t input)
 {
     glUseProgram(0);
@@ -44,6 +46,8 @@ void ResetGLState(frame_input_t input)
 
 void BeforeUpdateAndDraw(frame_input_t input)
 {
+    frame_input = input;
+
     ResetGLState(input);
     glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -55,12 +59,58 @@ void AfterUpdateAndDraw(frame_input_t input)
 }
 
 // todo: are x,y screen or framebuffer coordinates?
-void DrawString(float x, float y, const char *text)
+void DrawStringCenteredUnformatted(float x, float y, const char *text)
 {
+    ImVec2 text_size = ImGui::CalcTextSize(text);
+    x -= text_size.x*0.5f;
+    y -= text_size.y*0.5f;
     ImDrawList *draw = ImGui::GetOverlayDrawList();
     draw->AddText(ImVec2(x+1,y+1), IM_COL32(0,0,0,255), text);
     draw->AddText(ImVec2(x,y), IM_COL32(255,255,255,255), text);
 }
+
+void DrawStringCentered(float x, float y, const char *fmt, ...)
+{
+    char buffer[1024];
+    va_list args;
+    va_start(args, fmt);
+    int w = vsnprintf(buffer, sizeof(buffer), fmt, args);
+    if (w == -1 || w >= (int)sizeof(buffer))
+        w = (int)sizeof(buffer) - 1;
+    buffer[w] = 0;
+    DrawStringCenteredUnformatted(x, y, buffer);
+    va_end(args);
+}
+
+float NdcToFbX(float x_ndc)
+{
+    return (0.5f+0.5f*x_ndc)*frame_input.framebuffer_w;
+}
+float NdcToFbY(float y_ndc)
+{
+    return (0.5f-0.5f*y_ndc)*frame_input.framebuffer_h;
+}
+
+// void UserToNdc(float x, float y, float z, float *x_ndc, float *y_ndc, float *z_ndc)
+// {
+//     GLfloat P[16];
+//     GLfloat M[16];
+//     glGetFloatv(GL_PROJECTION_MATRIX,P);
+//     glGetFloatv(GL_MODELVIEW_MATRIX,M);
+//     float x_view = M[ 0]*x + M[ 1]*y + M[ 2]*z + M[ 3];
+//     float y_view = M[ 4]*x + M[ 5]*y + M[ 6]*z + M[ 7];
+//     float z_view = M[ 8]*x + M[ 9]*y + M[10]*z + M[11];
+//     float w_view = M[12]*x + M[13]*y + M[14]*z + M[15];
+
+//     float x_clip = P[ 0]*x_view + P[ 1]*y_view + P[ 2]*z_view + P[ 3]*w_view;
+//     float y_clip = P[ 4]*x_view + P[ 5]*y_view + P[ 6]*z_view + P[ 7]*w_view;
+//     float z_clip = P[ 8]*x_view + P[ 9]*y_view + P[10]*z_view + P[11]*w_view;
+//     float w_clip = P[12]*x_view + P[13]*y_view + P[14]*z_view + P[15]*w_view;
+
+//     *x_ndc = x_clip/w_clip;
+//     *y_ndc = y_clip/w_clip;
+//     *z_ndc = z_clip/w_clip;
+// }
 
 void UpdateAndDraw(frame_input_t input)
 {
@@ -78,38 +128,49 @@ void UpdateAndDraw(frame_input_t input)
 
     DrawTexture(0);
 
-    DrawString(200,200, "hello sailor!");
+    DrawStringCentered(NdcToFbX(-0.5f),NdcToFbY(-0.5f), "lower-left");
+    DrawStringCentered(NdcToFbX(+0.5f),NdcToFbY(-0.5f), "lower-right");
+    DrawStringCentered(NdcToFbX(+0.5f),NdcToFbY(+0.5f), "upper-right");
+    DrawStringCentered(NdcToFbX(-0.5f),NdcToFbY(+0.5f), "upper-left");
 
-    // for (int j = 0; j < 4; j++)
-    // {
-    //     glBegin(GL_TRIANGLE_FAN);
-    //     if (j == 0)
-    //         glColor4f(0.19f, 0.2f, 0.25f, 1.0f);
-    //     else if (j == 1)
-    //         glColor4f(0.38f, 0.31f, 0.51f, 1.0f);
-    //     else if (j == 2)
-    //         glColor4f(0.29f, 0.22f, 0.38f, 1.0f);
-    //     else if (j == 3)
-    //         glColor4f(0.11f, 0.11f, 0.12f, 1.0f);
-    //     glVertex2f(-1.0f,-1.0f);
-    //     float t = anim_time;
-    //     for (int i = 0; i <= 128; i++)
-    //     {
-    //         float s = i/128.0f;
-    //         float x = -1.0f+2.0f*s;
-    //         float f = 1.0f - j*0.25f;
-    //         float p = (1.0f + j*0.25f)*s + j*3.14f/2.0f;
-    //         glVertex2f(x, 0.8f+0.1f*sinf(p + f*t)-0.45f*j);
-    //     }
-    //     glVertex2f(+1.0f,-1.0f);
-    //     glEnd();
-    // }
+    #if 0
+    for (int j = 0; j < 4; j++)
+    {
+        glBegin(GL_TRIANGLE_FAN);
+        if (j == 0)
+            glColor4f(0.19f, 0.2f, 0.25f, 1.0f);
+        else if (j == 1)
+            glColor4f(0.38f, 0.31f, 0.51f, 1.0f);
+        else if (j == 2)
+            glColor4f(0.29f, 0.22f, 0.38f, 1.0f);
+        else if (j == 3)
+            glColor4f(0.11f, 0.11f, 0.12f, 1.0f);
+        glVertex2f(-1.0f,-1.0f);
+        float t = anim_time;
+        for (int i = 0; i <= 8; i++)
+        {
+            float s = i/8.0f;
+            float x = -1.0f+2.0f*s;
+            float f = 1.0f - j*0.25f;
+            float p = (1.0f + j*0.25f)*s + j*3.14f/2.0f;
+            float y = 0.8f+0.1f*sinf(p + f*t)-0.45f*j;
+            glVertex2f(x, y);
 
-    // glPointSize(32.0f);
-    // glBegin(GL_POINTS);
-    // glColor4f(1.0f,1.0f,1.0f,0.3f);
-    // glVertex2f(0.0f,0.0f);
-    // glEnd();
+        }
+        glVertex2f(+1.0f,-1.0f);
+        glEnd();
+    }
+    #endif
+
+    {
+        GLfloat data[16];
+        glGetFloatv(GL_PROJECTION_MATRIX,data);
+        for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+        {
+            DrawStringCentered(20.0f + i*32.0f, 20.0f + j*24.0f, "%.2f", data[i*4 + j]);
+        }
+    }
 
     ImGui::Text("The time is: %ds", (int)input.elapsed_time);
     ImGui::ShowDemoWindow();

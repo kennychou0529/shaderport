@@ -8,8 +8,9 @@ if not exist ".build" mkdir .build
 attrib +h .build /s /d
 pushd .build
 
-:: Copy the libtcc1.a (windows) library to the same directory as executable
-if not exist "libtcc1.a" xcopy /y ../libtcc/win/libtcc1.a libtcc1.a > nul
+:: Copy libtcc1.a (windows) and libtcc.dll (windows) to the same directory as executable
+xcopy /y "..\libtcc\win\libtcc1.a" . > nul
+xcopy /y "..\libtcc\win\libtcc.dll" . > nul
 
 :: -Od: Turns off optimizations and speeds up compilation
 :: -Zi: Generates debug symbols

@@ -20,6 +20,15 @@
 #include "3rdparty/stb_image_write.h"
 #include "3rdparty/stb_image.h"
 
+// todo: replace with internal console rendered to screen
+void Log(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+}
+
 #include "texture.cpp"
 #include "perframe.cpp"
 #include "framegrab.cpp"
@@ -168,30 +177,6 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
 
 int main(int argc, char **argv)
 {
-    {
-        {
-            const char *script =
-            "float myc_fun(float x, float y)"
-            "{"
-            " return x + y;"
-            "}";
-
-            TCCState *s;
-            s = tcc_new();
-            tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
-            tcc_add_library_path(s, ".");
-            if (tcc_compile_string(s, script) != -1) {
-               if (tcc_relocate(s, TCC_RELOCATE_AUTO) >= 0) {
-
-                  float (*myc_fun)(float, float) = (float (*)(float, float))tcc_get_symbol(s, "myc_fun");
-                  float x = myc_fun(0.1f, 0.2f);
-                  printf("0.1 + 0.2 = %f\n", x);
-               }
-            }
-            tcc_delete(s);
-        }
-    }
-
     glfwSetErrorCallback(ErrorCallback);
     if (!glfwInit())
     {
@@ -241,6 +226,34 @@ int main(int argc, char **argv)
         bool escape_eaten = false;
 
         SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);
+
+        // todo: temporary scripting code
+        static void (*script_loop)(frame_input_t) = NULL;
+        if (enter_button)
+        {
+            Log("reloading script\n");
+            TCCState *s;
+            s = tcc_new();
+            tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
+            tcc_add_library_path(s, ".");
+            if (tcc_add_file(s, "../script/test.c", TCC_FILETYPE_C) == -1)
+            {
+                Log("failed to compile script\n");
+            }
+            else if (tcc_relocate(s, TCC_RELOCATE_AUTO) == -1)
+            {
+                Log("failed to compile script\n");
+            }
+            else
+            {
+                script_loop = (void (*)(frame_input_t))tcc_get_symbol(s, "loop");
+            }
+            tcc_delete(s);
+        }
+        if (script_loop)
+        {
+            script_loop(input);
+        }
 
         if (framegrab.active)
         {

@@ -26,6 +26,8 @@
 #include "macro_triggered.h"
 #include "macro_one_time_event.h"
 
+#include "3rdparty/libtcc.h"
+
 void ErrorCallback(int error, const char* description)
 {
     fprintf(stderr, "Error %d: %s\n", error, description);
@@ -166,6 +168,30 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
 
 int main(int argc, char **argv)
 {
+    {
+        {
+            const char *script =
+            "float myc_fun(float x, float y)"
+            "{"
+            " return x + y;"
+            "}";
+
+            TCCState *s;
+            s = tcc_new();
+            tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
+            tcc_add_library_path(s, ".");
+            if (tcc_compile_string(s, script) != -1) {
+               if (tcc_relocate(s, TCC_RELOCATE_AUTO) >= 0) {
+
+                  float (*myc_fun)(float, float) = (float (*)(float, float))tcc_get_symbol(s, "myc_fun");
+                  float x = myc_fun(0.1f, 0.2f);
+                  printf("0.1 + 0.2 = %f\n", x);
+               }
+            }
+            tcc_delete(s);
+        }
+    }
+
     glfwSetErrorCallback(ErrorCallback);
     if (!glfwInit())
     {

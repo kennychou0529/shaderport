@@ -281,11 +281,21 @@ int main(int argc, char **argv)
             {
                 if (opt.draw_imgui)
                 {
-                    ImGui::GetIO().MouseDrawCursor = opt.draw_cursor;
-                    ImGui::Render();
-                    ImGui::GetIO().MouseDrawCursor = true;
+                    if (opt.draw_cursor)
+                    {
+                        ImGui::Render();
+                    }
+                    else
+                    {
+                        ImGui::GetIO().MouseDrawCursor = false;
+                        ImGui::Render();
+
+                        // Temporarily re-enable system cursor. This is automatically disabled on the next call to NewFramec
+                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                        ImGui::GetIO().MouseDrawCursor = true;
+                    }
                 }
-                else
+                else if (opt.draw_cursor)
                 {
                     FramegrabDrawCrosshair(input);
                 }

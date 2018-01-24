@@ -134,6 +134,21 @@ void UpdateAndDraw(frame_input_t input)
     static float anim_time = 0.0f;
     anim_time += 1.0f/60.0f;
 
+    {
+        // ImGui::GetStyle().AntiAliasedLines = false;
+        // ImGui::GetStyle().AntiAliasedFill = false;
+        ImDrawList *draw = ImGui::GetOverlayDrawList();
+        draw->Flags = 0;
+        for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+        {
+            float x = NdcToFbX(-1.0f+2.0f*i/4.0f);
+            float y = NdcToFbY(-1.0f+2.0f*j/4.0f);
+            // draw->AddRectFilled(ImVec2(x-1,y-1), ImVec2(x+1,y+1), IM_COL32(255,255,255,255));
+            draw->AddCircleFilled(ImVec2(x,y), 32.0f, IM_COL32(255,255,255,255));
+        }
+    }
+
     #if 0
     static bool first = true;
     if (first)

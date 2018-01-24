@@ -141,14 +141,38 @@ void UpdateAndDraw(frame_input_t input)
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
         ImGui::Begin("##BatchedDrawUser", NULL, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoSavedSettings);
         ImDrawList *draw = ImGui::GetWindowDrawList();
-        draw->Flags = 0; // Disable anti-aliasing on both lines and fill shapes. Todo: optional
+        // draw->Flags = 0; // Disable anti-aliasing on both lines and fill shapes. Todo: optional
+
+        for (int j = 0; j < 4; j++)
+        {
+            // todo: user coordinates to imgui coordinates
+            draw->PathClear();
+            draw->PathLineTo(ImVec2(NdcToFbX(-1.0f), NdcToFbY(-1.0f)));
+            float t = anim_time;
+            for (int i = 0; i <= 8; i++)
+            {
+                float s = i/8.0f;
+                float x = -1.0f+2.0f*s;
+                float f = 1.0f - j*0.25f;
+                float p = (1.0f + j*0.25f)*s + j*3.14f/2.0f;
+                float y = 0.8f+0.1f*sinf(p + f*t)-0.45f*j;
+                draw->PathLineTo(ImVec2(NdcToFbX(x), NdcToFbY(y)));
+
+            }
+            draw->PathLineTo(ImVec2(NdcToFbX(+1.0f), NdcToFbY(-1.0f)));
+                 if (j == 0) draw->PathFillConvex(IM_COL32(20,20,20,255));
+            else if (j == 1) draw->PathFillConvex(IM_COL32(40,40,40,255));
+            else if (j == 2) draw->PathFillConvex(IM_COL32(80,80,80,255));
+            else if (j == 3) draw->PathFillConvex(IM_COL32(120,120,120,255));
+        }
+
         for (int i = 0; i <= 4; i++)
         for (int j = 0; j <= 4; j++)
         {
             float x = NdcToFbX(-1.0f+2.0f*i/4.0f);
             float y = NdcToFbY(-1.0f+2.0f*j/4.0f);
             // draw->AddRectFilled(ImVec2(x-1,y-1), ImVec2(x+1,y+1), IM_COL32(255,255,255,255));
-            draw->AddCircleFilled(ImVec2(x,y), 32.0f, IM_COL32(255,255,255,255));
+            draw->AddCircleFilled(ImVec2(x,y), 4.0f, IM_COL32(255,255,255,255));
         }
         ImGui::End();
         ImGui::PopStyleVar();
@@ -175,7 +199,7 @@ void UpdateAndDraw(frame_input_t input)
     DrawStringCentered(NdcToFbX(-0.5f),NdcToFbY(+0.5f), "upper-left");
     #endif
 
-    #if 1
+    #if 0
     for (int j = 0; j < 4; j++)
     {
         glBegin(GL_TRIANGLE_FAN);

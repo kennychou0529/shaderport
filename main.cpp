@@ -178,7 +178,6 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
 
 int ScriptTest()
 {
-    // todo: temporary scripting code
     int (*script_loop)(int) = NULL;
 
     Log("reloading script\n");
@@ -191,11 +190,21 @@ int ScriptTest()
         Log("failed to compile script\n");
         return 0;
     }
-    if (tcc_relocate(s, TCC_RELOCATE_AUTO) == -1)
+    static unsigned char *code = NULL;
+    int n = tcc_relocate(s, NULL);
+    if (code)
+        free(code);
+    code = (unsigned char*)malloc(n);
+    if (tcc_relocate(s, code) == -1)
     {
         Log("failed to compile script\n");
         return 0;
     }
+    // if (tcc_relocate(s, TCC_RELOCATE_AUTO) == -1)
+    // {
+    //     Log("failed to compile script\n");
+    //     return 0;
+    // }
 
     script_loop = (int (*)(int))tcc_get_symbol(s, "loop");
     if (!script_loop)
@@ -235,7 +244,7 @@ int main(int argc, char **argv)
     GLFWwindow *window = glfwCreateWindow(1000, 600, "Visual Debugger", NULL, NULL);
 
     // todo: figure out why calling a function GetAddress'd from a script crashes after we create a window
-    // ScriptTest();
+    ScriptTest();
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);

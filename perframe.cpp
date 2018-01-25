@@ -149,9 +149,9 @@ void UpdateAndDraw(frame_input_t input)
             draw->PathClear();
             draw->PathLineTo(ImVec2(NdcToFbX(-1.0f), NdcToFbY(-1.0f)));
             float t = anim_time;
-            for (int i = 0; i <= 8; i++)
+            for (int i = 0; i <= 128; i++)
             {
-                float s = i/8.0f;
+                float s = i/128.0f;
                 float x = -1.0f+2.0f*s;
                 float f = 1.0f - j*0.25f;
                 float p = (1.0f + j*0.25f)*s + j*3.14f/2.0f;

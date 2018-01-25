@@ -29,14 +29,15 @@ void Log(const char *fmt, ...)
     va_end(args);
 }
 
+#include "3rdparty/libtcc.h"
+#include "script.cpp"
+// #include "script/include/vdb.h"
+
 #include "texture.cpp"
 #include "perframe.cpp"
 #include "framegrab.cpp"
 #include "macro_triggered.h"
 #include "macro_one_time_event.h"
-
-#include "3rdparty/libtcc.h"
-#include "script/include/vdb.h"
 
 void ErrorCallback(int error, const char* description)
 {
@@ -176,53 +177,6 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
     }
 }
 
-int ScriptTest()
-{
-    int (*script_loop)(int) = NULL;
-
-    Log("reloading script\n");
-    TCCState *s;
-    s = tcc_new();
-    tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
-    tcc_add_library_path(s, ".");
-    if (tcc_add_file(s, "../script/test.c", TCC_FILETYPE_C) == -1)
-    {
-        Log("failed to compile script\n");
-        return 0;
-    }
-    static unsigned char *code = NULL;
-    int n = tcc_relocate(s, NULL);
-    if (code)
-        free(code);
-    code = (unsigned char*)malloc(n);
-    if (tcc_relocate(s, code) == -1)
-    {
-        Log("failed to compile script\n");
-        return 0;
-    }
-    // if (tcc_relocate(s, TCC_RELOCATE_AUTO) == -1)
-    // {
-    //     Log("failed to compile script\n");
-    //     return 0;
-    // }
-
-    script_loop = (int (*)(int))tcc_get_symbol(s, "loop");
-    if (!script_loop)
-    {
-        Log("failed to compile script: where is the loop function?\n");
-        return 0;
-    }
-
-    tcc_delete(s);
-
-    if (script_loop)
-    {
-        int y = script_loop(5);
-        printf("%d\n", y);
-    }
-    return 0;
-}
-
 int main(int argc, char **argv)
 {
     // assert(false && "See comment above");
@@ -242,10 +196,6 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_DOUBLEBUFFER,   1);
     glfwWindowHint(GLFW_SAMPLES,        0);
     GLFWwindow *window = glfwCreateWindow(1000, 600, "Visual Debugger", NULL, NULL);
-
-    // todo: figure out why calling a function GetAddress'd from a script crashes after we create a window
-    ScriptTest();
-
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -278,6 +228,9 @@ int main(int argc, char **argv)
         OneTimeEvent(screenshot_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
         OneTimeEvent(window_size_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
         bool escape_eaten = false;
+
+        if (enter_button)
+            ReloadScript();
 
         SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);
 

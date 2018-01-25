@@ -46,6 +46,7 @@ void ResetGLState(frame_input_t input)
 }
 
 static int draw_string_id = 0;
+static ImDrawList *user_draw_list = NULL;
 void BeforeUpdateAndDraw(frame_input_t input)
 {
     draw_string_id = 0;
@@ -54,6 +55,16 @@ void BeforeUpdateAndDraw(frame_input_t input)
     ResetGLState(input);
     glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0,0,0,0));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+    ImGui::SetNextWindowPos(ImVec2(0,0));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    ImGui::Begin("##UserDrawWindow", NULL, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoSavedSettings);
+    user_draw_list = ImGui::GetWindowDrawList();
+    ImGui::End();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
 }
 
 void AfterUpdateAndDraw(frame_input_t input)
@@ -135,12 +146,7 @@ void UpdateAndDraw(frame_input_t input)
     anim_time += 1.0f/60.0f;
 
     {
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0,0,0,0));
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
-        ImGui::SetNextWindowPos(ImVec2(0,0));
-        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-        ImGui::Begin("##BatchedDrawUser", NULL, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoSavedSettings);
-        ImDrawList *draw = ImGui::GetWindowDrawList();
+        ImDrawList *draw = user_draw_list;
         // draw->Flags = 0; // Disable anti-aliasing on both lines and fill shapes. Todo: optional
 
         for (int j = 0; j < 4; j++)
@@ -174,9 +180,6 @@ void UpdateAndDraw(frame_input_t input)
             // draw->AddRectFilled(ImVec2(x-1,y-1), ImVec2(x+1,y+1), IM_COL32(255,255,255,255));
             draw->AddCircleFilled(ImVec2(x,y), 4.0f, IM_COL32(255,255,255,255));
         }
-        ImGui::End();
-        ImGui::PopStyleVar();
-        ImGui::PopStyleColor();
     }
 
     #if 0

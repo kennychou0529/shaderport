@@ -31,7 +31,6 @@ void Log(const char *fmt, ...)
 
 #include "3rdparty/libtcc.h"
 #include "script.cpp"
-// #include "script/include/vdb.h"
 
 #include "texture.cpp"
 #include "perframe.cpp"

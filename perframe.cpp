@@ -140,15 +140,54 @@ float NdcToFbY(float y_ndc)
 //     *z_ndc = z_clip/w_clip;
 // }
 
+// todo: put these in a more logical place
+void vdb_path_clear()
+{
+    user_draw_list->PathClear();
+}
+void vdb_path_line_to(float x, float y)
+{
+    user_draw_list->PathLineTo(ImVec2(NdcToFbX(x), NdcToFbY(y)));
+}
+void vdb_path_fill_convex(float r, float g, float b, float a)
+{
+    user_draw_list->PathFillConvex(IM_COL32((int)r, (int)g, (int)b, (int)a));
+}
+
 void UpdateAndDraw(frame_input_t input)
 {
     static float anim_time = 0.0f;
     anim_time += 1.0f/60.0f;
 
+    // test running a script!
+    #if 1
+    if (ScriptLoop)
+    {
+        script_input_t s = {0};
+        s.window_x = input.window_x;
+        s.window_y = input.window_y;
+        s.window_w = input.window_w;
+        s.window_h = input.window_h;
+        s.framebuffer_w = input.framebuffer_w;
+        s.framebuffer_h = input.framebuffer_h;
+        s.mouse_x = input.mouse_x;
+        s.mouse_y = input.mouse_y;
+        s.mouse_u = input.mouse_u;
+        s.mouse_v = input.mouse_v;
+        s.elapsed_time = input.elapsed_time;
+        s.frame_time = input.frame_time;
+        s.recording_video = input.recording_video;
+        s.lost_focus = input.lost_focus;
+        s.regained_focus = input.regained_focus;
+        ScriptLoop(s);
+    }
+    #endif
+
+    // test using imgui draw api
+    #if 0
     {
         ImDrawList *draw = user_draw_list;
         // draw->Flags = 0; // Disable anti-aliasing on both lines and fill shapes. Todo: optional
-
         for (int j = 0; j < 4; j++)
         {
             // todo: user coordinates to imgui coordinates
@@ -181,6 +220,7 @@ void UpdateAndDraw(frame_input_t input)
             draw->AddCircleFilled(ImVec2(x,y), 4.0f, IM_COL32(255,255,255,255));
         }
     }
+    #endif
 
     #if 0
     static bool first = true;

@@ -1,5 +1,19 @@
 #include "3rdparty/glad.c"
 #include "3rdparty/glfw3.h"
+#include "3rdparty/imgui.h"
+#include "3rdparty/imgui_demo.cpp"
+#include "3rdparty/libtcc.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#include "3rdparty/stb_image_write.h"
+#include "3rdparty/stb_image.h"
+
+#include "log.h"
+#include "frameinput.h"
+
+#include "framegrab.cpp"
+#include "perframe.cpp"
+#include "script.cpp"
 
 // required for IME input functionality in imgui
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -10,34 +24,9 @@
 #undef APIENTRY // becomes defined by imgui when it include windows stuff for IME and clipboard
 #endif
 #include "3rdparty/imgui.cpp"
-#include "3rdparty/imgui_demo.cpp"
 #include "3rdparty/imgui_draw.cpp"
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "fonts/source_sans_pro.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#include "3rdparty/stb_image_write.h"
-#include "3rdparty/stb_image.h"
-
-// todo: replace with internal console rendered to screen
-void Log(const char *fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    vprintf(fmt, args);
-    va_end(args);
-}
-
-#include "3rdparty/libtcc.h"
-#include "script.cpp"
-
-#include "transform.cpp"
-#include "texture.cpp"
-#include "perframe.cpp"
-#include "framegrab.cpp"
-#include "macro_triggered.h"
-#include "macro_one_time_event.h"
 
 void ErrorCallback(int error, const char* description)
 {
@@ -188,6 +177,7 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
     bool VAR = VAR##_is_active && !VAR##_was_active; \
     VAR##_was_active = VAR##_is_active;
 
+script_loop_t ScriptLoop = NULL;
 
 int main(int argc, char **argv)
 {
@@ -229,12 +219,6 @@ int main(int argc, char **argv)
         }
 
         frame_input_t input = PollFrameEvents(window);
-
-        ImGui_ImplGlfw_NewFrame();
-        BeforeUpdateAndDraw(input);
-        UpdateAndDraw(input);
-        AfterUpdateAndDraw(input);
-
         OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
         OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS);
         OneTimeEvent(screenshot_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
@@ -242,7 +226,15 @@ int main(int argc, char **argv)
         bool escape_eaten = false;
 
         if (enter_button)
-            ReloadScript();
+        {
+            ScriptLoop = LoadScript();
+        }
+
+        ImGui_ImplGlfw_NewFrame();
+        BeforeUpdateAndDraw(input);
+        UpdateAndDraw(input);
+        AfterUpdateAndDraw(input);
+
 
         SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);
 

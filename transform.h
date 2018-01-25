@@ -1,3 +1,6 @@
+#pragma once
+#include "frameinput.h"
+
 float NdcToFbX(float x_ndc)
 {
     return (0.5f+0.5f*x_ndc)*frame_input.framebuffer_w;

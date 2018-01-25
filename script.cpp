@@ -1,11 +1,10 @@
 #include "script.h"
+#include "log.h"
+#include "frameinput.h"
 
-typedef void (*script_loop_t)(script_input_t);
-static script_loop_t ScriptLoop = NULL;
-
-void ReloadScript()
+script_loop_t LoadScript()
 {
-    ScriptLoop = NULL;
+    script_loop_t ScriptLoop = NULL;
 
     Log("reloading script\n");
     TCCState *s;
@@ -15,7 +14,7 @@ void ReloadScript()
     if (tcc_add_file(s, "../script/test.c", TCC_FILETYPE_C) == -1)
     {
         Log("failed to compile script\n");
-        return;
+        return NULL;
     }
 
     // add API functions
@@ -35,13 +34,14 @@ void ReloadScript()
     if (tcc_relocate(s, code) == -1)
     {
         Log("failed to compile script\n");
-        return;
+        return NULL;
     }
     ScriptLoop = (script_loop_t)tcc_get_symbol(s, "loop");
     if (!ScriptLoop)
     {
         Log("failed to compile script: where is the loop function?\n");
-        return;
+        return NULL;
     }
     tcc_delete(s);
+    return ScriptLoop;
 }

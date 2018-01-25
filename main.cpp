@@ -32,6 +32,7 @@ void Log(const char *fmt, ...)
 #include "3rdparty/libtcc.h"
 #include "script.cpp"
 
+#include "transform.cpp"
 #include "texture.cpp"
 #include "perframe.cpp"
 #include "framegrab.cpp"

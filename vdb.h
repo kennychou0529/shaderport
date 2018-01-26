@@ -3,6 +3,7 @@
 void vdb_path_clear();
 void vdb_path_line_to(float x, float y);
 void vdb_path_fill_convex(float r, float g, float b, float a);
+void vdb_text(float x, float y, const char *fmt, ...);
 // void PushView();
 // void PopView();
 // void vdbColor(float r, float g, float b, float a);

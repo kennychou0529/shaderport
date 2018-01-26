@@ -1,10 +1,5 @@
 #pragma once
 
-// temporary scripting stuff
-#include "script.h"
-typedef void (*script_loop_t)(script_input_t);
-extern script_loop_t ScriptLoop;
-
 struct frame_input_t
 {
     // Note: for retina displays screen coordinates != framebuffer coordinates

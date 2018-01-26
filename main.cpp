@@ -10,7 +10,6 @@
 
 #include "log.h"
 #include "frameinput.h"
-#include "script.h"
 
 #include "framegrab.cpp"
 #include "perframe.cpp"
@@ -177,6 +176,9 @@ void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t i
     bool VAR = VAR##_is_active && !VAR##_was_active; \
     VAR##_was_active = VAR##_is_active;
 
+// todo: This is temporary. Just for drafting out the API
+#include "script.h"
+typedef void (*script_loop_t)(script_input_t);
 script_loop_t LoadScript()
 {
     script_loop_t ScriptLoop = NULL;

@@ -256,7 +256,7 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_STENCIL_BITS,   8);
     glfwWindowHint(GLFW_DOUBLEBUFFER,   1);
     glfwWindowHint(GLFW_SAMPLES,        0);
-    GLFWwindow *window = glfwCreateWindow(1000, 600, "Visual Debugger", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(1000, 600, "ShaderPort", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);

@@ -77,7 +77,7 @@ void vdb_path_clear()
 }
 void vdb_path_to(float x, float y)
 {
-    user_draw_list->PathLineTo(x, y);
+    user_draw_list->PathLineTo(ImVec2(x, y));
 }
 void vdb_path_fill()
 {

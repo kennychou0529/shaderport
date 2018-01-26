@@ -25,7 +25,7 @@ set LIBGLFW=../libglfw/lib-vc2010-64/glfw3.lib
 set LIBTCC=../libtcc/win/tcc.lib
 set LF=-debug %LIBGLFW% %LIBTCC% opengl32.lib user32.lib gdi32.lib shell32.lib
 
-cl %CF% ../main.cpp /link %LF% -out:native.exe
-native.exe
+cl %CF% ../main.cpp /link %LF% -out:shaderport.exe
+shaderport.exe
 
 popd

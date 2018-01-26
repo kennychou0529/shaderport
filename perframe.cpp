@@ -111,30 +111,6 @@ void UpdateAndDraw(frame_input_t input)
     static float anim_time = 0.0f;
     anim_time += 1.0f/60.0f;
 
-    // test running a script!
-    #if 1
-    if (ScriptLoop)
-    {
-        script_input_t s = {0};
-        s.window_x = input.window_x;
-        s.window_y = input.window_y;
-        s.window_w = input.window_w;
-        s.window_h = input.window_h;
-        s.framebuffer_w = input.framebuffer_w;
-        s.framebuffer_h = input.framebuffer_h;
-        s.mouse_x = input.mouse_x;
-        s.mouse_y = input.mouse_y;
-        s.mouse_u = input.mouse_u;
-        s.mouse_v = input.mouse_v;
-        s.elapsed_time = input.elapsed_time;
-        s.frame_time = input.frame_time;
-        s.recording_video = input.recording_video;
-        s.lost_focus = input.lost_focus;
-        s.regained_focus = input.regained_focus;
-        ScriptLoop(s);
-    }
-    #endif
-
     // test using imgui draw api
     #if 0
     {

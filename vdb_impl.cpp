@@ -28,6 +28,11 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_point_size = 1.0f;
 }
 
+void ConvertCoordinates(float *x, float *y)
+{
+
+}
+
 // todo: are x,y screen or framebuffer coordinates?
 void DrawTextUnformatted(float x, float y, const char *text)
 {
@@ -72,7 +77,7 @@ void vdb_path_clear()
 }
 void vdb_path_to(float x, float y)
 {
-    user_draw_list->PathLineTo(ImVec2(NdcToFbX(x), NdcToFbY(y)));
+    user_draw_list->PathLineTo(x, y);
 }
 void vdb_path_fill()
 {

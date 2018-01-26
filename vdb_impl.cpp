@@ -9,6 +9,10 @@ static ImU32 vdb_current_color = IM_COL32(1.0f,1.0f,1.0f,1.0f);
 static float vdb_current_line_width = 1.0f;
 static float vdb_current_point_size = 1.0f;
 
+// todo: optimize, store inverse width
+struct vdb_view_t { float left,right,bottom,top; };
+vdb_view_t vdb_current_view = { 0 };
+
 void vdbBeforeUpdateAndDraw(frame_input_t input)
 {
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0,0,0,0));
@@ -26,25 +30,43 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_color = IM_COL32(1.0f,1.0f,1.0f,1.0f);
     vdb_current_line_width = 1.0f;
     vdb_current_point_size = 1.0f;
+
+    vdb_current_view.left = -1.0f;
+    vdb_current_view.right = +1.0f;
+    vdb_current_view.bottom = -1.0f;
+    vdb_current_view.top = +1.0f;
 }
 
-void ConvertCoordinates(float *x, float *y)
+ImVec2 ConvertCoordinates(float x, float y)
 {
+    float x_normalized = (x-vdb_current_view.left)/(vdb_current_view.right-vdb_current_view.left);
+    float y_normalized = (y-vdb_current_view.top)/(vdb_current_view.bottom-vdb_current_view.top);
+    float x_display = frame_input.window_w*x_normalized;
+    float y_display = frame_input.window_h*y_normalized;
+    return ImVec2(x_display, y_display);
+}
 
+void vdb_view(float left, float right, float bottom, float top)
+{
+    vdb_current_view.left = left;
+    vdb_current_view.right = right;
+    vdb_current_view.bottom = bottom;
+    vdb_current_view.top = top;
 }
 
 // todo: are x,y screen or framebuffer coordinates?
 void DrawTextUnformatted(float x, float y, const char *text)
 {
+    ImVec2 pos = ConvertCoordinates(x,y);
     ImVec2 text_size = ImGui::CalcTextSize(text);
-    x -= text_size.x*0.5f;
-    y -= text_size.y*0.5f;
+    pos.x -= text_size.x*0.5f;
+    pos.y -= text_size.y*0.5f;
     #if 1
     char id[32];
     sprintf(id, "##DrawString%d", draw_string_id++);
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f,1.0f,1.0f,1.0f));
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f,0.0f,0.0f,0.4f));
-    ImGui::SetNextWindowPos(ImVec2(x, y));
+    ImGui::SetNextWindowPos(pos);
     ImGui::Begin(id, 0, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Text(text);
     ImGui::End();
@@ -77,7 +99,7 @@ void vdb_path_clear()
 }
 void vdb_path_to(float x, float y)
 {
-    user_draw_list->PathLineTo(ImVec2(x, y));
+    user_draw_list->PathLineTo(ConvertCoordinates(x, y));
 }
 void vdb_path_fill()
 {
@@ -101,63 +123,66 @@ void vdb_point_size(float px)
 }
 void vdb_point(float x, float y)
 {
-    ImVec2 a = ImVec2(x - vdb_current_point_size, y - vdb_current_point_size);
-    ImVec2 b = ImVec2(x + vdb_current_point_size, y + vdb_current_point_size);
+    ImVec2 c = ConvertCoordinates(x, y);
+    ImVec2 a = ImVec2(c.x - vdb_current_point_size, c.y - vdb_current_point_size);
+    ImVec2 b = ImVec2(c.x + vdb_current_point_size, c.y + vdb_current_point_size);
     user_draw_list->AddRect(a, b, vdb_current_color);
 }
 void vdb_line(float x1, float y1, float x2, float y2)
 {
-    ImVec2 a = ImVec2(x1,y1);
-    ImVec2 b = ImVec2(x2,y2);
+    ImVec2 a = ConvertCoordinates(x1,y1);
+    ImVec2 b = ConvertCoordinates(x2,y2);
     user_draw_list->AddLine(a, b, vdb_current_color, vdb_current_line_width);
 }
 void vdb_triangle(float x1, float y1, float x2, float y2, float x3, float y3)
 {
-    ImVec2 a = ImVec2(x1,y1);
-    ImVec2 b = ImVec2(x2,y2);
-    ImVec2 c = ImVec2(x3,y3);
+    ImVec2 a = ConvertCoordinates(x1,y1);
+    ImVec2 b = ConvertCoordinates(x2,y2);
+    ImVec2 c = ConvertCoordinates(x3,y3);
     user_draw_list->AddTriangle(a, b, c, vdb_current_color, vdb_current_line_width);
 }
 void vdb_triangle_filled(float x1, float y1, float x2, float y2, float x3, float y3)
 {
-    ImVec2 a = ImVec2(x1,y1);
-    ImVec2 b = ImVec2(x2,y2);
-    ImVec2 c = ImVec2(x3,y3);
+    ImVec2 a = ConvertCoordinates(x1,y1);
+    ImVec2 b = ConvertCoordinates(x2,y2);
+    ImVec2 c = ConvertCoordinates(x3,y3);
     user_draw_list->AddTriangleFilled(a, b, c, vdb_current_color);
 }
 void vdb_quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
-    ImVec2 a = ImVec2(x1,y1);
-    ImVec2 b = ImVec2(x2,y2);
-    ImVec2 c = ImVec2(x3,y3);
-    ImVec2 d = ImVec2(x4,y4);
+    ImVec2 a = ConvertCoordinates(x1,y1);
+    ImVec2 b = ConvertCoordinates(x2,y2);
+    ImVec2 c = ConvertCoordinates(x3,y3);
+    ImVec2 d = ConvertCoordinates(x4,y4);
     user_draw_list->AddQuad(a, b, c, d, vdb_current_color, vdb_current_line_width);
 }
 void vdb_quad_filled(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
-    ImVec2 a = ImVec2(x1,y1);
-    ImVec2 b = ImVec2(x2,y2);
-    ImVec2 c = ImVec2(x3,y3);
-    ImVec2 d = ImVec2(x4,y4);
+    ImVec2 a = ConvertCoordinates(x1,y1);
+    ImVec2 b = ConvertCoordinates(x2,y2);
+    ImVec2 c = ConvertCoordinates(x3,y3);
+    ImVec2 d = ConvertCoordinates(x4,y4);
     user_draw_list->AddQuadFilled(a, b, c, d, vdb_current_color);
 }
 void vdb_rect(float x, float y, float w, float h)
 {
-    ImVec2 a = ImVec2(x,y);
-    ImVec2 b = ImVec2(x+w,y+h);
+    ImVec2 a = ConvertCoordinates(x,y);
+    ImVec2 b = ConvertCoordinates(x+w,y+h);
     user_draw_list->AddRect(a, b, vdb_current_color, 0.0f, 0, vdb_current_line_width);
 }
 void vdb_rect_filled(float x, float y, float w, float h)
 {
-    ImVec2 a = ImVec2(x,y);
-    ImVec2 b = ImVec2(x+w,y+h);
+    ImVec2 a = ConvertCoordinates(x,y);
+    ImVec2 b = ConvertCoordinates(x+w,y+h);
     user_draw_list->AddRectFilled(a, b, vdb_current_color);
 }
 void vdb_circle(float x, float y, float r)
 {
-    user_draw_list->AddCircle(ImVec2(x, y), r, vdb_current_color, 12, vdb_current_line_width);
+    float r_display = r/(vdb_current_view.right-vdb_current_view.left); // could also do y-axis... ideally we do an ellipse?
+    user_draw_list->AddCircle(ConvertCoordinates(x, y), r_display, vdb_current_color, 12, vdb_current_line_width);
 }
 void vdb_circle_filled(float x, float y, float r)
 {
-    user_draw_list->AddCircleFilled(ImVec2(x, y), r, vdb_current_color, 12);
+    float r_display = r/(vdb_current_view.right-vdb_current_view.left); // could also do y-axis... ideally we do an ellipse?
+    user_draw_list->AddCircleFilled(ConvertCoordinates(x, y), r_display, vdb_current_color, 12);
 }

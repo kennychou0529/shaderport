@@ -1,6 +1,7 @@
 #pragma once
 
 // todo: vdb_text_center_x(); vdb_text_left(); ...
+void vdb_view(float left, float right, float bottom, float top);
 void vdb_color(float r, float g, float b, float a);
 void vdb_line_width(float px); // The width of lines is 1px (screen coordinates) by default
 void vdb_point_size(float px); // The radius of points is 1px (screen coordinates) by default

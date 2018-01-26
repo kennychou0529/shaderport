@@ -196,6 +196,7 @@ script_loop_t LoadScript()
 
     // add API functions
     {
+        tcc_add_symbol(s, "vdb_view", vdb_view);
         tcc_add_symbol(s, "vdb_color", vdb_color);
         tcc_add_symbol(s, "vdb_line_width", vdb_line_width);
         tcc_add_symbol(s, "vdb_point_size", vdb_point_size);

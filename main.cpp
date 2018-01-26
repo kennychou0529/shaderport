@@ -196,9 +196,24 @@ script_loop_t LoadScript()
 
     // add API functions
     {
+        tcc_add_symbol(s, "vdb_color", vdb_color);
+        tcc_add_symbol(s, "vdb_line_width", vdb_line_width);
+        tcc_add_symbol(s, "vdb_point_size", vdb_point_size);
         tcc_add_symbol(s, "vdb_path_clear", vdb_path_clear);
-        tcc_add_symbol(s, "vdb_path_line_to", vdb_path_line_to);
-        tcc_add_symbol(s, "vdb_path_fill_convex", vdb_path_fill_convex);
+        tcc_add_symbol(s, "vdb_path_to", vdb_path_to);
+        tcc_add_symbol(s, "vdb_path_fill", vdb_path_fill);
+        tcc_add_symbol(s, "vdb_path_stroke", vdb_path_stroke);
+        tcc_add_symbol(s, "vdb_text", vdb_text);
+        tcc_add_symbol(s, "vdb_point", vdb_point);
+        tcc_add_symbol(s, "vdb_line", vdb_line);
+        tcc_add_symbol(s, "vdb_triangle", vdb_triangle);
+        tcc_add_symbol(s, "vdb_triangle_filled", vdb_triangle_filled);
+        tcc_add_symbol(s, "vdb_quad", vdb_quad);
+        tcc_add_symbol(s, "vdb_quad_filled", vdb_quad_filled);
+        tcc_add_symbol(s, "vdb_rect", vdb_rect);
+        tcc_add_symbol(s, "vdb_rect_filled", vdb_rect_filled);
+        tcc_add_symbol(s, "vdb_circle", vdb_circle);
+        tcc_add_symbol(s, "vdb_circle_filled", vdb_circle_filled);
     }
 
     static unsigned char *code = NULL;

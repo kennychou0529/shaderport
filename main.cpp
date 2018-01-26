@@ -14,14 +14,9 @@
 #include "framegrab.cpp"
 #include "perframe.cpp"
 
-// required for IME input functionality in imgui
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
-#include "3rdparty/glfw3native.h"
-
-#ifdef _WIN32
-#undef APIENTRY // becomes defined by imgui when it include windows stuff for IME and clipboard
-#endif
+#include "3rdparty/glfw3native.h" // required for IME input functionality in imgui
 #include "3rdparty/imgui.cpp"
 #include "3rdparty/imgui_draw.cpp"
 #include "3rdparty/imgui_impl_glfw.cpp"

@@ -278,10 +278,14 @@ int main(int argc, char **argv)
         }
 
         frame_input_t input = PollFrameEvents(window);
+        bool imgui_want_keyboard = ImGui::GetIO().WantCaptureKeyboard;
         OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
         OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS);
         OneTimeEvent(screenshot_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
         OneTimeEvent(window_size_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
+        enter_button &= !imgui_want_keyboard;
+        screenshot_button &= !imgui_want_keyboard;
+        window_size_button &= !imgui_want_keyboard;
         bool escape_eaten = false;
 
         if (enter_button)
@@ -316,7 +320,6 @@ int main(int argc, char **argv)
             UpdateAndDraw(input);
         }
         AfterUpdateAndDraw(input);
-
 
         SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);
 

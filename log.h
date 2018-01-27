@@ -1,5 +1,7 @@
 #pragma once
 
+static char log_buffer[1024*1024];
+
 // todo: replace with internal console rendered to screen
 void Log(const char *fmt, ...)
 {

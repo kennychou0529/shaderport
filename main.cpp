@@ -1,5 +1,7 @@
 #include "3rdparty/glad.c"
 #include "3rdparty/glfw3.h"
+#define IMGUI_DISABLE_INCLUDE_IMCONFIG_H
+#include "imconfig.h"
 #include "3rdparty/imgui.h"
 #include "3rdparty/imgui_demo.cpp"
 #include "3rdparty/libtcc.h"

@@ -24,6 +24,15 @@
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "fonts/source_sans_pro.h"
 
+struct settings_t
+{
+    bool never_ask_on_exit;
+    int window_x;
+    int window_y;
+    int window_w;
+    int window_h;
+};
+
 void ErrorCallback(int error, const char* description)
 {
     fprintf(stderr, "Error %d: %s\n", error, description);
@@ -119,6 +128,8 @@ void AfterImGuiInit()
     ImGui::GetIO().MouseDrawCursor = true;
     ImGui::StyleColorsDark();
     ImGui::GetStyle().FrameRounding = 5.0f;
+
+    // ImGui::GetIO().IniFilename = "shaderport.ini";
 }
 
 void SetWindowSizeDialog(bool *escape_eaten, GLFWwindow *window, frame_input_t input, bool window_size_button, bool enter_button, bool escape_button)
@@ -236,9 +247,62 @@ script_loop_t LoadScript()
     return ScriptLoop;
 }
 
+void SaveSettings(settings_t s, const char *filename)
+{
+    FILE *f = fopen(filename, "wb");
+    if (!f)
+    {
+        printf("Failed to save settings file '%s'\n", filename);
+        return;
+    }
+    fprintf(f, "Pos=%d,%d\n", s.window_x, s.window_y);
+    fprintf(f, "Size=%d,%d\n", s.window_w, s.window_h);
+    fprintf(f, "NeverAskOnExit=%d\n", s.never_ask_on_exit);
+    fclose(f);
+}
+
+settings_t LoadSettingsOrDefault(const char *filename)
+{
+    settings_t settings = {0};
+    settings.window_x = -1;
+    settings.window_y = -1;
+    settings.window_w = 1000;
+    settings.window_h = 600;
+    settings.never_ask_on_exit = false;
+
+    FILE *f = fopen(filename, "rb");
+    if (!f)
+    {
+        return settings;
+    }
+    int file_size;
+    if (fseek(f, 0, SEEK_END) || (file_size = (int)ftell(f)) == -1 || fseek(f, 0, SEEK_SET))
+    {
+        fclose(f);
+        return settings;
+    }
+    char *line = (char*)malloc(file_size);
+
+    while (fscanf(f, "%s", line) == 1) // todo: more robust line-by-line reading?
+    {
+        // very rudimentary parser
+        int x,y;
+        int i;
+        if (sscanf(line, "Pos=%d,%d", &x, &y) == 2)          { settings.window_x = x; settings.window_y = y; }
+        else if (sscanf(line, "Size=%d,%d", &x, &y) == 2)    { settings.window_w = x; settings.window_h = y; }
+        else if (sscanf(line, "NeverAskOnExit=%d", &i) == 1) { settings.never_ask_on_exit = (i != 0); }
+    }
+
+    free(line);
+    return settings;
+}
+
 int main(int argc, char **argv)
 {
     // assert(false && "See comment above");
+
+    const char *settings_filename = "shaderport.ini";
+    settings_t settings = LoadSettingsOrDefault(settings_filename);
 
     glfwSetErrorCallback(ErrorCallback);
     if (!glfwInit())
@@ -254,7 +318,14 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_STENCIL_BITS,   8);
     glfwWindowHint(GLFW_DOUBLEBUFFER,   1);
     glfwWindowHint(GLFW_SAMPLES,        0);
+    glfwWindowHint(GLFW_VISIBLE,        0);
     GLFWwindow *window = glfwCreateWindow(1000, 600, "ShaderPort", NULL, NULL);
+
+    if (settings.window_x >= 0 && settings.window_y >= 0)
+        glfwSetWindowPos(window, settings.window_x, settings.window_y);
+    glfwSetWindowSize(window, settings.window_w, settings.window_h);
+    glfwShowWindow(window);
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -262,12 +333,10 @@ int main(int argc, char **argv)
 
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
     glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
-
     ImGui_ImplGlfw_Init(window, true);
     AfterImGuiInit();
 
     script_loop_t ScriptLoop = NULL;
-    bool never_ask_exit = true; // todo: put into ShaderPort settings
 
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
@@ -279,6 +348,12 @@ int main(int argc, char **argv)
         }
 
         frame_input_t input = PollFrameEvents(window);
+
+        settings.window_x = input.window_x;
+        settings.window_y = input.window_y;
+        settings.window_w = input.window_w;
+        settings.window_h = input.window_h;
+
         bool imgui_want_keyboard = ImGui::GetIO().WantCaptureKeyboard;
         OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
         OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS);
@@ -388,7 +463,7 @@ int main(int argc, char **argv)
             // after I captured the frame.
             FramegrabShowDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
 
-            if (!never_ask_exit && escape_button && !escape_eaten)
+            if (!settings.never_ask_on_exit && escape_button && !escape_eaten)
             {
                 ImGui::OpenPopup("Do you want to exit?##popup_exit");
             }
@@ -405,7 +480,7 @@ int main(int argc, char **argv)
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
-                ImGui::Checkbox("Never ask me again", &never_ask_exit);
+                ImGui::Checkbox("Never ask me again", &settings.never_ask_on_exit);
                 if (escape_button)
                 {
                     ImGui::CloseCurrentPopup();
@@ -432,7 +507,7 @@ int main(int argc, char **argv)
             }
         }
 
-        if (never_ask_exit && escape_button && !escape_eaten)
+        if (settings.never_ask_on_exit && escape_button && !escape_eaten)
         {
             glfwSetWindowShouldClose(window, true);
         }
@@ -447,6 +522,7 @@ int main(int argc, char **argv)
         }
     }
 
+    SaveSettings(settings, settings_filename);
     ImGui_ImplGlfw_Shutdown();
     glfwTerminate();
 

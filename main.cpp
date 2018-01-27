@@ -17,9 +17,12 @@
 #include "perframe.cpp"
 #include "settings.cpp"
 
+#ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
 #include "3rdparty/glfw3native.h" // required for IME input functionality in imgui
+#include <winuser.h> // required for SetWindowSize (to set top-most)
+#endif
 #include "3rdparty/imgui.cpp"
 #include "3rdparty/imgui_draw.cpp"
 #include "3rdparty/imgui_impl_glfw.cpp"
@@ -30,9 +33,6 @@ void ErrorCallback(int error, const char* description)
     fprintf(stderr, "Error %d: %s\n", error, description);
 }
 
-#ifdef _WIN32
-#include <winuser.h>
-#endif
 void SetWindowSize(GLFWwindow *window, int width, int height, bool topmost=false)
 {
     #ifdef _WIN32

@@ -284,12 +284,10 @@ int main(int argc, char **argv)
         OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS);
         OneTimeEvent(screenshot_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
         OneTimeEvent(window_size_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
-        enter_button &= !imgui_want_keyboard;
-        screenshot_button &= !imgui_want_keyboard;
-        window_size_button &= !imgui_want_keyboard;
+        OneTimeEvent(reload_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
         bool escape_eaten = false;
 
-        if (enter_button)
+        if (reload_button)
         {
             ScriptLoop = LoadScript();
         }

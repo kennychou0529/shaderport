@@ -155,51 +155,54 @@ void FramegrabShowDialog(bool *escape_eaten, bool screenshot_button, bool enter_
                 CloseCurrentPopup();
             }
         }
-        else if (mode == mode_sequence || mode == mode_ffmpeg)
+        else if (mode == mode_sequence)
         {
             static bool do_continue = false;
             static int start_from = 0;
+            static int frame_cap = 0;
+            InputInt("Number of frames", &frame_cap);
+            SameLine();
+            ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
+
+            Checkbox("Continue from last frame", &do_continue);
+            SameLine();
+            ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
+            if (!do_continue)
+            {
+                SameLine();
+                PushItemWidth(100.0f);
+                InputInt("Start from", &start_from);
+            }
+
+            if (Button("Start", ImVec2(120,0)) || enter_button)
+            {
+                RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !do_continue, start_from, alpha);
+            }
+            SameLine();
+            ShowHelpMarker("Press ESCAPE or CTRL+S to stop.");
+            SameLine();
+            if (Button("Cancel", ImVec2(120,0)))
+            {
+                CloseCurrentPopup();
+            }
+        }
+        else if (mode == mode_ffmpeg)
+        {
             static int frame_cap = 0;
             static float framerate = 60;
             static int crf = 21;
             InputInt("Number of frames", &frame_cap);
             SameLine();
             ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
+            SliderInt("Quality (lower is better)", &crf, 1, 51);
+            InputFloat("Framerate", &framerate);
 
-            if (mode == mode_sequence)
+            if (Button("Start", ImVec2(120,0)) || enter_button)
             {
-                Checkbox("Continue from last frame", &do_continue);
-                SameLine();
-                ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
-
-                if (!do_continue)
-                {
-                    SameLine();
-                    PushItemWidth(100.0f);
-                    InputInt("Start from", &start_from);
-                }
+                RecordVideoToFfmpeg(filename, framerate, crf, frame_cap, draw_imgui, draw_cursor, alpha);
             }
-            else if (mode == mode_ffmpeg)
-            {
-                SliderInt("Quality (lower is better)", &crf, 1, 51);
-                InputFloat("Framerate", &framerate);
-            }
-
-            if (framegrab.active && (Button("Stop", ImVec2(120,0)) || enter_button))
-            {
-                StopFramegrab();
-            }
-            else if (Button("Start", ImVec2(120,0)) || enter_button)
-            {
-                if (mode == mode_sequence)
-                {
-                    RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !do_continue, start_from, alpha);
-                }
-                else if (mode == mode_ffmpeg)
-                {
-                    RecordVideoToFfmpeg(filename, framerate, crf, frame_cap, draw_imgui, draw_cursor, alpha);
-                }
-            }
+            SameLine();
+            ShowHelpMarker("Press ESCAPE or CTRL+S to stop.");
             SameLine();
             if (Button("Cancel", ImVec2(120,0)))
             {

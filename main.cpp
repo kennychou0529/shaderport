@@ -267,7 +267,7 @@ int main(int argc, char **argv)
     AfterImGuiInit();
 
     script_loop_t ScriptLoop = NULL;
-    bool never_ask_exit = false; // todo: put into ShaderPort settings
+    bool never_ask_exit = true; // todo: put into ShaderPort settings
 
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))

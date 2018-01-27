@@ -13,6 +13,7 @@ struct framegrab_options_t
     int ffmpeg_crf;
     bool reset_num_screenshots;
     bool reset_num_video_frames;
+    int start_from;
     int video_frame_cap;
 };
 
@@ -39,19 +40,20 @@ void StartFrameGrab(framegrab_options_t opt)
 {
     framegrab.options = opt;
     if (opt.reset_num_screenshots)
-        framegrab.num_screenshots = 0;
+        framegrab.num_screenshots = opt.start_from;
     if (opt.reset_num_video_frames)
-        framegrab.num_video_frames = 0;
+        framegrab.num_video_frames = opt.start_from;
     framegrab.active = true;
     framegrab.should_stop = false;
 }
 
 void TakeScreenshot(
-    const char *filename, bool imgui, bool cursor, bool reset, bool alpha)
+    const char *filename, bool imgui, bool cursor, bool reset, int start_from, bool alpha)
 {
     framegrab_options_t opt = {0};
     opt.filename = filename;
     opt.reset_num_screenshots = reset;
+    opt.start_from = start_from;
     opt.draw_imgui = imgui;
     opt.draw_cursor = cursor;
     opt.alpha_channel = alpha;
@@ -59,11 +61,12 @@ void TakeScreenshot(
 }
 
 void RecordVideoToImageSequence(
-    const char *filename, int frame_cap, bool imgui, bool cursor, bool reset, bool alpha)
+    const char *filename, int frame_cap, bool imgui, bool cursor, bool reset, int start_from, bool alpha)
 {
     framegrab_options_t opt = {0};
     opt.filename = filename;
     opt.reset_num_video_frames = reset;
+    opt.start_from = start_from;
     opt.draw_imgui = imgui;
     opt.draw_cursor = cursor;
     opt.alpha_channel = alpha;
@@ -131,12 +134,19 @@ void FramegrabShowDialog(bool *escape_eaten, bool screenshot_button, bool enter_
         if (mode == mode_single)
         {
             static bool do_continue = true;
+            static int start_from = 0;
             Checkbox("Continue counting", &do_continue);
             SameLine();
             ShowHelpMarker("Enable this to continue the image filename number suffix from the last screenshot captured (in this program session).");
+            if (!do_continue)
+            {
+                SameLine();
+                PushItemWidth(100.0f);
+                InputInt("Start from", &start_from);
+            }
             if (Button("OK", ImVec2(120,0)) || enter_button)
             {
-                TakeScreenshot(filename, draw_imgui, draw_cursor, !do_continue, alpha);
+                TakeScreenshot(filename, draw_imgui, draw_cursor, !do_continue, start_from, alpha);
                 CloseCurrentPopup();
             }
             SameLine();
@@ -148,11 +158,11 @@ void FramegrabShowDialog(bool *escape_eaten, bool screenshot_button, bool enter_
         else if (mode == mode_sequence || mode == mode_ffmpeg)
         {
             static bool do_continue = false;
+            static int start_from = 0;
             static int frame_cap = 0;
             static float framerate = 60;
             static int crf = 21;
             InputInt("Number of frames", &frame_cap);
-            SliderInt("Quality (lower is better)", &crf, 1, 51);
             SameLine();
             ShowHelpMarker("0 for unlimited. To stop the recording at any time, press the same hotkey you used to open this dialog (CTRL+S by default).");
 
@@ -161,9 +171,17 @@ void FramegrabShowDialog(bool *escape_eaten, bool screenshot_button, bool enter_
                 Checkbox("Continue from last frame", &do_continue);
                 SameLine();
                 ShowHelpMarker("Enable this to continue the image filename number suffix from the last image sequence that was recording (in this program session).");
+
+                if (!do_continue)
+                {
+                    SameLine();
+                    PushItemWidth(100.0f);
+                    InputInt("Start from", &start_from);
+                }
             }
             else if (mode == mode_ffmpeg)
             {
+                SliderInt("Quality (lower is better)", &crf, 1, 51);
                 InputFloat("Framerate", &framerate);
             }
 
@@ -173,13 +191,13 @@ void FramegrabShowDialog(bool *escape_eaten, bool screenshot_button, bool enter_
             }
             else if (Button("Start", ImVec2(120,0)) || enter_button)
             {
-                if (mode == mode_ffmpeg)
+                if (mode == mode_sequence)
+                {
+                    RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !do_continue, start_from, alpha);
+                }
+                else if (mode == mode_ffmpeg)
                 {
                     RecordVideoToFfmpeg(filename, framerate, crf, frame_cap, draw_imgui, draw_cursor, alpha);
-                }
-                else
-                {
-                    RecordVideoToImageSequence(filename, frame_cap, draw_imgui, draw_cursor, !do_continue, alpha);
                 }
             }
             SameLine();

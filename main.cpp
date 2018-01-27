@@ -24,15 +24,6 @@
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "fonts/source_sans_pro.h"
 
-struct settings_t
-{
-    bool never_ask_on_exit;
-    int window_x;
-    int window_y;
-    int window_w;
-    int window_h;
-};
-
 void ErrorCallback(int error, const char* description)
 {
     fprintf(stderr, "Error %d: %s\n", error, description);
@@ -246,6 +237,15 @@ script_loop_t LoadScript()
     tcc_delete(s);
     return ScriptLoop;
 }
+
+struct settings_t
+{
+    bool never_ask_on_exit;
+    int window_x;
+    int window_y;
+    int window_w;
+    int window_h;
+};
 
 void SaveSettings(settings_t s, const char *filename)
 {

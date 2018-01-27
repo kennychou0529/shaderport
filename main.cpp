@@ -267,6 +267,7 @@ int main(int argc, char **argv)
     AfterImGuiInit();
 
     script_loop_t ScriptLoop = NULL;
+    bool never_ask_exit = false; // todo: put into ShaderPort settings
 
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
@@ -369,7 +370,12 @@ int main(int argc, char **argv)
 
             free(data);
 
-            if (screenshot_button)
+            if (escape_button)
+            {
+                StopFramegrab();
+                escape_eaten = true;
+            }
+            else if (screenshot_button)
             {
                 StopFramegrab();
             }
@@ -383,6 +389,31 @@ int main(int argc, char **argv)
             // elements, but I don't want to render *this* dialog box yet; I want to render it
             // after I captured the frame.
             FramegrabShowDialog(&escape_eaten, screenshot_button, enter_button, escape_button);
+
+            if (!never_ask_exit && escape_button && !escape_eaten)
+            {
+                ImGui::OpenPopup("Do you want to exit?##popup_exit");
+            }
+            else if (ImGui::BeginPopupModal("Do you want to exit?##popup_exit", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                if (ImGui::Button("Yes"))
+                {
+                    glfwSetWindowShouldClose(window, true);
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                ImGui::Checkbox("Never ask me again", &never_ask_exit);
+                if (escape_button)
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
 
             ImGui::Render();
         }
@@ -403,12 +434,12 @@ int main(int argc, char **argv)
             }
         }
 
-        glfwSwapBuffers(window);
-
-        if (escape_button && !escape_eaten)
+        if (never_ask_exit && escape_button && !escape_eaten)
         {
             glfwSetWindowShouldClose(window, true);
         }
+
+        glfwSwapBuffers(window);
 
         GLenum error = glGetError();
         if (error != GL_NO_ERROR)

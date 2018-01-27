@@ -44,10 +44,50 @@ void AfterUpdateAndDraw(frame_input_t input)
     ResetGLState(input);
 }
 
+void TestImageWidget(frame_input_t input)
+{
+    // todo: plasma coloring in shader RED channel, GREEN channel, BLUE channel
+    // todo: rgb coloring in shader, select channels
+    // todo: brightness and bias in shader
+    // todo: nearest/linear filtering context
+    // todo: pixel inspector
+
+    static bool entry = true;
+    static unsigned char *src = NULL;
+    static GLuint texture_id = 0;
+    static int width = 0;
+    static int height = 0;
+    static int channels = 0;
+    if (entry)
+    {
+        src = stbi_load("C:/Temp/dummy.png", &width, &height, &channels, 3);
+        texture_id = TexImage2D(src, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+        entry = false;
+    }
+
+    #if 1
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f,0.0f));
+    ImGui::Begin("Image");
+    ImGui::Image((ImTextureID)texture_id, ImGui::GetContentRegionAvail());
+    ImGui::End();
+    ImGui::PopStyleVar();
+    #else
+    IMGUI_API void  AddImage(ImTextureID user_texture_id, const ImVec2& a, const ImVec2& b, const ImVec2& uv_a = ImVec2(0,0), const ImVec2& uv_b = ImVec2(1,1), ImU32 col = 0xFFFFFFFF);
+    ImGui::Begin("Image");
+    ImVec2 pos = ImGui::GetWindowPos();
+    ImVec2 size = ImGui::GetWindowSize();
+    ImDrawList *draw = ImGui::GetWindowDrawList();
+    draw->AddLine(ImVec2(10+pos.x,10+pos.y), ImVec2(50+pos.x, 50+pos.y), IM_COL32(255,255,255,255));
+    ImGui::End();
+    #endif
+}
+
 void UpdateAndDraw(frame_input_t input)
 {
     static float anim_time = 0.0f;
     anim_time += 1.0f/60.0f;
+
+    TestImageWidget(input);
 
     // test using imgui draw api
     #if 0

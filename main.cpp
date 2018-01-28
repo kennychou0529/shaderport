@@ -14,6 +14,8 @@
 #include "frameinput.h"
 
 #include "framegrab.cpp"
+#include "vdb_impl.cpp"
+#include "commandbuffer.cpp"
 #include "perframe.cpp"
 #include "settings.cpp"
 
@@ -244,6 +246,13 @@ script_loop_t LoadScript()
 int main(int argc, char **argv)
 {
     // assert(false && "See comment above");
+
+    unsigned int command_buffer_allocation_size = 1024*1024*10;
+    if (!AllocateCommandBuffers(command_buffer_allocation_size))
+    {
+        printf("Did not have enough memory to allocate draw command buffers. Lower the allocation size by passing the command-line argument -buffer_size <your size in bytes>\n");
+        return 1;
+    }
 
     const char *settings_filename = "shaderport.ini";
     settings_t settings = LoadSettingsOrDefault(settings_filename);

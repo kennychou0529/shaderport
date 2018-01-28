@@ -17,14 +17,15 @@ void PushCommandFloat32(float x) {
     *(float*)(b->data + b->used) = x;
     b->used += sizeof(float);
 }
-void PushCommandString(const char *x) {
+void PushCommandString(const char *x, int n) {
     command_buffer_t *b = GetBackBuffer();
     assert(b && b->data && "Back buffer not allocated");
-    while (*x) {
-        assert(b->used + 1 <= b->max_size);
-        *(char*)(b->data + b->used++) = *x;
-        x++;
-    }
+    if (n > 256)
+        n = 256;
+    assert(b->used + n + 1 <= b->max_size);
+    PushCommandUint8(n);
+    for (int i = 0; i < n; i++)
+        *(char*)(b->data + b->used++) = x[i];
 }
 #define f(x) PushCommandFloat32(x)
 #define u(id) PushCommandUint8(id)
@@ -38,7 +39,6 @@ void PushCommand_vdb_path_clear() { u(id_path_clear); }
 void PushCommand_vdb_path_to(float x, float y) { u(id_path_to); f(x); f(y); }
 void PushCommand_vdb_path_fill() { u(id_path_fill); }
 void PushCommand_vdb_path_stroke() { u(id_path_stroke); }
-void PushCommand_vdb_text(float x, float y, const char *fmt, ...) { u(id_text); f(x); f(y); PushCommandString(fmt); }
 void PushCommand_vdb_point(float x, float y) { u(id_point); f(x); f(y); }
 void PushCommand_vdb_line(float x1, float y1, float x2, float y2) { u(id_line); f(x1); f(y1); f(x2); f(y2); }
 void PushCommand_vdb_triangle(float x1, float y1, float x2, float y2, float x3, float y3) { u(id_triangle); f(x1); f(y1); f(x2); f(y2); f(x3); f(y3); }
@@ -49,6 +49,18 @@ void PushCommand_vdb_rect(float x, float y, float w, float h) { u(id_rect); f(x)
 void PushCommand_vdb_rect_filled(float x, float y, float w, float h) { u(id_rect_filled); f(x); f(y); f(w); f(h); }
 void PushCommand_vdb_circle(float x, float y, float r) { u(id_circle); f(x); f(y); f(r); }
 void PushCommand_vdb_circle_filled(float x, float y, float r) { u(id_circle_filled); f(x); f(y); f(r); }
+void PushCommand_vdb_text(float x, float y, const char *fmt, ...) {
+    char buffer[1024];
+    va_list args;
+    va_start(args, fmt);
+    int w = vsnprintf(buffer, sizeof(buffer), fmt, args);
+    if (w == -1 || w >= (int)sizeof(buffer))
+        w = (int)sizeof(buffer) - 1;
+    buffer[w] = 0;
+    va_end(args);
+
+    u(id_text); f(x); f(y); PushCommandString(buffer,w);
+}
 #undef f
 #undef u
 

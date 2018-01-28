@@ -126,3 +126,55 @@ bool AllocateCommandBuffers(uint32_t max_size)
     return true;
 }
 
+
+//
+// Dummy stuff
+// todo: remove
+//
+
+void PushCommandUint8(uint8_t x)
+{
+    assert(back_buffer && back_buffer->data && "Back buffer not allocated");
+    assert(back_buffer->size + sizeof(uint8_t) <= back_buffer->max_size);
+    *(uint8_t*)back_buffer->data[back_buffer->size] = x;
+    back_buffer->size += sizeof(uint8_t);
+}
+void PushCommandFloat32(float x) {
+    assert(back_buffer && back_buffer->data && "Back buffer not allocated");
+    assert(back_buffer->size + sizeof(float) <= back_buffer->max_size);
+    *(float*)back_buffer->data[back_buffer->size] = x;
+    back_buffer->size += sizeof(float);
+}
+void PushCommandString(const char *x) {
+    assert(back_buffer && back_buffer->data && "Back buffer not allocated");
+    while (*x) {
+        assert(back_buffer->size + 1 <= back_buffer->max_size);
+        *(char*)back_buffer->data[back_buffer->size++] = *x;
+        x++;
+    }
+}
+#define f(x) PushCommandFloat32(x)
+#define u(id) PushCommandUint8(id)
+void PushCommand_vdb_new_frame() { PushCommandString("new frame"); }
+void PushCommand_vdb_render() { PushCommandString("end frame"); }
+void PushCommand_vdb_view(float left, float right, float bottom, float top) { u(id_view); f(left); f(right); f(bottom); f(top); }
+void PushCommand_vdb_color(float r, float g, float b, float a) { u(id_color); f(r); f(g); f(b); f(a); }
+void PushCommand_vdb_line_width(float pixel_width) { u(id_line_width); f(pixel_width); }
+void PushCommand_vdb_point_size(float pixel_size) { u(id_point_size); f(pixel_size); }
+void PushCommand_vdb_path_clear() { u(id_path_clear); }
+void PushCommand_vdb_path_to(float x, float y) { u(id_path_to); f(x); f(y); }
+void PushCommand_vdb_path_fill() { u(id_path_fill); }
+void PushCommand_vdb_path_stroke() { u(id_path_stroke); }
+void PushCommand_vdb_text(float x, float y, const char *text) { u(id_text); f(x); f(y); PushCommandString(text); }
+void PushCommand_vdb_point(float x, float y) { u(id_point); f(x); f(y); }
+void PushCommand_vdb_line(float x1, float y1, float x2, float y2) { u(id_line); f(x1); f(y1); f(x2); f(y2); }
+void PushCommand_vdb_triangle(float x1, float y1, float x2, float y2, float x3, float y3) { u(id_triangle); f(x1); f(y1); f(x2); f(y2); f(x3); f(y3); }
+void PushCommand_vdb_triangle_filled(float x1, float y1, float x2, float y2, float x3, float y3) { u(id_triangle_filled); f(x1); f(y1); f(x2); f(y2); f(x3); f(y3); }
+void PushCommand_vdb_quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) { u(id_quad); f(x1); f(y1); f(x2); f(y2); f(x3); f(y3); f(x4); f(y4); }
+void PushCommand_vdb_quad_filled(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4) { u(id_quad_filled); f(x1); f(y1); f(x2); f(y2); f(x3); f(y3); f(x4); f(y4); }
+void PushCommand_vdb_rect(float x, float y, float w, float h) { u(id_rect); f(x); f(y); f(w); f(h); }
+void PushCommand_vdb_rect_filled(float x, float y, float w, float h) { u(id_rect_filled); f(x); f(y); f(w); f(h); }
+void PushCommand_vdb_circle(float x, float y, float r) { u(id_circle); f(x); f(y); f(r); }
+void PushCommand_vdb_circle_filled(float x, float y, float r) { u(id_circle_filled); f(x); f(y); f(r); }
+#undef f
+#undef u

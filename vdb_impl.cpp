@@ -54,7 +54,7 @@ void vdb_view(float left, float right, float bottom, float top)
 }
 
 // todo: are x,y screen or framebuffer coordinates?
-void vdb_text(float x, float y, const char *text)
+void vdb_text(float x, float y, const char *text, int length)
 {
     ImVec2 pos = ConvertCoordinates(x,y);
     ImVec2 text_size = ImGui::CalcTextSize(text);
@@ -66,7 +66,7 @@ void vdb_text(float x, float y, const char *text)
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f,0.0f,0.0f,0.4f));
     ImGui::SetNextWindowPos(pos);
     ImGui::Begin(id, 0, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text(text);
+    ImGui::TextUnformatted(text, text + length);
     ImGui::End();
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();

@@ -73,7 +73,7 @@ struct command_buffer_t
             else if (id == id_path_to)          { x=F;y=F;vdb_path_to(x,y); }
             else if (id == id_path_fill)        { vdb_path_fill(); }
             else if (id == id_path_stroke)      { vdb_path_stroke(); }
-            else if (id == id_text)             { x=F;y=F;n=ReadUint8();s=ReadString(n);vdb_text(x,y,s); }
+            else if (id == id_text)             { x=F;y=F;n=ReadUint8();s=ReadString(n);vdb_text(x,y,s,n); }
             else if (id == id_point)            { x=F;y=F;vdb_point(x,y); }
             else if (id == id_line)             { x1=F;y1=F;x2=F;y2=F;vdb_line(x1,y1,x2,y2); }
             else if (id == id_triangle)         { x1=F;y1=F;x2=F;y2=F;x3=F;y3=F;vdb_triangle(x1,y1,x2,y2,x3,y3); }

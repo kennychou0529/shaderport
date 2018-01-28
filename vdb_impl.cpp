@@ -1,4 +1,3 @@
-#include "vdb.h"
 #include "transform.h"
 #include "frameinput.h"
 // #include "3rdparty/imgui.h"
@@ -55,13 +54,12 @@ void vdb_view(float left, float right, float bottom, float top)
 }
 
 // todo: are x,y screen or framebuffer coordinates?
-void DrawTextUnformatted(float x, float y, const char *text)
+void vdb_text(float x, float y, const char *text)
 {
     ImVec2 pos = ConvertCoordinates(x,y);
     ImVec2 text_size = ImGui::CalcTextSize(text);
     pos.x -= text_size.x*0.5f;
     pos.y -= text_size.y*0.5f;
-    #if 1
     char id[32];
     sprintf(id, "##DrawString%d", draw_string_id++);
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f,1.0f,1.0f,1.0f));
@@ -72,14 +70,9 @@ void DrawTextUnformatted(float x, float y, const char *text)
     ImGui::End();
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
-    #else
-    // this will render on top of everything, which I don't really want!
-    ImDrawList *draw = ImGui::GetOverlayDrawList();
-    draw->AddText(ImVec2(x+1,y+1), IM_COL32(0,0,0,255), text);
-    draw->AddText(ImVec2(x,y), IM_COL32(255,255,255,255), text);
-    #endif
 }
 
+#if 0
 void vdb_text(float x, float y, const char *fmt, ...)
 {
     char buffer[1024];
@@ -92,6 +85,7 @@ void vdb_text(float x, float y, const char *fmt, ...)
     DrawTextUnformatted(x, y, buffer);
     va_end(args);
 }
+#endif
 
 void vdb_path_clear()
 {

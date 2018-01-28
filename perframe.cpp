@@ -27,7 +27,7 @@ enum command_id_t
     id_count // todo: assert(id_count <= 256); // ensure id fits into uint8
 };
 
-struct cmdbuf_t
+struct command_buffer_parser_t
 {
     uint8_t *data; // points to pre-allocated array of bytes
     uint32_t size; // number of bytes available in data
@@ -67,7 +67,7 @@ struct cmdbuf_t
             else if (id == id_path_to)          vdb_path_to(f,f);
             else if (id == id_path_fill)        vdb_path_fill();
             else if (id == id_path_stroke)      vdb_path_stroke();
-            else if (id == id_text)             DrawTextUnformatted(f,f, ReadString(ReadUint8()));
+            else if (id == id_text)             vdb_text(f,f, ReadString(ReadUint8()));
             else if (id == id_point)            vdb_point(f,f);
             else if (id == id_line)             vdb_line(f,f,f,f);
             else if (id == id_triangle)         vdb_triangle(f,f,f,f,f,f);
@@ -82,6 +82,16 @@ struct cmdbuf_t
         }
     }
 };
+
+struct command_buffer_t
+{
+    uint8_t *data;
+    uint32_t size;
+    uint32_t max_size;
+};
+
+static command_buffer_t *back_buffer = NULL;
+static command_buffer_t *front_buffer = NULL;
 
 void ResetGLState(frame_input_t input)
 {

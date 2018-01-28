@@ -194,6 +194,7 @@ script_loop_t LoadScript()
         return NULL;
     }
 
+    #if 0
     // add API functions
     {
         tcc_add_symbol(s, "vdb_view", vdb_view);
@@ -216,6 +217,7 @@ script_loop_t LoadScript()
         tcc_add_symbol(s, "vdb_circle", vdb_circle);
         tcc_add_symbol(s, "vdb_circle_filled", vdb_circle_filled);
     }
+    #endif
 
     static unsigned char *code = NULL;
     int n = tcc_relocate(s, NULL);
@@ -311,6 +313,9 @@ int main(int argc, char **argv)
 
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
+        #if 1
+        UpdateAndDraw(input);
+        #else
         if (ScriptLoop)
         {
             script_input_t s = {0};
@@ -335,6 +340,7 @@ int main(int argc, char **argv)
         {
             UpdateAndDraw(input);
         }
+        #endif
         AfterUpdateAndDraw(input);
 
         SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);

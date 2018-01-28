@@ -120,7 +120,7 @@ void vdb_point(float x, float y)
     ImVec2 c = ConvertCoordinates(x, y);
     ImVec2 a = ImVec2(c.x - vdb_current_point_size, c.y - vdb_current_point_size);
     ImVec2 b = ImVec2(c.x + vdb_current_point_size, c.y + vdb_current_point_size);
-    user_draw_list->AddRect(a, b, vdb_current_color);
+    user_draw_list->AddRectFilled(a, b, vdb_current_color);
 }
 void vdb_line(float x1, float y1, float x2, float y2)
 {

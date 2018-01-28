@@ -3,14 +3,18 @@
 // todo: vdb_text_center_x(); vdb_text_left(); ...
 void vdb_new_frame(); // this is a signal that we are to start writing commands to the backbuffer
 void vdb_render(); // this will swap the backbuffer with the front buffer, to be drawn from now
-void vdb_view(float left, float right, float bottom, float top);
-void vdb_color(float r, float g, float b, float a);
-void vdb_line_width(float pixel_width);
-void vdb_point_size(float pixel_size);
+
+// todo: path cannot be interrupted with other draw calls
+// todo: remove path functions altogether
 void vdb_path_clear();
 void vdb_path_to(float x, float y);
 void vdb_path_fill();
 void vdb_path_stroke();
+
+void vdb_view(float left, float right, float bottom, float top);
+void vdb_color(float r, float g, float b, float a);
+void vdb_line_width(float pixel_width);
+void vdb_point_size(float pixel_size);
 void vdb_text(float x, float y, const char *fmt, ...);
 void vdb_point(float x, float y);
 void vdb_line(float x1, float y1, float x2, float y2);

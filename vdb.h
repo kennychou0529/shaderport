@@ -1,6 +1,9 @@
 #pragma once
 
 // todo: vdb_text_center_x(); vdb_text_left(); ...
+void vdb_new_frame(); // this is a signal that we are to start writing commands to the backbuffer
+void vdb_render(); // this will swap the backbuffer with the front buffer, to be drawn from now
+
 void vdb_view(float left, float right, float bottom, float top);
 void vdb_color(float r, float g, float b, float a);
 void vdb_line_width(float px); // The width of lines is 1px (screen coordinates) by default

@@ -29,8 +29,6 @@ void PushCommandString(const char *x, int n) {
 }
 #define f(x) PushCommandFloat32(x)
 #define u(id) PushCommandUint8(id)
-void PushCommand_vdb_new_frame() { GetBackBuffer()->used = 0; }
-void PushCommand_vdb_render() { SwapCommandBuffers(); }
 void PushCommand_vdb_view(float left, float right, float bottom, float top) { u(id_view); f(left); f(right); f(bottom); f(top); }
 void PushCommand_vdb_color(float r, float g, float b, float a) { u(id_color); f(r); f(g); f(b); f(a); }
 void PushCommand_vdb_line_width(float pixel_width) { u(id_line_width); f(pixel_width); }
@@ -64,6 +62,8 @@ void PushCommand_vdb_text(float x, float y, const char *fmt, ...) {
 #undef f
 #undef u
 
+void vdb_new_frame() { GetBackBuffer()->used = 0; }
+void vdb_render() { SwapCommandBuffers(); }
 
 script_loop_t LoadScript()
 {
@@ -83,8 +83,9 @@ script_loop_t LoadScript()
     // add API functions
     #if 1
     {
-        tcc_add_symbol(s, "vdb_new_frame", PushCommand_vdb_new_frame);
-        tcc_add_symbol(s, "vdb_render", PushCommand_vdb_render);
+        tcc_add_symbol(s, "vdb_new_frame", vdb_new_frame);
+        tcc_add_symbol(s, "vdb_render", vdb_render);
+
         tcc_add_symbol(s, "vdb_view", PushCommand_vdb_view);
         tcc_add_symbol(s, "vdb_color", PushCommand_vdb_color);
         tcc_add_symbol(s, "vdb_line_width", PushCommand_vdb_line_width);

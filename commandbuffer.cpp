@@ -103,7 +103,7 @@ void SwapCommandBuffers()
     back_buffer = temp;
 }
 
-bool AllocateCommandBuffers(uint32 max_size)
+bool AllocateCommandBuffers(uint32_t max_size)
 {
     assert(!command_buffer1.data && "Buffer already allocated");
     assert(!command_buffer2.data && "Buffer already allocated");

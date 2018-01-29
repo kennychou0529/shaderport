@@ -11,13 +11,12 @@
 #include "3rdparty/stb_image.h"
 
 #include "log.h"
-#include "frameinput.h"
-
-#include "framegrab.cpp"
-#include "vdb_impl.cpp"
-#include "commandbuffer.cpp"
-#include "settings.cpp"
-#include "script.cpp"
+#include "frame_input.h"
+#include "frame_grab.h"
+#include "vdb_implementation.h"
+#include "command_buffer.h"
+#include "settings.h"
+#include "connection_script.h"
 
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32

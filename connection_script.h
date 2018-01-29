@@ -1,4 +1,4 @@
-// todo: This is temporary. Just for drafting out the API
+#pragma once
 #include "script_input.h"
 
 typedef void (*script_loop_t)(script_input_t);

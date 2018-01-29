@@ -1,3 +1,4 @@
+#pragma once
 struct settings_t
 {
     bool never_ask_on_exit;

@@ -1,5 +1,5 @@
-#include "transform.h"
-#include "frameinput.h"
+#pragma once
+#include "frame_input.h"
 // #include "3rdparty/imgui.h"
 
 static int draw_string_id = 0;

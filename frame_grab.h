@@ -37,7 +37,7 @@ void RecordVideoToFfmpeg(const char *filename, float fps, int crf, int frame_cap
 // terminal that the application ran from (in the PATH variable). If you're on Windows, you will want
 // to change your PATH environment variable to point to the folder holding the ffmpeg executable.
 
-#include "frameinput.h"
+#include "frame_input.h"
 #include "texture.h"
 
 struct framegrab_options_t

@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 
 enum command_id_t

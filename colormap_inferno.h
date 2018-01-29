@@ -1,3 +1,4 @@
+#pragma once
 // Red, Green, Blue values (0.0 to 1.0) by linearly increasing source value
 const double cm_inferno[] = {
 1.46159096e-03,   4.66127766e-04,   1.38655200e-02,

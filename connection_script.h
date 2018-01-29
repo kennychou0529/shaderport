@@ -1,5 +1,6 @@
 #pragma once
 #include "script_input.h"
+#include "3rdparty/tinycthread.h"
 
 typedef void (*script_loop_t)(script_input_t);
 

@@ -17,8 +17,8 @@
 #include "command_buffer.h"
 #include "settings.h"
 
-#include "connection_script_direct.h"
-// #include "connection_script.h"
+// #include "connection_script_direct.h"
+#include "connection_script.h"
 
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -30,6 +30,9 @@
 #include "3rdparty/imgui_draw.cpp"
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "fonts/source_sans_pro.h"
+
+// important that this is included after imgui for some reason, otherwise app crashes on start-up
+#include "3rdparty/tinycthread.c"
 
 void ErrorCallback(int error, const char* description)
 {

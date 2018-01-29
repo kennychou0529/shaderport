@@ -72,8 +72,7 @@ void vdb_text(float x, float y, const char *text, int length)
     ImGui::PopStyleColor();
 }
 
-#if 0
-void vdb_text(float x, float y, const char *fmt, ...)
+void vdb_text_formatted(float x, float y, const char *fmt, ...)
 {
     char buffer[1024];
     va_list args;
@@ -82,10 +81,9 @@ void vdb_text(float x, float y, const char *fmt, ...)
     if (w == -1 || w >= (int)sizeof(buffer))
         w = (int)sizeof(buffer) - 1;
     buffer[w] = 0;
-    DrawTextUnformatted(x, y, buffer);
+    vdb_text(x, y, buffer, w);
     va_end(args);
 }
-#endif
 
 void vdb_path_clear()
 {

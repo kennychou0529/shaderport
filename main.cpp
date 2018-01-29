@@ -16,7 +16,9 @@
 #include "vdb_implementation.h"
 #include "command_buffer.h"
 #include "settings.h"
-#include "connection_script.h"
+
+#include "connection_script_direct.h"
+// #include "connection_script.h"
 
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32

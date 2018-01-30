@@ -94,73 +94,22 @@ struct command_buffer_t
     }
 };
 
-union draw_cmd_t
-{
-    struct cmd_vdb_view_t { float left, right, bottom, top; void Draw() { vdb_view(left, right, bottom, top); } };
-    struct cmd_vdb_color_t { float r, g, b, a; void Draw() { vdb_color(r, g, b, a); } };
-    struct cmd_vdb_line_width_t { float pixel_width; void Draw() { vdb_line_width(pixel_width); } };
-    struct cmd_vdb_point_size_t { float pixel_size; void Draw() { vdb_point_size(pixel_size); } };
-    struct cmd_vdb_text_t { float x, y, const char *text; int n; void Draw() { vdb_text(x, y, text, n); } };
-    struct cmd_vdb_point_t { float x, y; void Draw() { vdb_point(x, y); } };
-    struct cmd_vdb_line_t { float x1, y1, x2, y2; void Draw() { vdb_line(x1, y1, x2, y2); } };
-    struct cmd_vdb_triangle_t { float x1, y1, x2, y2, x3, y3; void Draw() { vdb_triangle(x1, y1, x2, y2, x3, y3); } };
-    struct cmd_vdb_triangle_filled_t { float x1, y1, x2, y2, x3, y3; void Draw() { vdb_triangle_filled(x1, y1, x2, y2, x3, y3); } };
-    struct cmd_vdb_quad_t { float x1, y1, x2, y2, x3, y3, x4, y4; void Draw() { vdb_quad(x1, y1, x2, y2, x3, y3, x4, y4); } };
-    struct cmd_vdb_quad_filled_t { float x1, y1, x2, y2, x3, y3, x4, y4; void Draw() { vdb_quad_filled(x1, y1, x2, y2, x3, y3, x4, y4); } };
-    struct cmd_vdb_rect_t { float x, y, w, h; void Draw() { vdb_rect(x, y, w, h); } };
-    struct cmd_vdb_rect_filled_t { float x, y, w, h; void Draw() { vdb_rect_filled(x, y, w, h); } };
-    struct cmd_vdb_circle_t { float x, y, r; void Draw() { vdb_circle(x, y, r); } };
-    struct cmd_vdb_circle_filled_t { float x, y, r; void Draw() { vdb_circle_filled(x, y, r); } };
-}
-
-static command_buffer_t command_buffer1 = {0};
-static command_buffer_t command_buffer2 = {0};
-
-static command_buffer_t *back_buffer = NULL;
-static command_buffer_t *front_buffer = NULL;
-
-command_buffer_t *GetFrontBuffer() { return front_buffer; }
-command_buffer_t *GetBackBuffer() { return back_buffer; }
+static command_buffer_t command_buffer = {0};
 
 mtx_t front_buffer_mutex = {0};
-void LockFrontBuffer() { mtx_lock(&mutex_command_buffer); }
-void ReleaseFrontBuffer() { mtx_unlock(&mutex_command_buffer); thrd_yield(); }
-
-void SwapCommandBuffers()
-{
-    // two threads might want to use the front buffer:
-    // 1) the main thread wants to draw it at 60 fps
-    // 2) the connection thread wants to swap it with
-    // the back buffer once it has finished receiving
-    // data.
-    LockFrontBuffer();
-
-    command_buffer_t *temp = front_buffer;
-    front_buffer = back_buffer;
-    back_buffer = temp;
-    ReleaseFrontBuffer();
-}
+void LockCommandBuffer() { mtx_lock(&mutex_command_buffer); }
+void ReleaseCommandBuffer() { mtx_unlock(&mutex_command_buffer); thrd_yield(); }
 
 bool AllocateCommandBuffers(uint32_t max_size)
 {
-    assert(!command_buffer1.data && "Buffer already allocated");
-    assert(!command_buffer2.data && "Buffer already allocated");
+    assert(!command_buffer.data && "Buffer already allocated");
     assert(id_count <= 256 && "Command IDs cannot exceed the size of a uint8 (256) for now");
 
-    command_buffer1.data = (uint8_t*)malloc(max_size);
-    if (!command_buffer1.data)
+    command_buffer.data = (uint8_t*)malloc(max_size);
+    if (!command_buffer.data)
         return false;
-    command_buffer1.used = 0;
-    command_buffer1.max_size = max_size;
-
-    command_buffer2.data = (uint8_t*)malloc(max_size);
-    if (!command_buffer2.data)
-        return false;
-    command_buffer2.used = 0;
-    command_buffer2.max_size = max_size;
-
-    back_buffer = &command_buffer1;
-    front_buffer = &command_buffer2;
+    command_buffer.used = 0;
+    command_buffer.max_size = max_size;
 
     mtx_init(&mutex_command_buffer, mtx_plain);
 

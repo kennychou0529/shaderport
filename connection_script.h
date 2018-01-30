@@ -60,6 +60,11 @@ int ScriptDataWelcomerThread(void *arg)
                         copy_from = script_data_buffer + i;
                         copy_count = script_data_used - i;
                         frame_begun = true;
+                        consecutive_new_frame_markers = 0;
+                        LockCommandBuffer();
+                        command_buffer.used = 0; // clear command buffer
+                        ReleaseCommandBuffer();
+                        break;
                     }
                 }
                 else
@@ -69,35 +74,18 @@ int ScriptDataWelcomerThread(void *arg)
             }
         }
 
+        // just copy all data into the command buffer immediately
+        // don't bother locking it
         if (frame_begun)
         {
-            command_buffer_t *b = GetBackBuffer();
+            command_buffer_t *b = &command_buffer;
             if (b->used + copy_count > b->max_size)
             {
-                SwapCommandBuffers();
-                printf("Backbuffer filled up, truncating backbuffer. Some graphical glitches may occur.\n");
+                copy_count = b->max_size - b->used;
+                printf("Backbuffer filled up, truncating data. Some graphical glitches may occur.\n");
                 // todo: log this error to on-screen console, warn user
             }
-            else
-            {
-                static uint32_t consecutive_end_frame_markers = 0;
-                for (uint32_t i = 0; i < copy_count; i++)
-                {
-                    // todo: is it possible to send a valid sequence of 8 consecutive end frame markers
-                    // that is *not* an end frame marker? yes...
-
-                    // todo: maybe we should parse IDs here in the first place, and maybe
-                    // generate an easier draw list for the front buffer (so they don't
-                    // have to parse IDs). but then we need to handle partial data... e.g.
-                    // we have begun parsing a quad_filled(x,y,x,y,x,y,x,y) message, but
-                    // haven't received all the float bytes yet.
-
-                    // todo: could also do error mitigation if we parse it in this thread
-                    // doing that while rendering could be slow...
-                    if (copy_from[i] == id_end_frame)
-                }
-            }
-            memcpy(b->data, copy_from, copy_count);
+            memcpy(b->data + b->used, copy_from, copy_count);
             b->used += copy_count;
         }
 

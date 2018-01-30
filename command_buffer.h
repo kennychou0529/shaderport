@@ -94,6 +94,25 @@ struct command_buffer_t
     }
 };
 
+union draw_cmd_t
+{
+    struct cmd_vdb_view_t { float left, right, bottom, top; void Draw() { vdb_view(left, right, bottom, top); } };
+    struct cmd_vdb_color_t { float r, g, b, a; void Draw() { vdb_color(r, g, b, a); } };
+    struct cmd_vdb_line_width_t { float pixel_width; void Draw() { vdb_line_width(pixel_width); } };
+    struct cmd_vdb_point_size_t { float pixel_size; void Draw() { vdb_point_size(pixel_size); } };
+    struct cmd_vdb_text_t { float x, y, const char *text; int n; void Draw() { vdb_text(x, y, text, n); } };
+    struct cmd_vdb_point_t { float x, y; void Draw() { vdb_point(x, y); } };
+    struct cmd_vdb_line_t { float x1, y1, x2, y2; void Draw() { vdb_line(x1, y1, x2, y2); } };
+    struct cmd_vdb_triangle_t { float x1, y1, x2, y2, x3, y3; void Draw() { vdb_triangle(x1, y1, x2, y2, x3, y3); } };
+    struct cmd_vdb_triangle_filled_t { float x1, y1, x2, y2, x3, y3; void Draw() { vdb_triangle_filled(x1, y1, x2, y2, x3, y3); } };
+    struct cmd_vdb_quad_t { float x1, y1, x2, y2, x3, y3, x4, y4; void Draw() { vdb_quad(x1, y1, x2, y2, x3, y3, x4, y4); } };
+    struct cmd_vdb_quad_filled_t { float x1, y1, x2, y2, x3, y3, x4, y4; void Draw() { vdb_quad_filled(x1, y1, x2, y2, x3, y3, x4, y4); } };
+    struct cmd_vdb_rect_t { float x, y, w, h; void Draw() { vdb_rect(x, y, w, h); } };
+    struct cmd_vdb_rect_filled_t { float x, y, w, h; void Draw() { vdb_rect_filled(x, y, w, h); } };
+    struct cmd_vdb_circle_t { float x, y, r; void Draw() { vdb_circle(x, y, r); } };
+    struct cmd_vdb_circle_filled_t { float x, y, r; void Draw() { vdb_circle_filled(x, y, r); } };
+}
+
 static command_buffer_t command_buffer1 = {0};
 static command_buffer_t command_buffer2 = {0};
 

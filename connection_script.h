@@ -1,9 +1,124 @@
 #pragma once
+#include <stdint.h>
 #include "script_input.h"
 #include "3rdparty/tinycthread.h"
+#include "command_buffer.h"
 
 typedef void (*script_loop_t)(script_input_t);
 
+static uint8_t script_data_buffer[1024*1024*10] = {0}; // todo: allocate at start of thread?
+volatile uint32_t script_data_used = 0;
+
+void script_push_bytes(uint8_t *data, uint32_t count)
+{
+    while (count > 0) // in case we couldn't write the entire data into the buffer at once
+    {
+        while (script_data_used > 0)
+        {
+            // wait until connection reader thread has processed existing data
+        }
+        uint32_t bytes_to_copy = count;
+        if (bytes_to_copy > sizeof(script_data_buffer))
+            bytes_to_copy = sizeof(script_data_buffer);
+        memcpy(script_data_buffer, data, bytes_to_copy);
+        count -= bytes_to_copy;
+        data += bytes_to_copy;
+        script_data_used = bytes_to_copy;
+    }
+}
+
+// To be somewhat robust against non-deliberate communication
+// over the TCP or serial channel, the StartOfFrame signal is
+// not just a single 1 byte ID; instead it's the magic byte
+// repeated 8 times.
+// todo: document this decision for people who want to write
+// an implementation of the transmission protocol for their
+// platform.
+int ScriptDataWelcomerThread(void *arg)
+{
+    bool frame_begun = false;
+    while (true)
+    {
+        while (script_data_used == 0)
+        {
+            // wait until there is data to process
+            thrd_yield();
+        }
+
+        uint8_t *copy_from = script_data_buffer;
+        uint32_t copy_count = script_data_used;
+        if (!frame_begun)
+        {
+            static uint32_t consecutive_new_frame_markers = 0;
+            for (uint32_t i = 0; i < script_data_used; i++)
+            {
+                if (script_data_buffer[i] == (uint8_t)id_new_frame)
+                {
+                    consecutive_new_frame_markers++;
+                    if (consecutive_new_frame_markers == required_consecutive_new_frame_markers)
+                    {
+                        copy_from = script_data_buffer + i;
+                        copy_count = script_data_used - i;
+                        frame_begun = true;
+                    }
+                }
+                else
+                {
+                    consecutive_new_frame_markers = 0;
+                }
+            }
+        }
+
+        if (frame_begun)
+        {
+            command_buffer_t *b = GetBackBuffer();
+            if (b->used + copy_count > b->max_size)
+            {
+                SwapCommandBuffers();
+                printf("Backbuffer filled up, truncating backbuffer. Some graphical glitches may occur.\n");
+                // todo: log this error to on-screen console, warn user
+            }
+            else
+            {
+                static uint32_t consecutive_end_frame_markers = 0;
+                for (uint32_t i = 0; i < copy_count; i++)
+                {
+                    // todo: is it possible to send a valid sequence of 8 consecutive end frame markers
+                    // that is *not* an end frame marker? yes...
+
+                    // todo: maybe we should parse IDs here in the first place, and maybe
+                    // generate an easier draw list for the front buffer (so they don't
+                    // have to parse IDs). but then we need to handle partial data... e.g.
+                    // we have begun parsing a quad_filled(x,y,x,y,x,y,x,y) message, but
+                    // haven't received all the float bytes yet.
+
+                    // todo: could also do error mitigation if we parse it in this thread
+                    // doing that while rendering could be slow...
+                    if (copy_from[i] == id_end_frame)
+                }
+            }
+            memcpy(b->data, copy_from, copy_count);
+            b->used += copy_count;
+        }
+
+        script_data_used = 0;
+    }
+    return 0;
+}
+
+void ScriptConnectionStart()
+{
+    thrd_t thread = {0};
+    thrd_create(&thread, ScriptDataWelcomerThread, NULL);
+}
+
+void ScriptUpdateAndDraw(frame_input_t input, bool reload)
+{
+
+}
+
+
+#if 0
 void PushCommandUint8(uint8_t x) {
     command_buffer_t *b = GetBackBuffer();
     assert(b && b->data && "Back buffer not allocated");
@@ -162,3 +277,4 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
         front_buffer->Draw();
     }
 }
+#endif

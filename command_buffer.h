@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "3rdparty/tinycthread.h"
 
 enum command_id_t
 {
@@ -22,6 +23,8 @@ enum command_id_t
     id_rect_filled,
     id_circle,
     id_circle_filled,
+    id_new_frame = 254,
+    id_end_frame = 255,
     id_count // todo: assert(id_count <= 256); // ensure id fits into uint8
 };
 
@@ -35,6 +38,7 @@ struct command_buffer_t
 
     float ReadFloat32() {
         assert((read + sizeof(float) <= used) && "Read past command buffer");
+        // todo: replace with "ensure_data_available" and don't do command if so
         float x = *(float*)(data + read);
         read += sizeof(float);
         return x;
@@ -99,11 +103,23 @@ static command_buffer_t *front_buffer = NULL;
 command_buffer_t *GetFrontBuffer() { return front_buffer; }
 command_buffer_t *GetBackBuffer() { return back_buffer; }
 
+mtx_t front_buffer_mutex = {0};
+void LockFrontBuffer() { mtx_lock(&mutex_command_buffer); }
+void ReleaseFrontBuffer() { mtx_unlock(&mutex_command_buffer); thrd_yield(); }
+
 void SwapCommandBuffers()
 {
+    // two threads might want to use the front buffer:
+    // 1) the main thread wants to draw it at 60 fps
+    // 2) the connection thread wants to swap it with
+    // the back buffer once it has finished receiving
+    // data.
+    LockFrontBuffer();
+
     command_buffer_t *temp = front_buffer;
     front_buffer = back_buffer;
     back_buffer = temp;
+    ReleaseFrontBuffer();
 }
 
 bool AllocateCommandBuffers(uint32_t max_size)
@@ -126,6 +142,8 @@ bool AllocateCommandBuffers(uint32_t max_size)
 
     back_buffer = &command_buffer1;
     front_buffer = &command_buffer2;
+
+    mtx_init(&mutex_command_buffer, mtx_plain);
 
     return true;
 }

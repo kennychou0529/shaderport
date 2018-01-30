@@ -17,8 +17,8 @@
 #include "command_buffer.h"
 #include "settings.h"
 
-// #include "connection_script_direct.h"
-#include "connection_script.h"
+#include "connection_script_direct.h"
+// #include "connection_script.h"
 
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -231,6 +231,8 @@ void UpdateAndDraw(frame_input_t input)
 
 int main(int argc, char **argv)
 {
+    assert(id_count <= 256 && "I limit the ID to 1 byte for now, so there can only be 256 unique draw commands.");
+
     unsigned int command_buffer_allocation_size = 1024*1024*10;
     if (!AllocateCommandBuffers(command_buffer_allocation_size))
     {

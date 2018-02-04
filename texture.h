@@ -124,3 +124,72 @@ void DrawTexture(int slot)
     glEnd();
     glDisable(GL_TEXTURE_2D);
 }
+
+#include "shader.h"
+
+void DrawTextureFancy(int slot)
+{
+    static bool loaded = false;
+    static GLuint program = 0;
+    static GLint attrib_in_position = 0;
+    static GLint uniform_mode = 0;
+    static GLint uniform_gain = 0;
+    static GLint uniform_bias = 0;
+    static GLint uniform_channel0 = 0;
+    if (!loaded)
+    {
+        const char *vs = "#version 150\n"
+        "in vec2 in_position;\n"
+        "out vec2 texel;\n"
+        "void main()\n"
+        "{\n"
+        "    texel = vec2(0.5)+0.5*in_position;\n"
+        "    gl_Position = vec4(in_position, 0.0, 1.0);\n"
+        "}\n";
+
+        const char *fs = "#version 150\n"
+        "in vec2 texel;\n"
+        "uniform int mode;\n"
+        "uniform vec4 gain;\n"
+        "uniform vec4 bias;\n"
+        "uniform sampler2D channel0;\n"
+        "out vec4 color;\n"
+        "void main()\n"
+        "{\n"
+        "    vec4 sample = texture(channel0, texel);\n"
+        "    sample = gain*sample + bias;\n"
+        "    // color = vec4(sample.r*2.0 + sample.b + sample.g*3.0)/6.0;\n"
+        "    color = sample;\n"
+        "}\n";
+        program = LoadShaderFromMemory(vs, fs);
+        attrib_in_position = glGetAttribLocation(program, "in_position");
+        uniform_channel0 = glGetUniformLocation(program, "channel0");
+        uniform_gain = glGetUniformLocation(program, "gain");
+        uniform_bias = glGetUniformLocation(program, "bias");
+        // uniform_mode = glGetUniformLocation(program, "mode");
+        loaded = true;
+    }
+    static float gain[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    static float bias[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+    glUseProgram(program);
+    glEnable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    BindTexture(slot);
+    glUniform1i(uniform_channel0, 0);
+    glUniform4fv(uniform_gain, 1, gain);
+    glUniform4fv(uniform_bias, 1, bias);
+    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, -1.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f);
+    glVertexAttrib2f(attrib_in_position, -1.0f, +1.0f);
+    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
+    glUseProgram(0);
+
+    ImGui::DragFloat3("gain", gain);
+    ImGui::SliderFloat3("bias", bias, 0.0f, 1.0f);
+}

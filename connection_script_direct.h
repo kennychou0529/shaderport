@@ -70,6 +70,17 @@ script_loop_t LoadScript()
 
 void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 {
+    static bool first = true;
+    if (first)
+    {
+        int w,h,n;
+        unsigned char *data = stbi_load("C:/Temp/dummy.png", &w,&h,&n,3);
+        assert(data && "failed to load image");
+        SetTexture(0, data, w, h);
+        first = false;
+    }
+    DrawTextureFancy(0);
+
     static script_loop_t ScriptLoop = NULL;
     if (reload)
     {

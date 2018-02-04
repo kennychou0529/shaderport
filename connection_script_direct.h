@@ -69,6 +69,8 @@ script_loop_t LoadScript()
 }
 
 #include "render_texture.h"
+#include "shader.h"
+
 
 void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 {
@@ -79,27 +81,76 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
     }
 
     // testing render textures
-    #if 0
+    #if 1
     static bool first = true;
     static render_texture_t rt = {0};
+    static GLuint program = 0;
+    static GLuint buffer = 0;
     if (first)
     {
-        rt = MakeRenderTexture(128, 128);
         first = false;
+
+        const char *vs = "#version 150\n"
+        "in vec2 in_position;\n"
+        "out vec2 position;\n"
+        "void main()\n"
+        "{\n"
+        "    position = in_position;\n"
+        "    gl_Position = vec4(in_position, 0.0, 1.0);\n"
+        "}\n";
+
+        const char *fs = "#version 150\n"
+        "in vec2 position;\n"
+        "out vec4 color;\n"
+        "void main()\n"
+        "{\n"
+        "    color = vec4(0.5*position.x+0.5, 0.5*position.y+0.5, 0.5, 1.0);\n"
+        "}\n";
+
+        program = LoadShaderFromMemory(vs, fs);
+        rt = MakeRenderTexture(32, 32, GL_NEAREST, GL_NEAREST);
+
+        const float data[] = {
+            -1.0f, -1.0f,
+            +1.0f, -1.0f,
+            +1.0f, +1.0f,
+            +1.0f, +1.0f,
+            -1.0f, +1.0f,
+            -1.0f, -1.0f
+        };
+
+        glGenBuffers(1, &buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
+    // todo: getVertexattribLocation
+
     rt.Enable();
+    glUseProgram(program);
+    // glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    GLint slot = glGetAttribLocation(program, "in_position");
+    glVertexAttrib2f(slot, -1.0f, -1.0f);
+    glVertexAttrib2f(slot, +1.0f, -1.0f);
+    glVertexAttrib2f(slot, +1.0f, +1.0f);
+    glVertexAttrib2f(slot, +1.0f, +1.0f);
+    glVertexAttrib2f(slot, -1.0f, +1.0f);
+    glVertexAttrib2f(slot, -1.0f, -1.0f);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glUseProgram(0);
     rt.Disable();
 
     glEnable(GL_TEXTURE_2D);
     rt.Bind();
     glBegin(GL_TRIANGLES);
-    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+1,-1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
+    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-0.5f,-0.5f);
+    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+0.5f,-0.5f);
+    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+0.5f,+0.5f);
+    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+0.5f,+0.5f);
+    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-0.5f,+0.5f);
+    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-0.5f,-0.5f);
     glEnd();
     rt.Unbind();
     glDisable(GL_TEXTURE_2D);

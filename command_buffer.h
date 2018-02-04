@@ -97,8 +97,8 @@ struct command_buffer_t
 static command_buffer_t command_buffer = {0};
 
 mtx_t front_buffer_mutex = {0};
-void LockCommandBuffer() { mtx_lock(&mutex_command_buffer); }
-void ReleaseCommandBuffer() { mtx_unlock(&mutex_command_buffer); thrd_yield(); }
+void LockCommandBuffer() { mtx_lock(&front_buffer_mutex); }
+void ReleaseCommandBuffer() { mtx_unlock(&front_buffer_mutex); thrd_yield(); }
 
 bool AllocateCommandBuffers(uint32_t max_size)
 {
@@ -111,7 +111,7 @@ bool AllocateCommandBuffers(uint32_t max_size)
     command_buffer.used = 0;
     command_buffer.max_size = max_size;
 
-    mtx_init(&mutex_command_buffer, mtx_plain);
+    mtx_init(&front_buffer_mutex, mtx_plain);
 
     return true;
 }

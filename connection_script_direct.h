@@ -85,7 +85,6 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
     static bool first = true;
     static render_texture_t rt = {0};
     static GLuint program = 0;
-    static GLuint buffer = 0;
     if (first)
     {
         first = false;
@@ -109,27 +108,12 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 
         program = LoadShaderFromMemory(vs, fs);
         rt = MakeRenderTexture(32, 32, GL_NEAREST, GL_NEAREST);
-
-        const float data[] = {
-            -1.0f, -1.0f,
-            +1.0f, -1.0f,
-            +1.0f, +1.0f,
-            +1.0f, +1.0f,
-            -1.0f, +1.0f,
-            -1.0f, -1.0f
-        };
-
-        glGenBuffers(1, &buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     // todo: getVertexattribLocation
 
     rt.Enable();
     glUseProgram(program);
-    // glBindBuffer(GL_ARRAY_BUFFER, buffer);
     GLint slot = glGetAttribLocation(program, "in_position");
     glVertexAttrib2f(slot, -1.0f, -1.0f);
     glVertexAttrib2f(slot, +1.0f, -1.0f);
@@ -138,7 +122,6 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
     glVertexAttrib2f(slot, -1.0f, +1.0f);
     glVertexAttrib2f(slot, -1.0f, -1.0f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    // glBindBuffer(GL_ARRAY_BUFFER, 0);
     glUseProgram(0);
     rt.Disable();
 

@@ -74,7 +74,7 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
     if (first)
     {
         int w,h,n;
-        unsigned char *data = stbi_load("C:/Temp/dummy.png", &w,&h,&n,3);
+        unsigned char *data = stbi_load("C:/Temp/images/C0QispKVIAMK9VZ.jpg", &w,&h,&n,3);
         assert(data && "failed to load image");
         SetTexture(0, data, w, h);
         first = false;

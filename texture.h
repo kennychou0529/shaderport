@@ -72,6 +72,11 @@ GLuint TexImage2D(
     return result;
 }
 
+GLuint GetTextureSlotHandle(int slot)
+{
+    return 4040 + slot;
+}
+
 void SetTexture(
     int slot,
     void *data,
@@ -85,7 +90,7 @@ void SetTexture(
     GLenum wrap_t,
     GLenum internal_format)
 {
-    GLuint tex = 4040 + slot; // Hopefully no one else uses this texture range!
+    GLuint tex = GetTextureSlotHandle(slot); // Hopefully no one else uses this texture range!
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
@@ -107,7 +112,7 @@ void SetTexture(
 
 void BindTexture(int slot)
 {
-    glBindTexture(GL_TEXTURE_2D, 4040 + slot);
+    glBindTexture(GL_TEXTURE_2D, GetTextureSlotHandle(slot));
 }
 
 void DrawTexture(int slot)
@@ -126,6 +131,7 @@ void DrawTexture(int slot)
 }
 
 #include "shader.h"
+#include "render_texture.h"
 
 void DrawTextureFancy(int slot)
 {
@@ -157,7 +163,7 @@ void DrawTextureFancy(int slot)
         "void main()\n"
         "{\n"
         "    vec4 sample = texture(channel0, texel);\n"
-        "    sample = gain*sample + bias;\n"
+        "    sample = gain*(sample + bias);\n"
         "    // color = vec4(sample.r*2.0 + sample.b + sample.g*3.0)/6.0;\n"
         "    color = sample;\n"
         "}\n";
@@ -167,11 +173,28 @@ void DrawTextureFancy(int slot)
         uniform_gain = glGetUniformLocation(program, "gain");
         uniform_bias = glGetUniformLocation(program, "bias");
         // uniform_mode = glGetUniformLocation(program, "mode");
+
         loaded = true;
     }
+
+    static render_texture_t rt = {0};
+    {
+        int width,height;
+        BindTexture(slot);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        if (rt.width != width || rt.height != height)
+        {
+            rt = MakeRenderTexture(width, height, GL_NEAREST, GL_NEAREST);
+        }
+    }
+
+
     static float gain[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     static float bias[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
+    // rt.Enable();
     glUseProgram(program);
     glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
@@ -189,7 +212,48 @@ void DrawTextureFancy(int slot)
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
     glUseProgram(0);
+    // rt.Disable();
 
-    ImGui::DragFloat3("gain", gain);
-    ImGui::SliderFloat3("bias", bias, 0.0f, 1.0f);
+    // {
+    //     using namespace ImGui;
+    //     PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f,0.0f));
+    //     Begin("##texture");
+    //     Image((ImTextureID)rt.color, ImVec2((float)rt.width, (float)rt.height));
+    //     End();
+    //     PopStyleVar();
+    // }
+
+    {
+        using namespace ImGui;
+        static bool rgb_gain = false;
+        static bool rgb_bias = false;
+        Text("Contrast");
+        if (rgb_gain)
+        {
+            DragFloat3("##Contrast", gain, 0.1f);
+        }
+        else
+        {
+            DragFloat("##Contrast", gain, 0.1f);
+            if (gain[0] < 0.0f)
+                gain[0] = 0.0f;
+            gain[1] = gain[0];
+            gain[2] = gain[0];
+        }
+        SameLine();
+        Checkbox("RGB##rgb_gain", &rgb_gain);
+        Text("Brightness");
+        if (rgb_bias)
+        {
+            SliderFloat3("##Brightness", bias, -1.0f, 1.0f);
+        }
+        else
+        {
+            SliderFloat("##Brightness", bias, -1.0f, 1.0f);
+            bias[1] = bias[0];
+            bias[2] = bias[0];
+        }
+        SameLine();
+        Checkbox("RGB##rgb_bias", &rgb_bias);
+    }
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-void GLErrorCodeString(GLenum error)
+const char *GLErrorCodeString(GLenum error)
 {
          if (error == GL_INVALID_ENUM)                  return "enum argument out of range\n";
     else if (error == GL_INVALID_VALUE)                 return "Numeric argument out of range\n";
@@ -10,12 +10,12 @@ void GLErrorCodeString(GLenum error)
     return "Not an error";
 }
 
-void CheckGLError()
+void CheckGLError(const char *msg)
 {
     GLenum error = glGetError();
     while (error != GL_NO_ERROR)
     {
-        printf("OpenGL error: (0x%x) %s", error, GLErrorCodeString(error));
+        printf("%s: (0x%x) %s", msg, error, GLErrorCodeString(error));
         error = glGetError();
     }
 }

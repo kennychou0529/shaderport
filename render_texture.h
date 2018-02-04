@@ -1,5 +1,17 @@
+// Usage example:
+// render_texture_t rt = MakeRenderTexture(...);
+// ...
+// rt.Enable();
+// ... render content
+// rt.Disable();
+// ...
+// rt.Bind();
+// ... use texture2D
+// rt.Unbind();
+
 #pragma once
 #include "gl_error.h"
+#include "frame_input.h"
 
 struct render_texture_t
 {
@@ -8,25 +20,14 @@ struct render_texture_t
     GLuint depth;
     int width;
     int height;
+
+    void Enable()  { glBindFramebuffer(GL_FRAMEBUFFER, fbo); glViewport(0, 0, width, height); }
+    void Disable() { glBindFramebuffer(GL_FRAMEBUFFER, 0); glViewport(0, 0, frame_input.framebuffer_w, frame_input.framebuffer_h); }
+    void Bind()    { glBindTexture(GL_TEXTURE_2D, color); }
+    void Unbind()  { glBindTexture(GL_TEXTURE_2D, 0); }
 };
 
-render_texture_t MakeRenderTexture(int width, int height, bool enable_depth=false);
-
-//
-//
-//
-
-GLuint MakeRenderBuffer(int width, int height, GLenum format)
-{
-    GLuint result;
-    glGenRenderbuffers(1, &result);
-    glBindRenderbuffer(GL_RENDERBUFFER, result);
-    glRenderbufferStorage(GL_RENDERBUFFER, format, width, height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-    return result;
-}
-
-render_texture_t MakeRenderTexture(int width, int height, bool enable_depth)
+render_texture_t MakeRenderTexture(int width, int height, bool enable_depth=false)
 {
     GLuint fbo;
     glGenFramebuffers(1, &fbo);
@@ -46,7 +47,10 @@ render_texture_t MakeRenderTexture(int width, int height, bool enable_depth)
         // DEPTH_COMPONENT24
         // DEPTH_COMPONENT32
         // DEPTH_COMPONENT32F
-        depth = MakeRenderBuffer(width, height, GL_DEPTH_COMPONENT24);
+        glGenRenderbuffers(1, &depth);
+        glBindRenderbuffer(GL_RENDERBUFFER, depth);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
     }
 

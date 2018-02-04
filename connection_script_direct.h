@@ -68,6 +68,8 @@ script_loop_t LoadScript()
     return ScriptLoop;
 }
 
+#include "render_texture.h"
+
 void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 {
     static script_loop_t ScriptLoop = NULL;
@@ -75,6 +77,34 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
     {
         ScriptLoop = LoadScript();
     }
+
+    // testing render textures
+    #if 0
+    static bool first = true;
+    static render_texture_t rt = {0};
+    if (first)
+    {
+        rt = MakeRenderTexture(128, 128);
+        first = false;
+    }
+
+    rt.Enable();
+    rt.Disable();
+
+    glEnable(GL_TEXTURE_2D);
+    rt.Bind();
+    glBegin(GL_TRIANGLES);
+    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
+    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+1,-1);
+    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
+    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
+    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-1,+1);
+    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
+    glEnd();
+    rt.Unbind();
+    glDisable(GL_TEXTURE_2D);
+    #endif
+
     if (ScriptLoop)
     {
         script_input_t s = {0};

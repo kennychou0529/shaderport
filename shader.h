@@ -1,3 +1,4 @@
+#pragma once
 GLuint LoadShaderFromMemory(const char *vs, const char *fs)
 {
     GLenum types[2] = { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER };

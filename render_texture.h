@@ -27,7 +27,7 @@ struct render_texture_t
     void Unbind()  { glBindTexture(GL_TEXTURE_2D, 0); }
 };
 
-render_texture_t MakeRenderTexture(int width, int height, bool enable_depth=false)
+render_texture_t MakeRenderTexture(int width, int height, GLenum mag_filter=GL_LINEAR, GLenum min_filter=GL_LINEAR, bool enable_depth=false)
 {
     GLuint fbo;
     glGenFramebuffers(1, &fbo);
@@ -35,7 +35,7 @@ render_texture_t MakeRenderTexture(int width, int height, bool enable_depth=fals
     CheckGLError("Creating framebuffer object");
 
     // todo: what if we want float texture as internal format?
-    GLuint color = TexImage2D(NULL, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
+    GLuint color = TexImage2D(NULL, width, height, GL_RGBA, GL_UNSIGNED_BYTE, mag_filter, min_filter, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
     CheckGLError("Creating color texture for render target");
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color, 0);
     // todo: more color attachments, if you want multi-output shaders

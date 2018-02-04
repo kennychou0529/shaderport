@@ -68,10 +68,6 @@ script_loop_t LoadScript()
     return ScriptLoop;
 }
 
-#include "render_texture.h"
-#include "shader.h"
-
-
 void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 {
     static script_loop_t ScriptLoop = NULL;
@@ -79,66 +75,6 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
     {
         ScriptLoop = LoadScript();
     }
-
-    // testing render textures
-    #if 1
-    static bool first = true;
-    static render_texture_t rt = {0};
-    static GLuint program = 0;
-    if (first)
-    {
-        first = false;
-
-        const char *vs = "#version 150\n"
-        "in vec2 in_position;\n"
-        "out vec2 position;\n"
-        "void main()\n"
-        "{\n"
-        "    position = in_position;\n"
-        "    gl_Position = vec4(in_position, 0.0, 1.0);\n"
-        "}\n";
-
-        const char *fs = "#version 150\n"
-        "in vec2 position;\n"
-        "out vec4 color;\n"
-        "void main()\n"
-        "{\n"
-        "    color = vec4(0.5*position.x+0.5, 0.5*position.y+0.5, 0.5, 1.0);\n"
-        "}\n";
-
-        program = LoadShaderFromMemory(vs, fs);
-        rt = MakeRenderTexture(32, 32, GL_NEAREST, GL_NEAREST);
-    }
-
-    // todo: getVertexattribLocation
-
-    rt.Enable();
-    glUseProgram(program);
-    GLint slot = glGetAttribLocation(program, "in_position");
-    glVertexAttrib2f(slot, -1.0f, -1.0f);
-    glVertexAttrib2f(slot, +1.0f, -1.0f);
-    glVertexAttrib2f(slot, +1.0f, +1.0f);
-    glVertexAttrib2f(slot, +1.0f, +1.0f);
-    glVertexAttrib2f(slot, -1.0f, +1.0f);
-    glVertexAttrib2f(slot, -1.0f, -1.0f);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glUseProgram(0);
-    rt.Disable();
-
-    glEnable(GL_TEXTURE_2D);
-    rt.Bind();
-    glBegin(GL_TRIANGLES);
-    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-0.5f,-0.5f);
-    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+0.5f,-0.5f);
-    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+0.5f,+0.5f);
-    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+0.5f,+0.5f);
-    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-0.5f,+0.5f);
-    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-0.5f,-0.5f);
-    glEnd();
-    rt.Unbind();
-    glDisable(GL_TEXTURE_2D);
-    #endif
-
     if (ScriptLoop)
     {
         script_input_t s = {0};

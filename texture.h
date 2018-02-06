@@ -144,29 +144,55 @@ void DrawTextureFancy(int slot)
     static GLint uniform_channel0 = 0;
     if (!loaded)
     {
-        const char *vs = "#version 150\n"
-        "in vec2 in_position;\n"
-        "out vec2 texel;\n"
-        "void main()\n"
-        "{\n"
-        "    texel = vec2(0.5)+0.5*in_position;\n"
-        "    gl_Position = vec4(in_position, 0.0, 1.0);\n"
-        "}\n";
+        #define SHADER(S) "#version 150\n" #S
 
-        const char *fs = "#version 150\n"
-        "in vec2 texel;\n"
-        "uniform int mode;\n"
-        "uniform vec4 gain;\n"
-        "uniform vec4 bias;\n"
-        "uniform sampler2D channel0;\n"
-        "out vec4 color;\n"
-        "void main()\n"
-        "{\n"
-        "    vec4 sample = texture(channel0, texel);\n"
-        "    sample = gain*(sample + bias);\n"
-        "    // color = vec4(sample.r*2.0 + sample.b + sample.g*3.0)/6.0;\n"
-        "    color = sample;\n"
-        "}\n";
+        const char *vs = SHADER(
+        in vec2 in_position;
+        out vec2 texel;
+        void main()
+        {
+            texel = vec2(0.5)+0.5*in_position;
+            gl_Position = vec4(in_position, 0.0, 1.0);
+        }
+        );
+
+        const char *fs = SHADER(
+        in vec2 texel;
+        uniform int mode;
+        uniform vec4 gain;
+        uniform vec4 bias;
+        uniform sampler2D channel0;
+        out vec4 color;
+        void main()
+        {
+            const vec3 colormap[3] = vec3[](
+                vec3(1.46159096e-03,   4.66127766e-04,   1.38655200e-02),
+                vec3(2.25764007e-03,   1.29495431e-03,   1.83311461e-02),
+                vec3(3.27943222e-03,   2.30452991e-03,   2.37083291e-02));
+
+            vec4 sample = texture(channel0, texel);
+            sample = gain*(sample + bias);
+
+            // mode == single,float
+            const vec4 selector = vec4(1.0, 0.0, 0.0, 0.0);
+            const float range_min = 0.0;
+            const float range_max = 1.0;
+            float f = (dot(sample,selector) - range_min) / (range_max - range_min);
+            f = clamp(f, 0.0, 1.0);
+            f = f*float(colormap.length());
+            int n = clamp(int(f), 0, colormap.length()-1);
+            color.rgb = colormap[n];
+            color.a = 1.0;
+
+            // mode == gray
+            // color = vec4(sample.r*2.0 + sample.b + sample.g*3.0)/6.0;
+
+            // mode == rgb
+            // color = sample;
+        });
+
+        #undef SHADER
+
         program = LoadShaderFromMemory(vs, fs);
         attrib_in_position = glGetAttribLocation(program, "in_position");
         uniform_channel0 = glGetUniformLocation(program, "channel0");

@@ -48,6 +48,8 @@ void ReloadScript(const char *dll_filename)
             system("vcvarsall x86_amd64");
             first = false;
         }
+        // todo: don't compile into working directory and clutter up user's directory?
+        // todo: take argv[1] as filename
         system("del script.dll > NUL 2> NUL");
         system("del script_in_use.dll > NUL 2> NUL");
         system("del script*.pdb > NUL 2> NUL");

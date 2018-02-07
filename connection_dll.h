@@ -37,33 +37,56 @@ FILETIME FileLastWriteTime(const char *filename)
     return t;
 }
 
+// todo: replace with actual on screen console
+void LogToScreenConsole(const char *line)
+{
+    printf("[INFO] %s", line);
+}
+
+void RunSystemCommandAndDisplayOutput(const char *cmd)
+{
+    FILE *p = _popen(cmd, "rt");
+    if (!p)
+    {
+        LogToScreenConsole("Failed to run command (could not open pipe):\n");
+        LogToScreenConsole(cmd);
+        return;
+    }
+
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), p))
+    {
+        LogToScreenConsole(buffer);
+    }
+    _pclose(p);
+}
+
 // todo: do we want the user to compile, or do we check for file update and compile?
-void ReloadScript(const char *dll_filename)
+void ReloadScript(const char *cpp_filename)
 {
     // compile using msvc
+    // todo: define build directory
+    const char *dll_filename = "C:/Temp/build/script.dll";
     {
-        static bool first = true;
-        if (first)
-        {
-            system("vcvarsall x86_amd64");
-            first = false;
-        }
-        // todo: don't compile into working directory and clutter up user's directory?
-        // todo: take argv[1] as filename
-        system("del script.dll > NUL 2> NUL");
-        system("del script_in_use.dll > NUL 2> NUL");
-        system("del script*.pdb > NUL 2> NUL");
-        system("echo WAITING FOR PDB > lock.tmp");
-        int ok = system("cl "
-               "-Zi -nologo -Oi -Od -WX -W4 -wd4505 -wd4189 -wd4100 -fp:fast "
-               "../script/script.cpp /link "
-               "-debug -DLL -opt:ref -PDB:script_%%random%%.pdb -export:loop "
-               "-out:script.dll");
-        if (ok != 0)
-        {
-            printf("Failed to compile script\n");
-            return;
-        }
+        char cmd[1024];
+        sprintf(cmd,
+            "cd C:/Temp/build &&" // change directory so we don't clutter up the script directory
+            "del vc110.pdb > NUL 2> NUL &&" // delete old generated files...
+            "del script.obj > NUL 2> NUL &&"
+            "del script.lib > NUL 2> NUL &&"
+            "del script.exp > NUL 2> NUL &&"
+            "del script.dll > NUL 2> NUL &&"
+            "del script_in_use.dll > NUL 2> NUL &&"
+            "del script*.pdb > NUL 2> NUL &&"
+            "echo WAITING FOR PDB > lock.tmp &&"
+            "vcvarsall x86_amd64 && " // todo: can we somehow invoke vcvarsall once before popen? system(...) does not persist...
+            "cl -Zi -nologo -Oi -Od -WX -W4 -wd4505 -wd4189 -wd4100 -fp:fast "
+            "%s " // cpp_filename
+            "/link -debug -DLL -opt:ref -PDB:script_%%random%%.pdb -export:loop "
+            "-out:script.dll",
+            cpp_filename);
+
+        RunSystemCommandAndDisplayOutput(cmd);
     }
 
     if (!FileExists(dll_filename))
@@ -127,7 +150,7 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
             if (CompareFileTime(&write_time, &last_write_time) != 0)
             {
                 last_write_time = write_time;
-                ReloadScript("script.dll");
+                ReloadScript(script_filename);
             }
         }
     }

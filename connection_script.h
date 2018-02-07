@@ -27,13 +27,6 @@ void script_push_bytes(uint8_t *data, uint32_t count)
     }
 }
 
-// To be somewhat robust against non-deliberate communication
-// over the TCP or serial channel, the StartOfFrame signal is
-// not just a single 1 byte ID; instead it's the magic byte
-// repeated 8 times.
-// todo: document this decision for people who want to write
-// an implementation of the transmission protocol for their
-// platform.
 int ScriptDataWelcomerThread(void *arg)
 {
     bool frame_begun = false;
@@ -45,51 +38,27 @@ int ScriptDataWelcomerThread(void *arg)
             thrd_yield();
         }
 
-        uint8_t *copy_from = script_data_buffer;
-        uint32_t copy_count = script_data_used;
+        uint32_t i = 0;
         if (!frame_begun)
         {
-            static uint32_t consecutive_new_frame_markers = 0;
-            for (uint32_t i = 0; i < script_data_used; i++)
+            for (i = 0; i < script_data_used; i++)
             {
-                if (script_data_buffer[i] == (uint8_t)id_new_frame)
+                uint8_t id = script_data_buffer[i];
+                if (id == id_new_frame)
                 {
-                    consecutive_new_frame_markers++;
-                    if (consecutive_new_frame_markers == required_consecutive_new_frame_markers)
-                    {
-                        copy_from = script_data_buffer + i;
-                        copy_count = script_data_used - i;
-                        frame_begun = true;
-                        consecutive_new_frame_markers = 0;
-                        LockCommandBuffer();
-                        command_buffer.used = 0; // clear command buffer
-                        ReleaseCommandBuffer();
-                        break;
-                    }
-                }
-                else
-                {
-                    consecutive_new_frame_markers = 0;
+                    frame_begun = true;
+                    break;
                 }
             }
         }
 
-        // just copy all data into the command buffer immediately
-        // don't bother locking it
         if (frame_begun)
         {
-            command_buffer_t *b = &command_buffer;
-            if (b->used + copy_count > b->max_size)
+            for (; i < script_data_used; i++)
             {
-                copy_count = b->max_size - b->used;
-                printf("Backbuffer filled up, truncating data. Some graphical glitches may occur.\n");
-                // todo: log this error to on-screen console, warn user
-            }
-            memcpy(b->data + b->used, copy_from, copy_count);
-            b->used += copy_count;
-        }
 
-        script_data_used = 0;
+            }
+        }
     }
     return 0;
 }

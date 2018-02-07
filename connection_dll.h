@@ -5,7 +5,6 @@
 
 #pragma once
 #include "dll.h"
-#include "console.h"
 
 typedef void script_loop_t(io_t, draw_t draw);
 static script_loop_t *ScriptLoop = NULL;
@@ -38,64 +37,62 @@ FILETIME FileLastWriteTime(const char *filename)
     return t;
 }
 
-void RunSystemCommandAndDisplayOutput(const char *cmd)
+void CompileScript(const char *cpp_filename, const char *dll_filename)
 {
+    // todo: this doesn't work if shaderport is run from outside a batch file?
+    // it works if you invoke vcvarsall and then run shaderport though.
+    static bool has_vcvarsall = false;
+    if (!has_vcvarsall)
+    {
+        system("vcvarsall x86_amd64");
+        has_vcvarsall = true;
+    }
+
+    char cmd[1024];
+    sprintf(cmd,
+        "cd C:/Temp/build &&" // change directory so we don't clutter up the script directory
+        "del vc110.pdb > NUL 2> NUL &&" // delete old generated files...
+        "del script.obj > NUL 2> NUL &&"
+        "del script.lib > NUL 2> NUL &&"
+        "del script.exp > NUL 2> NUL &&"
+        "del script.dll > NUL 2> NUL &&"
+        "del script_in_use.dll > NUL 2> NUL &&"
+        "del script*.pdb > NUL 2> NUL &&"
+        "echo WAITING FOR PDB > lock.tmp &&"
+        // "vcvarsall x86_amd64 && " // todo: can we somehow invoke vcvarsall once before popen? system(...) does not persist...
+        "cl -Zi -nologo -Oi -Od -WX -W4 -wd4505 -wd4189 -wd4100 -fp:fast "
+        "%s " // cpp_filename
+        "/link -debug -DLL -opt:ref -PDB:script_%%random%%.pdb -export:loop "
+        "-out:%s",
+        cpp_filename,
+        dll_filename);
+
     FILE *p = _popen(cmd, "rt");
     if (!p)
     {
-        LogToScreenConsole("Failed to run command (could not open pipe):\n");
-        LogToScreenConsole(cmd);
+        printf("Failed to run command (could not open pipe):\n");
+        printf(cmd);
         return;
     }
 
     char buffer[1024];
     while (fgets(buffer, sizeof(buffer), p))
     {
-        LogToScreenConsole(buffer);
+        printf(buffer);
     }
     _pclose(p);
 }
 
-// todo: run commands in a seperate thread?
-// todo: do we want the user to compile, or do we check for file update and compile?
 void ReloadScript(const char *cpp_filename)
 {
     // compile using msvc
     // todo: define build directory
     const char *dll_filename = "C:/Temp/build/script.dll";
-    {
-        // todo: this doesn't work if shaderport is run from outside a batch file?
-        // it works if you invoke vcvarsall and then run shaderport though.
-        static bool has_vcvarsall = false;
-        if (!has_vcvarsall)
-        {
-            system("vcvarsall x86_amd64");
-            has_vcvarsall = true;
-        }
-        char cmd[1024];
-        sprintf(cmd,
-            "cd C:/Temp/build &&" // change directory so we don't clutter up the script directory
-            "del vc110.pdb > NUL 2> NUL &&" // delete old generated files...
-            "del script.obj > NUL 2> NUL &&"
-            "del script.lib > NUL 2> NUL &&"
-            "del script.exp > NUL 2> NUL &&"
-            "del script.dll > NUL 2> NUL &&"
-            "del script_in_use.dll > NUL 2> NUL &&"
-            "del script*.pdb > NUL 2> NUL &&"
-            "echo WAITING FOR PDB > lock.tmp &&"
-            // "vcvarsall x86_amd64 && " // todo: can we somehow invoke vcvarsall once before popen? system(...) does not persist...
-            "cl -Zi -nologo -Oi -Od -WX -W4 -wd4505 -wd4189 -wd4100 -fp:fast "
-            "%s " // cpp_filename
-            "/link -debug -DLL -opt:ref -PDB:script_%%random%%.pdb -export:loop "
-            "-out:script.dll",
-            cpp_filename);
-
-        RunSystemCommandAndDisplayOutput(cmd);
-    }
+    CompileScript(cpp_filename, "script.dll");
 
     if (!FileExists(dll_filename))
     {
-        LogToScreenConsole("Failed to reload script: could not find dll\n");
+        printf("Failed to reload script: could not find dll\n");
         return;
     }
 
@@ -127,7 +124,7 @@ void ReloadScript(const char *cpp_filename)
     handle = LoadLibrary(temp_filename);
     if (!handle)
     {
-        LogToScreenConsole("Failed to reload script: LoadLibrary failed\n");
+        printf("Failed to reload script: LoadLibrary failed\n");
         return;
     }
 
@@ -135,7 +132,7 @@ void ReloadScript(const char *cpp_filename)
 
     if (!ScriptLoop)
     {
-        LogToScreenConsole("Failed to reload script: could not find routine 'loop'\n");
+        printf("Failed to reload script: could not find routine 'loop'\n");
     }
 }
 
@@ -202,6 +199,4 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 
         ScriptLoop(io, draw);
     }
-
-    app_log.Draw("console");
 }

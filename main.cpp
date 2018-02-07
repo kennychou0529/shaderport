@@ -119,6 +119,7 @@ void AfterImGuiInit()
     ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(
         (const char*)source_sans_pro_compressed_data,
         source_sans_pro_compressed_size, 18.0f);
+    // ImGui::GetIO().Fonts->AddFontDefault();
 
     // Adding fonts should be done before this is called
     // (it's called automatically on first frame)

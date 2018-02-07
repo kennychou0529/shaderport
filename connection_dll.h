@@ -6,6 +6,7 @@
 #pragma once
 #include "dll.h"
 #include "3rdparty/tinycthread.h"
+#include "console.h"
 
 typedef void script_loop_t(io_t, draw_t draw);
 static script_loop_t *ScriptLoop = NULL;
@@ -37,6 +38,24 @@ FILETIME FileLastWriteTime(const char *filename)
     }
     return t;
 }
+
+struct expanding_string_t
+{
+    char buffer[1024*1024];
+    size_t used;
+    void clear() { used = 0; buffer[0] = 0; }
+    void append(const char *s)
+    {
+        size_t len = strlen(s);
+        if (used + len <= sizeof(buffer))
+        {
+            strcpy(buffer+used, s);
+            used += len;
+        }
+    }
+};
+
+static expanding_string_t compiler_messages = {0};
 
 void CompileScript(const char *cpp_filename, const char *dll_filename)
 {
@@ -76,10 +95,13 @@ void CompileScript(const char *cpp_filename, const char *dll_filename)
         return;
     }
 
+    compiler_messages.clear();
+    int lines = 0;
     char buffer[1024];
-    while (fgets(buffer, sizeof(buffer), p))
+    while (lines < 5 && fgets(buffer, sizeof(buffer), p))
     {
-        printf(buffer);
+        compiler_messages.append(buffer);
+        lines++;
     }
     _pclose(p);
 }
@@ -177,7 +199,10 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
     {
         ReloadScriptDLL(dll_filename);
         compile_done = false;
+        ConsoleSetMessage(5.0f, compiler_messages.buffer);
     }
+
+    ConsoleDrawMessage();
 
     if (ScriptLoop)
     {

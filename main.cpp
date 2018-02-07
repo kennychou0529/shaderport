@@ -10,17 +10,6 @@
 #include "3rdparty/stb_image_write.h"
 #include "3rdparty/stb_image.h"
 
-#include "log.h"
-#include "frame_input.h"
-#include "frame_grab.h"
-#include "vdb_implementation.h"
-#include "command_buffer.h"
-#include "settings.h"
-
-// #include "connection_script_direct.h"
-// #include "connection_script.h"
-#include "connection_dll.h"
-
 #ifdef _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
@@ -31,6 +20,17 @@
 #include "3rdparty/imgui_draw.cpp"
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "fonts/source_sans_pro.h"
+
+#include "log.h"
+#include "frame_input.h"
+#include "frame_grab.h"
+#include "vdb_implementation.h"
+#include "command_buffer.h"
+#include "settings.h"
+
+// #include "connection_script_direct.h"
+// #include "connection_script.h"
+#include "connection_dll.h"
 
 // important that this is included after imgui for some reason, otherwise app crashes on start-up
 #include "3rdparty/tinycthread.c"

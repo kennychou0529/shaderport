@@ -106,20 +106,24 @@ void ReloadScript(const char *dll_filename)
 
 void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 {
-    static FILETIME last_write_time = {0};
     const char *script_filename = "C:/Programming/shaderport/script/script.cpp";
-    if (FileExists(script_filename))
+    static float last_file_check = 0.0f;
+    float file_check_interval = 1.0f;
+    if (input.elapsed_time - last_file_check > file_check_interval)
     {
-        FILETIME write_time = FileLastWriteTime(script_filename);
-        if (CompareFileTime(&write_time, &last_write_time) != 0)
+        last_file_check = input.elapsed_time;
+        static FILETIME last_write_time = {0};
+        if (FileExists(script_filename))
         {
-            last_write_time = write_time;
-            ReloadScript("script.dll");
+            FILETIME write_time = FileLastWriteTime(script_filename);
+            if (CompareFileTime(&write_time, &last_write_time) != 0)
+            {
+                last_write_time = write_time;
+                ReloadScript("script.dll");
+            }
         }
     }
 
-    // if (reload)
-        // ReloadScript("script.dll");
     if (ScriptLoop)
         ScriptLoop();
 }

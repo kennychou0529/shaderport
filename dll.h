@@ -19,9 +19,11 @@ struct io_t
     float frame_time; // Note: When recording video you probably want to use your own animation timer
                       // that increments at a fixed time step per loop. It is also possible that camera
                       // movement based on frame_time will explode...
-    int recording_video;
     int lost_focus;
     int regained_focus;
+
+    int recording_video;
+    // todo: int video_frame_index;
 };
 
 struct draw_t

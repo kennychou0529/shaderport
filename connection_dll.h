@@ -5,6 +5,7 @@
 
 #pragma once
 #include "dll.h"
+#include "3rdparty/tinycthread.h"
 
 typedef void script_loop_t(io_t, draw_t draw);
 static script_loop_t *ScriptLoop = NULL;
@@ -83,13 +84,18 @@ void CompileScript(const char *cpp_filename, const char *dll_filename)
     _pclose(p);
 }
 
-void ReloadScript(const char *cpp_filename)
+volatile bool compile_done = false;
+int StartCompileScript(void *arg)
 {
-    // compile using msvc
-    // todo: define build directory
-    const char *dll_filename = "C:/Temp/build/script.dll";
-    CompileScript(cpp_filename, "script.dll");
+    compile_done = false;
+    CompileScript("C:/Programming/shaderport/script/script.cpp", "script.dll");
+    compile_done = true;
+    thrd_exit(0);
+    return 0;
+}
 
+void ReloadScriptDLL(const char *dll_filename)
+{
     if (!FileExists(dll_filename))
     {
         printf("Failed to reload script: could not find dll\n");
@@ -138,7 +144,11 @@ void ReloadScript(const char *cpp_filename)
 
 void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 {
+    // todo: formalize output build directory target
+    // todo: get script.cpp from argv
     const char *script_filename = "C:/Programming/shaderport/script/script.cpp";
+    const char *dll_filename = "C:/Temp/build/script.dll";
+
     const float file_check_interval = 0.5f;
     static float last_file_check = 0.0f;
     if (input.elapsed_time - last_file_check > file_check_interval)
@@ -150,10 +160,23 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
             FILETIME write_time = FileLastWriteTime(script_filename);
             if (CompareFileTime(&write_time, &last_write_time) != 0)
             {
+                reload = true;
                 last_write_time = write_time;
-                ReloadScript(script_filename);
             }
         }
+    }
+
+    if (reload)
+    {
+        thrd_t thrd = {0};
+        thrd_create(&thrd, StartCompileScript, NULL);
+        // todo: thrd_detach?
+    }
+
+    if (compile_done)
+    {
+        ReloadScriptDLL(dll_filename);
+        compile_done = false;
     }
 
     if (ScriptLoop)

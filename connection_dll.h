@@ -23,6 +23,20 @@ bool FileExists(const char *filename)
     }
 }
 
+FILETIME FileLastWriteTime(const char *filename)
+{
+    FILETIME t = {};
+    WIN32_FIND_DATA fd;
+    HANDLE h = FindFirstFileA(filename, &fd);
+    if (h != INVALID_HANDLE_VALUE)
+    {
+        t = fd.ftLastWriteTime;
+        FindClose(h);
+    }
+    return t;
+}
+
+// todo: do we want the user to compile, or do we check for file update and compile?
 void ReloadScript(const char *dll_filename)
 {
     // compile using msvc
@@ -92,8 +106,20 @@ void ReloadScript(const char *dll_filename)
 
 void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 {
-    if (reload)
-        ReloadScript("script.dll");
+    static FILETIME last_write_time = {0};
+    const char *script_filename = "C:/Programming/shaderport/script/script.cpp";
+    if (FileExists(script_filename))
+    {
+        FILETIME write_time = FileLastWriteTime(script_filename);
+        if (CompareFileTime(&write_time, &last_write_time) != 0)
+        {
+            last_write_time = write_time;
+            ReloadScript("script.dll");
+        }
+    }
+
+    // if (reload)
+        // ReloadScript("script.dll");
     if (ScriptLoop)
         ScriptLoop();
 }

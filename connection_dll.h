@@ -190,6 +190,7 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload)
 
     if (reload)
     {
+        ConsoleSetMessage(0.0f, NULL);
         thrd_t thrd = {0};
         thrd_create(&thrd, StartCompileScript, NULL);
         // todo: thrd_detach?

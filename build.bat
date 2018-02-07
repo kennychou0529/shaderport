@@ -26,6 +26,6 @@ set LIBTCC=../libtcc/win/tcc.lib
 set LF=-debug %LIBGLFW% %LIBTCC% opengl32.lib user32.lib gdi32.lib shell32.lib
 
 cl %CF% ../main.cpp /link %LF% -out:shaderport.exe
-shaderport.exe
+if not errorlevel 1 shaderport.exe :: only run if we successfully compiled
 
 popd

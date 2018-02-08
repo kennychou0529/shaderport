@@ -237,13 +237,14 @@ int main(int argc, char **argv)
 
     // Parse commandline arguments and see if we should compile and run a .cpp file
     const char *script_cpp_path = NULL;
-    const char *script_build_dir = NULL;
+    const char *script_build_folder = NULL;
     {
         // todo: replace with actual arg parsing
         if (argc == 3)
         {
             script_cpp_path = argv[1];
-            script_build_dir = argv[2];
+            script_build_folder = argv[2];
+            ScriptSetPaths(script_cpp_path, script_build_folder);
         }
         else
         {

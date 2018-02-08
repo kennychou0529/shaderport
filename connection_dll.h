@@ -7,9 +7,19 @@
 #include "dll.h"
 #include "3rdparty/tinycthread.h"
 #include "console.h"
+#include "format.h"
 
-typedef void script_loop_t(io_t, draw_t draw);
-static script_loop_t *ScriptLoop = NULL;
+static char script_cpp_path[1024] = {0};
+static char script_build_folder[1024] = {0};
+static char script_dll_path[1024] = {0};
+static char script_dll_temp_path[1024] = {0};
+void ScriptSetPaths(const char *cpp_path, const char *build_folder)
+{
+    sprintf(script_cpp_path, cpp_path);
+    sprintf(script_build_folder, build_folder);
+    sprintf(script_dll_path, "%s/script.dll", build_folder);
+    sprintf(script_dll_temp_path, "%s/script_in_use.dll", build_folder);
+}
 
 bool FileExists(const char *filename)
 {
@@ -57,8 +67,10 @@ struct expanding_string_t
 
 static expanding_string_t compiler_messages = {0};
 
-void CompileScript(const char *cpp_filename, const char *dll_filename)
+void CompileScript()
 {
+    // todo: check filenames?
+
     // todo: this doesn't work if shaderport is run from outside a batch file?
     // it works if you invoke vcvarsall and then run shaderport though.
     static bool has_vcvarsall = false;
@@ -70,7 +82,7 @@ void CompileScript(const char *cpp_filename, const char *dll_filename)
 
     char cmd[1024];
     sprintf(cmd,
-        "cd C:/Temp/build &&" // change directory so we don't clutter up the script directory
+        "cd %s &&" // change directory so we don't clutter up the script directory
         "del vc110.pdb > NUL 2> NUL &&" // delete old generated files...
         "del script.obj > NUL 2> NUL &&"
         "del script.lib > NUL 2> NUL &&"
@@ -81,11 +93,11 @@ void CompileScript(const char *cpp_filename, const char *dll_filename)
         "echo WAITING FOR PDB > lock.tmp &&"
         // "vcvarsall x86_amd64 && " // todo: can we somehow invoke vcvarsall once before popen? system(...) does not persist...
         "cl -Zi -nologo -Oi -Od -WX -W4 -wd4505 -wd4189 -wd4100 -fp:fast "
-        "%s " // cpp_filename
+        "%s " // absolute path to cpp file
         "/link -debug -DLL -opt:ref -PDB:script_%%random%%.pdb -export:loop "
-        "-out:%s",
-        cpp_filename,
-        dll_filename);
+        "-out:script.dll",
+        script_build_folder,
+        script_cpp_path);
 
     FILE *p = _popen(cmd, "rt");
     if (!p)
@@ -110,17 +122,20 @@ volatile bool compile_done = false;
 int StartCompileScript(void *arg)
 {
     compile_done = false;
-    CompileScript("C:/Programming/shaderport/script/script.cpp", "script.dll");
+    CompileScript();
     compile_done = true;
     thrd_exit(0);
     return 0;
 }
 
-void ReloadScriptDLL(const char *dll_filename)
+typedef void script_loop_t(io_t, draw_t draw);
+static script_loop_t *ScriptLoop = NULL;
+void ReloadScriptDLL()
 {
-    if (!FileExists(dll_filename))
+    if (!FileExists(script_dll_path))
     {
-        printf("Failed to reload script: could not find dll\n");
+        // todo: display error message?
+        printf("Failed to reload script: could not find dll %s\n", script_dll_path);
         return;
     }
 
@@ -141,15 +156,14 @@ void ReloadScriptDLL(const char *dll_filename)
     // it in a later compilation. If we do not rename
     // it, the vc compiler would not be able to overwrite
     // the DLL, because hey, we're using it.
-    const char *temp_filename = "script_in_use.dll";
-    while (!CopyFile(dll_filename, temp_filename, FALSE))
+    while (!CopyFile(script_dll_path, script_dll_temp_path, FALSE))
     {
         // Try again... I guess the FreeLibrary call might be a bit slow?
     }
 
     // Next, we get the function pointer addresses by
     // loading the library and asking for the pointers.
-    handle = LoadLibrary(temp_filename);
+    handle = LoadLibrary(script_dll_temp_path);
     if (!handle)
     {
         printf("Failed to reload script: LoadLibrary failed\n");
@@ -166,9 +180,6 @@ void ReloadScriptDLL(const char *dll_filename)
 
 void ScriptUpdateAndDraw(frame_input_t input)
 {
-    const char *script_filename = "C:/Programming/shaderport/script/script.cpp";
-    const char *dll_filename = "C:/Temp/build/script.dll";
-
     bool should_check_write_time = false;
     {
         const float file_check_interval = 0.5f;
@@ -184,14 +195,19 @@ void ScriptUpdateAndDraw(frame_input_t input)
     if (should_check_write_time)
     {
         static FILETIME last_write_time = {0};
-        if (FileExists(script_filename))
+        if (FileExists(script_cpp_path))
         {
-            FILETIME write_time = FileLastWriteTime(script_filename);
+            FILETIME write_time = FileLastWriteTime(script_cpp_path);
             if (CompareFileTime(&write_time, &last_write_time) != 0)
             {
                 should_recompile = true;
                 last_write_time = write_time;
             }
+        }
+        else
+        {
+            // todo: display error message
+            printf("%s does not exist\n", script_cpp_path);
         }
     }
 
@@ -203,9 +219,9 @@ void ScriptUpdateAndDraw(frame_input_t input)
         // todo: thrd_detach?
     }
 
-    if (compile_done)
+    if (compile_done) // todo: && compile_success
     {
-        ReloadScriptDLL(dll_filename);
+        ReloadScriptDLL();
         compile_done = false;
         ConsoleSetMessage(5.0f, compiler_messages.buffer);
     }

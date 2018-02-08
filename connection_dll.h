@@ -187,9 +187,21 @@ bool gui_button(const char *label) { return ImGui::Button(label); }
 bool gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
 bool gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
 
-// todo: key presses
+// todo: keys
+#if 1
 bool io_key_down(char key) { return false; }
 bool io_key_press(char key) { return false; }
+#else
+bool io_key_down(char key) { return glfwGetKey(key) == GLFW_PRESS; }
+bool io_key_press(char key)
+{
+    static bool was_down[256] = {0};
+    bool is_down = io_key_down(key);
+    bool press = !was_down[key] && is_down;
+    was_down[key] = is_down;
+    return press;
+}
+#endif
 bool io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }
 bool io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }
 

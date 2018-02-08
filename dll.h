@@ -5,7 +5,10 @@ struct io_t
     // todo: void (*screenshot)();
     // todo: void (*framegrab)();
 
-    // todo: key presses
+    bool (*key_down)(char key);
+    bool (*key_press)(char key);
+    bool (*mouse_down)(int button);
+    bool (*mouse_click)(int button);
 
     // Note: for retina displays screen coordinates != framebuffer coordinates
     int window_x,window_y; // This is the position of the window's client area in screen coordinates

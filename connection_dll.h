@@ -187,6 +187,12 @@ bool gui_button(const char *label) { return ImGui::Button(label); }
 bool gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
 bool gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
 
+// todo: key presses
+bool io_key_down(char key) { return false; }
+bool io_key_press(char key) { return false; }
+bool io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }
+bool io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }
+
 void ScriptUpdateAndDraw(frame_input_t input)
 {
     bool should_check_write_time = false;
@@ -262,6 +268,11 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw.circle_filled = vdb_circle_filled;
 
         io_t io = {0};
+        io.key_down = io_key_down;
+        io.key_press = io_key_press;
+        io.mouse_down = io_mouse_down;
+        io.mouse_click = io_mouse_click;
+
         io.window_x = input.window_x;
         io.window_y = input.window_y;
         io.window_w = input.window_w;

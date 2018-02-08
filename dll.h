@@ -48,3 +48,15 @@ struct draw_t
     void (*circle)(float x, float y, float r);
     void (*circle_filled)(float x, float y, float r);
 };
+
+struct gui_t
+{
+    void (*begin)(const char *label);
+    void (*begin_no_title)(const char *label);
+    void (*end)();
+    bool (*slider1f)(const char* label, float* v, float v_min, float v_max);
+    bool (*slider1i)(const char* label, int* v, int v_min, int v_max);
+    bool (*button)(const char *label);
+    bool (*checkbox)(const char *label, bool *v);
+    bool (*radio)(const char *label, int *v, int v_button);
+};

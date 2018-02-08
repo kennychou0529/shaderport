@@ -128,7 +128,7 @@ int StartCompileScript(void *arg)
     return 0;
 }
 
-typedef void script_loop_t(io_t, draw_t draw);
+typedef void script_loop_t(io_t, draw_t draw, gui_t);
 static script_loop_t *ScriptLoop = NULL;
 void ReloadScriptDLL()
 {
@@ -177,6 +177,15 @@ void ReloadScriptDLL()
         printf("Failed to reload script: could not find routine 'loop'\n");
     }
 }
+
+void gui_begin(const char *label) { ImGui::Begin(label); }
+void gui_begin_no_title(const char *label) { ImGui::Begin(label, NULL, ImGuiWindowFlags_NoTitleBar); }
+void gui_end() { ImGui::End(); }
+bool gui_slider1f(const char* label, float* v, float v_min, float v_max) { return ImGui::SliderFloat(label, v, v_min, v_max); }
+bool gui_slider1i(const char* label, int* v, int v_min, int v_max) { return ImGui::SliderInt(label, v, v_min, v_max); }
+bool gui_button(const char *label) { return ImGui::Button(label); }
+bool gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
+bool gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
 
 void ScriptUpdateAndDraw(frame_input_t input)
 {
@@ -269,6 +278,16 @@ void ScriptUpdateAndDraw(frame_input_t input)
         io.lost_focus = input.lost_focus;
         io.regained_focus = input.regained_focus;
 
-        ScriptLoop(io, draw);
+        gui_t gui = {0};
+        gui.begin = gui_begin;
+        gui.begin_no_title = gui_begin_no_title;
+        gui.end = gui_end;
+        gui.slider1f = gui_slider1f;
+        gui.slider1i = gui_slider1i;
+        gui.button = gui_button;
+        gui.checkbox = gui_checkbox;
+        gui.radio = gui_radio;
+
+        ScriptLoop(io, draw, gui);
     }
 }

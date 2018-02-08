@@ -164,31 +164,38 @@ void ReloadScriptDLL(const char *dll_filename)
     }
 }
 
-void ScriptUpdateAndDraw(frame_input_t input, bool reload)
+void ScriptUpdateAndDraw(frame_input_t input)
 {
-    // todo: formalize output build directory target
-    // todo: get script.cpp from argv
     const char *script_filename = "C:/Programming/shaderport/script/script.cpp";
     const char *dll_filename = "C:/Temp/build/script.dll";
 
-    const float file_check_interval = 0.5f;
-    static float last_file_check = 0.0f;
-    if (input.elapsed_time - last_file_check > file_check_interval)
+    bool should_check_write_time = false;
     {
-        last_file_check = input.elapsed_time;
+        const float file_check_interval = 0.5f;
+        static float last_file_check = 0.0f;
+        if (input.elapsed_time - last_file_check > file_check_interval)
+        {
+            last_file_check = input.elapsed_time;
+            should_check_write_time = true;
+        }
+    }
+
+    bool should_recompile = false;
+    if (should_check_write_time)
+    {
         static FILETIME last_write_time = {0};
         if (FileExists(script_filename))
         {
             FILETIME write_time = FileLastWriteTime(script_filename);
             if (CompareFileTime(&write_time, &last_write_time) != 0)
             {
-                reload = true;
+                should_recompile = true;
                 last_write_time = write_time;
             }
         }
     }
 
-    if (reload)
+    if (should_recompile)
     {
         ConsoleSetMessage(0.0f, NULL);
         thrd_t thrd = {0};

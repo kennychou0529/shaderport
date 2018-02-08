@@ -235,6 +235,23 @@ int main(int argc, char **argv)
 {
     assert(id_count <= 256 && "I limit the ID to 1 byte for now, so there can only be 256 unique draw commands.");
 
+    // Parse commandline arguments and see if we should compile and run a .cpp file
+    const char *script_cpp_path = NULL;
+    const char *script_build_dir = NULL;
+    {
+        // todo: replace with actual arg parsing
+        if (argc == 3)
+        {
+            script_cpp_path = argv[1];
+            script_build_dir = argv[2];
+        }
+        else
+        {
+            printf("usage: shaderport.exe <path/to/script.cpp> <path/to/build/directory>\n");
+            return 0;
+        }
+    }
+
     unsigned int command_buffer_allocation_size = 1024*1024*10;
     if (!AllocateCommandBuffers(command_buffer_allocation_size))
     {
@@ -309,7 +326,7 @@ int main(int argc, char **argv)
         #else
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
-        ScriptUpdateAndDraw(input, reload_button);
+        ScriptUpdateAndDraw(input);
         AfterUpdateAndDraw(input);
         #endif
 

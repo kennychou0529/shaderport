@@ -213,9 +213,11 @@ int draw_load_image_file(const char *filename, int *width, int *height, int *com
     free(data);
     return handle;
 }
-void draw_image(int handle)
+void draw_image(int handle) { DrawTextureFancy(handle); }
+void draw_image_mono(int handle, float r, float g, float b, float a, float range_min, float range_max)
 {
-    DrawTextureFancy(handle);
+    float selector[4] = { r, g, b, a };
+    DrawTextureFancy(handle, texture_colormap_inferno, selector, range_min, range_max);
 }
 
 void gui_begin(const char *label) { ImGui::Begin(label); }
@@ -324,6 +326,7 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw.load_image_u08 = draw_load_image_u08;
         draw.load_image_f32 = draw_load_image_f32;
         draw.image = draw_image;
+        draw.image_mono = draw_image_mono;
 
         io_t io = {0};
         io.key_down = io_key_down;
@@ -359,18 +362,4 @@ void ScriptUpdateAndDraw(frame_input_t input)
 
         ScriptLoop(io, draw, gui);
     }
-
-    #if 0
-    {
-        static unsigned char *data = NULL;
-        static int x,y,n;
-        static GLuint t;
-        if (!data)
-        {
-            data = stbi_load("C:/Temp/dummy.png", &x,&y,&n,3);
-            t = TexImage2D(data, x, y, GL_RGB);
-        }
-        DrawTextureFancy(t, texture_colormap_inferno);
-    }
-    #endif
 }

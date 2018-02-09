@@ -65,14 +65,7 @@ struct draw_t
     int (*load_image_u08)(const void *data, int width, int height, int components);
     int (*load_image_f32)(const void *data, int width, int height, int components);
     void (*image)(int handle);
-
-    // enum draw_image_mode_t
-    // {
-    //     mode_rgb = 0,
-    //     mode_gray = 1,
-    //     mode_inferno = 2
-    // };
-    // void (*draw_image)(int handle, draw_image_mode_t mode, float *selector=NULL, float range_min=0.0f, float range_max=0.0f, float *gain=NULL, float *bias=NULL);
+    void (*image_mono)(int handle, float r, float g, float b, float a, float range_min, float range_max);
 };
 
 struct gui_t

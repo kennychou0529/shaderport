@@ -49,23 +49,6 @@ void ScriptSetPaths(const char *cpp_path, const char *build_folder)
     sprintf(script_dll_temp_path, "%s/script_in_use.dll", build_folder);
 }
 
-struct expanding_string_t
-{
-    char buffer[1024*1024];
-    size_t used;
-    void clear() { used = 0; buffer[0] = 0; }
-    void append(const char *fmt, ...)
-    {
-        va_list args;
-        va_start(args, fmt);
-        used += vsnprintf(buffer, sizeof(buffer)-used, fmt, args);
-        va_end(args);
-    }
-};
-
-static expanding_string_t compiler_messages = {0};
-
-// return true if successful
 bool CompileScript()
 {
     // todo: check filenames?
@@ -95,12 +78,12 @@ bool CompileScript()
         return false;
     }
 
-    compiler_messages.clear();
+    ConsoleClearMessage();
     int lines = 0;
     char buffer[1024];
     while (lines < 5 && fgets(buffer, sizeof(buffer), p))
     {
-        compiler_messages.append(buffer);
+        ConsoleAppendMessage(buffer);
         lines++;
     }
     int return_value = _pclose(p);
@@ -115,6 +98,7 @@ int StartCompileScript(void *arg)
 {
     compile_done = false;
     compile_success = false;
+    ConsoleHideMessage();
     if (CompileScript())
         compile_success = true;
     compile_done = true;
@@ -126,10 +110,9 @@ typedef void script_loop_t(io_t, draw_t draw, gui_t);
 static script_loop_t *ScriptLoop = NULL;
 bool ReloadScriptDLL()
 {
-    compiler_messages.clear();
     if (!FileExists(script_dll_path))
     {
-        compiler_messages.append("Failed to reload script: could not find DLL (%s)", script_dll_path);
+        ConsoleAppendMessage("Failed to reload script: could not find DLL (%s)", script_dll_path);
         return false;
     }
 
@@ -160,7 +143,7 @@ bool ReloadScriptDLL()
     handle = LoadLibrary(script_dll_temp_path);
     if (!handle)
     {
-        compiler_messages.append("Failed to reload script: LoadLibrary failed");
+        ConsoleAppendMessage("Failed to reload script: LoadLibrary failed");
         return false;
     }
 
@@ -168,7 +151,7 @@ bool ReloadScriptDLL()
 
     if (!ScriptLoop)
     {
-        compiler_messages.append("Failed to reload script: Could not find routine 'loop'");
+        ConsoleAppendMessage("Failed to reload script: Could not find routine 'loop'");
         return false;
     }
 
@@ -270,7 +253,6 @@ void ScriptUpdateAndDraw(frame_input_t input)
 
     if (should_recompile)
     {
-        ConsoleSetMessage(0.0f, NULL);
         thrd_t thrd = {0};
         thrd_create(&thrd, StartCompileScript, NULL);
         // todo: thrd_detach?
@@ -278,15 +260,27 @@ void ScriptUpdateAndDraw(frame_input_t input)
 
     if (compile_done)
     {
-        if (compile_success && ReloadScriptDLL())
-            ;// celebrate!
+        if (compile_success)
+        {
+            ConsoleClearMessage();
+            if (ReloadScriptDLL())
+            {
+                ConsoleHideMessage();
+            }
+            else
+            {
+                ConsoleShowMessage();
+            }
+        }
         else
-            ConsoleSetMessage(5.0f, compiler_messages.buffer);
+        {
+            ConsoleShowMessage();
+        }
         compile_done = false;
         compile_success = false;
     }
 
-    ConsoleDrawMessage();
+    ConsoleDraw();
 
     if (ScriptLoop)
     {

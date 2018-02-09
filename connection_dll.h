@@ -67,7 +67,8 @@ struct expanding_string_t
 
 static expanding_string_t compiler_messages = {0};
 
-void CompileScript()
+// return true if successful
+bool CompileScript()
 {
     // todo: check filenames?
 
@@ -104,8 +105,11 @@ void CompileScript()
     {
         printf("Failed to run command (could not open pipe):\n");
         printf(cmd);
-        return;
+        return false;
     }
+
+    // todo: check if cl failed and only display console message if it did
+    // (don't spam user if it compiled successfully)
 
     compiler_messages.clear();
     int lines = 0;
@@ -115,14 +119,20 @@ void CompileScript()
         compiler_messages.append(buffer);
         lines++;
     }
-    _pclose(p);
+    int return_value = _pclose(p);
+    if (return_value == 0)
+        return true;
+    return false;
 }
 
 volatile bool compile_done = false;
+volatile bool compile_success = false;
 int StartCompileScript(void *arg)
 {
     compile_done = false;
-    CompileScript();
+    compile_success = false;
+    if (CompileScript())
+        compile_success = true;
     compile_done = true;
     thrd_exit(0);
     return 0;
@@ -130,13 +140,13 @@ int StartCompileScript(void *arg)
 
 typedef void script_loop_t(io_t, draw_t draw, gui_t);
 static script_loop_t *ScriptLoop = NULL;
-void ReloadScriptDLL()
+bool ReloadScriptDLL()
 {
     if (!FileExists(script_dll_path))
     {
         // todo: display error message?
         printf("Failed to reload script: could not find dll %s\n", script_dll_path);
-        return;
+        return false;
     }
 
     // We store a handle to the DLL in order to free it later
@@ -167,7 +177,7 @@ void ReloadScriptDLL()
     if (!handle)
     {
         printf("Failed to reload script: LoadLibrary failed\n");
-        return;
+        return false;
     }
 
     ScriptLoop = (script_loop_t*)GetProcAddress(handle, "loop");
@@ -175,7 +185,10 @@ void ReloadScriptDLL()
     if (!ScriptLoop)
     {
         printf("Failed to reload script: could not find routine 'loop'\n");
+        return false;
     }
+
+    return true;
 }
 
 void gui_begin(const char *label) { ImGui::Begin(label); }
@@ -234,11 +247,14 @@ void ScriptUpdateAndDraw(frame_input_t input)
         // todo: thrd_detach?
     }
 
-    if (compile_done) // todo: && compile_success
+    if (compile_done)
     {
-        ReloadScriptDLL();
+        if (compile_success)
+            ReloadScriptDLL();
+        else
+            ConsoleSetMessage(5.0f, compiler_messages.buffer);
         compile_done = false;
-        ConsoleSetMessage(5.0f, compiler_messages.buffer);
+        compile_success = false;
     }
 
     ConsoleDrawMessage();

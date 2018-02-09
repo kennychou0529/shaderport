@@ -60,16 +60,8 @@ void vdb_text(float x, float y, const char *text, int length)
     ImVec2 text_size = ImGui::CalcTextSize(text);
     pos.x -= text_size.x*0.5f;
     pos.y -= text_size.y*0.5f;
-    char id[32];
-    sprintf(id, "##DrawString%d", draw_string_id++);
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f,1.0f,1.0f,1.0f));
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f,0.0f,0.0f,0.4f));
-    ImGui::SetNextWindowPos(pos);
-    ImGui::Begin(id, 0, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::TextUnformatted(text, text + length);
-    ImGui::End();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
+    user_draw_list->AddText(ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
+    user_draw_list->AddText(pos, IM_COL32(255,255,255,255), text, text+length);
 }
 
 void vdb_text_formatted(float x, float y, const char *fmt, ...)

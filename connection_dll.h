@@ -1,8 +1,3 @@
-// todo: create st2 build script that calls shaderport.exe ${FILEPATH}
-// existing shaderport instance then reads from stdin the filename to
-// compile and compiles it. if new instance, it runs vcvarsall x86_amd64
-// and compiles it.
-
 #pragma once
 #include "dll.h"
 #include "3rdparty/tinycthread.h"
@@ -71,16 +66,6 @@ static expanding_string_t compiler_messages = {0};
 bool CompileScript()
 {
     // todo: check filenames?
-
-    // todo: this doesn't work if shaderport is run from outside a batch file?
-    // it works if you invoke vcvarsall and then run shaderport though.
-    static bool has_vcvarsall = false;
-    if (!has_vcvarsall)
-    {
-        system("vcvarsall x86_amd64");
-        has_vcvarsall = true;
-    }
-
     char cmd[1024];
     sprintf(cmd,
         "cd %s &&" // change directory so we don't clutter up the script directory
@@ -92,7 +77,6 @@ bool CompileScript()
         "del script_in_use.dll > NUL 2> NUL &&"
         "del script*.pdb > NUL 2> NUL &&"
         "echo WAITING FOR PDB > lock.tmp &&"
-        // "vcvarsall x86_amd64 && " // todo: can we somehow invoke vcvarsall once before popen? system(...) does not persist...
         "cl -Zi -nologo -Oi -Od -WX -W4 -wd4505 -wd4189 -wd4100 -fp:fast "
         "%s " // absolute path to cpp file
         "/link -debug -DLL -opt:ref -PDB:script_%%random%%.pdb -export:loop "

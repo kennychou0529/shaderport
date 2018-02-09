@@ -1,5 +1,3 @@
-// todo: display multiple messages? e.g. failed to load image 1 2 3 4 5 ...
-
 #pragma once
 #include "frame_input.h"
 

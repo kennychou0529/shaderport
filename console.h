@@ -3,8 +3,8 @@
 #pragma once
 #include "frame_input.h"
 
-static char console_buffer[1024*1024] = {0};
-static char console_front_buffer[1024*1024] = {0};
+static char console_buffer[1024] = {0};
+static char console_front_buffer[1024] = {0};
 static size_t console_buffer_used = 0;
 static bool console_visible = false;
 static float console_animation_end_time = 0.0f;

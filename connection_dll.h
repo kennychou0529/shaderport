@@ -4,7 +4,7 @@
 #include "dll.h"
 #include "3rdparty/tinycthread.h"
 #include "console.h"
-#include "file.h"
+#include "filesystem.h"
 
 static char script_cpp_path[1024] = {0};
 static char script_cpp_folder[1024] = {0};

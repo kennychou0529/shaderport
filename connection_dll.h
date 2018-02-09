@@ -37,16 +37,13 @@ FILETIME FileLastWriteTime(const char *filename)
 #error "Implement missing functions"
 #endif
 
-
 static char script_cpp_path[1024] = {0};
-static char script_cpp_folder[1024] = {0};
 static char script_build_folder[1024] = {0};
 static char script_dll_path[1024] = {0};
 static char script_dll_temp_path[1024] = {0};
-void ScriptSetPaths(const char *cpp_path, const char *cpp_folder, const char *build_folder)
+void ScriptSetPaths(const char *cpp_path, const char *build_folder)
 {
     sprintf(script_cpp_path, cpp_path);
-    sprintf(script_cpp_folder, cpp_folder);
     sprintf(script_build_folder, build_folder);
     sprintf(script_dll_path, "%s/script.dll", build_folder);
     sprintf(script_dll_temp_path, "%s/script_in_use.dll", build_folder);

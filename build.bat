@@ -8,10 +8,6 @@ if not exist ".build" mkdir .build
 attrib +h .build /s /d
 pushd .build
 
-:: Copy libtcc1.a (windows) and libtcc.dll (windows) to the same directory as executable
-xcopy /y "..\libtcc\win\libtcc1.a" . > nul
-xcopy /y "..\libtcc\win\libtcc.dll" . > nul
-
 :: -Od: Turns off optimizations and speeds up compilation
 :: -Zi: Generates debug symbols
 :: -WX: Treat warnings as errors
@@ -22,8 +18,7 @@ set CF=-Zi -MD -nologo -Od -WX -W3 -wd4100 -wd4189 -wd4996 -wd4055
 :: -subsystem:console: Open a console
 :: -debug: Create debugging information into .pdb
 set LIBGLFW=../libglfw/lib-vc2010-64/glfw3.lib
-set LIBTCC=../libtcc/win/tcc.lib
-set LF=-debug %LIBGLFW% %LIBTCC% opengl32.lib user32.lib gdi32.lib shell32.lib
+set LF=-debug %LIBGLFW% opengl32.lib user32.lib gdi32.lib shell32.lib
 
 cl %CF% ../main.cpp /link %LF% -out:shaderport.exe
 

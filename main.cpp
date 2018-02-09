@@ -4,7 +4,6 @@
 #include "imconfig.h"
 #include "3rdparty/imgui.h"
 #include "3rdparty/imgui_demo.cpp"
-#include "3rdparty/libtcc.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #include "3rdparty/stb_image_write.h"
@@ -28,8 +27,6 @@
 #include "command_buffer.h"
 #include "settings.h"
 
-// #include "connection_script_direct.h"
-// #include "connection_script.h"
 #include "connection_dll.h"
 
 // important that this is included after imgui for some reason, otherwise app crashes on start-up
@@ -250,31 +247,9 @@ int main(int argc, char **argv)
 
     if (argc == 3)
     {
-        // todo: set working directory (for screenshots, loading script, loading images, ...)
-        static char script_cpp_folder[1024] = {0};
         const char *script_cpp_path = argv[1];
         const char *script_build_folder = argv[2];
-        {
-            // extract directory that contains the cpp file
-            const char *last_slash = NULL;
-            const char *c = script_cpp_path;
-            while (*c)
-            {
-                if (*c == '/' || *c == '\\')
-                    last_slash = c;
-                c++;
-            }
-            if (!last_slash)
-            {
-                snprintf(script_cpp_folder, sizeof(script_cpp_folder), "");
-            }
-            else
-            {
-                snprintf(script_cpp_folder, sizeof(script_cpp_folder)-1, script_cpp_path);
-                script_cpp_folder[1+last_slash-script_cpp_path] = 0;
-            }
-        }
-        ScriptSetPaths(script_cpp_path, script_cpp_folder, script_build_folder);
+        ScriptSetPaths(script_cpp_path, script_build_folder);
     }
     else
     {

@@ -207,35 +207,19 @@ void vdb_circle_filled(float x, float y, float r)
 
 int vdb_load_image_u08(const void *data, int width, int height, int components)
 {
-    if (components == 1)
-        return TexImage2D(data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 2)
-        return TexImage2D(data, width, height, GL_RG, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 3)
-        return TexImage2D(data, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 4)
-        return TexImage2D(data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else
-    {
-        ConsoleMessage("'components' must be 1,2,3 or 4");
-        return 0;
-    }
+    if (components == 1)      return TexImage2D(data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 2) return TexImage2D(data, width, height, GL_RG, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 3) return TexImage2D(data, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 4) return TexImage2D(data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else { ConsoleMessage("'components' must be 1,2,3 or 4"); return 0; }
 }
 int vdb_load_image_f32(const void *data, int width, int height, int components)
 {
-    if (components == 1)
-        return TexImage2D(data, width, height, GL_LUMINANCE, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 2)
-        return TexImage2D(data, width, height, GL_RG, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 3)
-        return TexImage2D(data, width, height, GL_RGB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 4)
-        return TexImage2D(data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else
-    {
-        ConsoleMessage("'components' must be 1,2,3 or 4");
-        return 0;
-    }
+    if (components == 1)      return TexImage2D(data, width, height, GL_LUMINANCE, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 2) return TexImage2D(data, width, height, GL_RG, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 3) return TexImage2D(data, width, height, GL_RGB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 4) return TexImage2D(data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else { ConsoleMessage("'components' must be 1,2,3 or 4"); return 0; }
 }
 int vdb_load_image_file(const char *filename, int *width, int *height, int *components)
 {

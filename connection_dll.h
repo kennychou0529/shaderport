@@ -169,7 +169,10 @@ int draw_load_image_u08(const void *data, int width, int height, int components)
     else if (components == 4)
         return TexImage2D(data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
     else
-        return 0; // todo: error
+    {
+        ConsoleMessage("'components' must be 1,2,3 or 4");
+        return 0;
+    }
 }
 int draw_load_image_f32(const void *data, int width, int height, int components)
 {
@@ -182,15 +185,18 @@ int draw_load_image_f32(const void *data, int width, int height, int components)
     else if (components == 4)
         return TexImage2D(data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
     else
-        return 0; // todo: error
+    {
+        ConsoleMessage("'components' must be 1,2,3 or 4");
+        return 0;
+    }
 }
 int draw_load_image_file(const char *filename, int *width, int *height, int *components)
 {
     unsigned char *data = stbi_load(filename, width, height, components, 3);
     if (!data)
     {
-        printf("Failed to load image %s\n", filename);
-        return 0; // todo: error
+        ConsoleMessage("Failed to load image %s", filename);
+        return 0;
     }
     int handle = TexImage2D(data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
     free(data);

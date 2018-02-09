@@ -1,3 +1,5 @@
+// todo: display multiple messages? e.g. failed to load image 1 2 3 4 5 ...
+
 #pragma once
 #include "frame_input.h"
 
@@ -29,17 +31,32 @@ void ConsoleShowMessage()
     }
 }
 
+void ConsoleAppendMessageV(const char *fmt, va_list args)
+{
+    console_buffer_used += vsnprintf(console_buffer, sizeof(console_buffer)-console_buffer_used, fmt, args);
+}
+
 void ConsoleAppendMessage(const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    console_buffer_used += vsnprintf(console_buffer, sizeof(console_buffer)-console_buffer_used, fmt, args);
+    ConsoleAppendMessageV(fmt, args);
     va_end(args);
 }
 
 void ConsoleClearMessage()
 {
     console_buffer_used = 0;
+}
+
+void ConsoleMessage(const char *fmt, ...)
+{
+    ConsoleClearMessage();
+    va_list args;
+    va_start(args, fmt);
+    ConsoleAppendMessageV(fmt, args);
+    va_end(args);
+    ConsoleShowMessage();
 }
 
 void ConsoleDraw()

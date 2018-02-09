@@ -316,12 +316,13 @@ void ScriptUpdateAndDraw(frame_input_t input)
     {
         static unsigned char *data = NULL;
         static int x,y,n;
+        static GLuint t;
         if (!data)
         {
             data = stbi_load("C:/Temp/dummy.png", &x,&y,&n,3);
-            SetTexture(0, data, x, y);
+            t = TexImage2D(data, x, y, GL_RGB);
         }
-        DrawTextureFancy(0);
+        DrawTextureFancy(t, texture_colormap_inferno);
     }
     #endif
 }

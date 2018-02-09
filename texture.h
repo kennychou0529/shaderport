@@ -133,73 +133,46 @@ void DrawTexture(int slot)
 #include "shader.h"
 #include "render_texture.h"
 #include "colormap_inferno.h"
+#include "texture_shader.h"
 
-void DrawTextureFancy(int slot)
+enum texture_colormap_t
+{
+    texture_colormap_rgb,
+    texture_colormap_gray,
+    texture_colormap_inferno
+};
+
+void DrawTextureFancy(GLuint texture, texture_colormap_t mode, float *selector=NULL, float range_min=0.0f, float range_max=1.0f, float *gain=NULL, float *bias=NULL)
 {
     static bool loaded = false;
     static GLuint program = 0;
     static GLuint colormap = 0;
     static GLint attrib_in_position = 0;
-    static GLint uniform_mode = 0;
     static GLint uniform_gain = 0;
     static GLint uniform_bias = 0;
+    static GLint uniform_selector = 0;
+    static GLint uniform_blend = 0;
+    static GLint uniform_range_min = 0;
+    static GLint uniform_range_max = 0;
     static GLint uniform_channel0 = 0;
     static GLint uniform_channel1 = 0;
     if (!loaded)
     {
         colormap = TexImage2D(colormap_inferno, colormap_inferno_length, 1, GL_RGB, GL_FLOAT, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
-
-        #define SHADER(S) "#version 150\n" #S
-
-        const char *vs = SHADER(
-        in vec2 in_position;
-        out vec2 texel;
-        void main()
-        {
-            texel = vec2(0.5)+0.5*in_position;
-            gl_Position = vec4(in_position, 0.0, 1.0);
-        }
-        );
-
-        const char *fs = SHADER(
-        in vec2 texel;
-        uniform int mode;
-        uniform vec4 gain;
-        uniform vec4 bias;
-        uniform sampler2D channel0;
-        uniform sampler2D channel1;
-        out vec4 color;
-        void main()
-        {
-            vec4 sample = texture(channel0, texel);
-            sample = gain*(sample + bias);
-
-            // mode == single,float
-            const vec4 selector = vec4(1.0, 0.0, 0.0, 0.0);
-            const float range_min = 0.0;
-            const float range_max = 1.0;
-            color = texture(channel1, vec2((dot(sample,selector) - range_min) / (range_max - range_min), 0.0));
-
-            // mode == gray
-            // color = vec4(sample.r*2.0 + sample.b + sample.g*3.0)/6.0;
-
-            // mode == rgb
-            // color = sample;
-        });
-
-        #undef SHADER
-
-        program = LoadShaderFromMemory(vs, fs);
+        program = LoadShaderFromMemory(texture_shader_vs, texture_shader_fs);
         attrib_in_position = glGetAttribLocation(program, "in_position");
         uniform_channel0 = glGetUniformLocation(program, "channel0");
         uniform_channel1 = glGetUniformLocation(program, "channel1");
         uniform_gain = glGetUniformLocation(program, "gain");
         uniform_bias = glGetUniformLocation(program, "bias");
-        // uniform_mode = glGetUniformLocation(program, "mode");
-
+        uniform_selector = glGetUniformLocation(program, "selector");
+        uniform_blend = glGetUniformLocation(program, "blend");
+        uniform_range_min = glGetUniformLocation(program, "range_min");
+        uniform_range_max = glGetUniformLocation(program, "range_max");
         loaded = true;
     }
 
+    #if 0
     static render_texture_t rt = {0};
     {
         int width,height;
@@ -212,22 +185,35 @@ void DrawTextureFancy(int slot)
             rt = MakeRenderTexture(width, height, GL_NEAREST, GL_NEAREST);
         }
     }
+    #endif
 
-
-    static float gain[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    static float bias[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
     // rt.Enable();
     glUseProgram(program);
     glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, GetTextureSlotHandle(slot));
+    glBindTexture(GL_TEXTURE_2D, texture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, colormap);
     glUniform1i(uniform_channel0, 0);
     glUniform1i(uniform_channel1, 1);
-    glUniform4fv(uniform_gain, 1, gain);
-    glUniform4fv(uniform_bias, 1, bias);
+
+    if (mode == texture_colormap_rgb) glUniform1f(uniform_blend, 0.0f);
+    else glUniform1f(uniform_blend, 1.0f);
+
+    if (mode == texture_colormap_gray) glUniform4f(uniform_selector, 2.0f/6.0f, 1.0f/6.0f, 3.0f/6.0f, 0.0f);
+    else if (selector) glUniform4fv(uniform_selector, 1, selector);
+    else glUniform4f(uniform_selector, 1.0f, 0.0f, 0.0f, 0.0f);
+
+    if (gain) glUniform4fv(uniform_gain, 1, gain);
+    else glUniform4f(uniform_gain, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    if (bias) glUniform4fv(uniform_bias, 1, bias);
+    else glUniform4f(uniform_bias, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    glUniform1f(uniform_range_min, range_min);
+    glUniform1f(uniform_range_max, range_max);
+
     glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
     glVertexAttrib2f(attrib_in_position, +1.0f, -1.0f);
     glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f);
@@ -241,6 +227,7 @@ void DrawTextureFancy(int slot)
     glUseProgram(0);
     // rt.Disable();
 
+    #if 0
     // {
     //     using namespace ImGui;
     //     PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f,0.0f));
@@ -249,7 +236,9 @@ void DrawTextureFancy(int slot)
     //     End();
     //     PopStyleVar();
     // }
+    #endif
 
+    #if 0
     {
         using namespace ImGui;
         static bool rgb_gain = false;
@@ -283,4 +272,5 @@ void DrawTextureFancy(int slot)
         SameLine();
         Checkbox("RGB##rgb_bias", &rgb_bias);
     }
+    #endif
 }

@@ -205,6 +205,93 @@ void vdb_circle_filled(float x, float y, float r)
 // These functions are currently only used in DLL scripts
 //
 
+// ImGui wrappers
+void vdb_gui_begin(const char *label) { ImGui::Begin(label); }
+void vdb_gui_begin_no_title(const char *label) { ImGui::Begin(label, NULL, ImGuiWindowFlags_NoTitleBar); }
+void vdb_gui_end() { ImGui::End(); }
+bool vdb_gui_slider1f(const char* label, float* v, float v_min, float v_max) { return ImGui::SliderFloat(label, v, v_min, v_max); }
+bool vdb_gui_slider1i(const char* label, int* v, int v_min, int v_max) { return ImGui::SliderInt(label, v, v_min, v_max); }
+bool vdb_gui_button(const char *label) { return ImGui::Button(label); }
+bool vdb_gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
+bool vdb_gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
+// Keyboard, mouse, screenshots, ...
+bool vdb_io_key_down(char key) { return frame_input.key_down[toupper(key)]; }
+bool vdb_io_key_press(char key) { return frame_input.key_press[toupper(key)]; }
+bool vdb_io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }
+bool vdb_io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }
+
+// Additional draw functions
+
+#include "shader.h"
+#include "colormap_inferno.h"
+#include "texture_shader.h"
+void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, float range_min=0.0f, float range_max=1.0f, float *gain=NULL, float *bias=NULL)
+{
+    static bool loaded = false;
+    static GLuint program = 0;
+    static GLuint colormap = 0;
+    static GLint attrib_in_position = 0;
+    static GLint uniform_gain = 0;
+    static GLint uniform_bias = 0;
+    static GLint uniform_selector = 0;
+    static GLint uniform_blend = 0;
+    static GLint uniform_range_min = 0;
+    static GLint uniform_range_max = 0;
+    static GLint uniform_channel0 = 0;
+    static GLint uniform_channel1 = 0;
+    if (!loaded)
+    {
+        colormap = TexImage2D(colormap_inferno, colormap_inferno_length, 1, GL_RGB, GL_FLOAT, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
+        program = LoadShaderFromMemory(texture_shader_vs, texture_shader_fs);
+        attrib_in_position = glGetAttribLocation(program, "in_position");
+        uniform_channel0 = glGetUniformLocation(program, "channel0");
+        uniform_channel1 = glGetUniformLocation(program, "channel1");
+        uniform_gain = glGetUniformLocation(program, "gain");
+        uniform_bias = glGetUniformLocation(program, "bias");
+        uniform_selector = glGetUniformLocation(program, "selector");
+        uniform_blend = glGetUniformLocation(program, "blend");
+        uniform_range_min = glGetUniformLocation(program, "range_min");
+        uniform_range_max = glGetUniformLocation(program, "range_max");
+        loaded = true;
+    }
+
+    glUseProgram(program);
+    glEnable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, colormap);
+    glUniform1i(uniform_channel0, 0);
+    glUniform1i(uniform_channel1, 1);
+
+    if (mono) glUniform1f(uniform_blend, 1.0f);
+    else glUniform1f(uniform_blend, 0.0f);
+
+    if (mono && selector) glUniform4fv(uniform_selector, 1, selector);
+    else if (mono) glUniform4f(uniform_selector, 2.0f/6.0f, 1.0f/6.0f, 3.0f/6.0f, 0.0f);
+    else glUniform4f(uniform_selector, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    if (gain) glUniform4fv(uniform_gain, 1, gain);
+    else glUniform4f(uniform_gain, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    if (bias) glUniform4fv(uniform_bias, 1, bias);
+    else glUniform4f(uniform_bias, 0.0f, 0.0f, 0.0f, 0.0f);
+
+    glUniform1f(uniform_range_min, range_min);
+    glUniform1f(uniform_range_max, range_max);
+
+    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, -1.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f);
+    glVertexAttrib2f(attrib_in_position, -1.0f, +1.0f);
+    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
+    glUseProgram(0);
+}
 int vdb_load_image_u08(const void *data, int width, int height, int components)
 {
     if (components == 1)      return TexImage2D(data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
@@ -237,20 +324,5 @@ void vdb_draw_image(int handle) { DrawTextureFancy(handle); }
 void vdb_draw_image_mono(int handle, float r, float g, float b, float a, float range_min, float range_max)
 {
     float selector[4] = { r, g, b, a };
-    DrawTextureFancy(handle, texture_colormap_inferno, selector, range_min, range_max);
+    DrawTextureFancy(handle, true, selector, range_min, range_max);
 }
-
-void vdb_gui_begin(const char *label) { ImGui::Begin(label); }
-void vdb_gui_begin_no_title(const char *label) { ImGui::Begin(label, NULL, ImGuiWindowFlags_NoTitleBar); }
-void vdb_gui_end() { ImGui::End(); }
-bool vdb_gui_slider1f(const char* label, float* v, float v_min, float v_max) { return ImGui::SliderFloat(label, v, v_min, v_max); }
-bool vdb_gui_slider1i(const char* label, int* v, int v_min, int v_max) { return ImGui::SliderInt(label, v, v_min, v_max); }
-bool vdb_gui_button(const char *label) { return ImGui::Button(label); }
-bool vdb_gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
-bool vdb_gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
-
-// todo: keys
-bool vdb_io_key_down(char key) { return frame_input.key_down[toupper(key)]; }
-bool vdb_io_key_press(char key) { return frame_input.key_press[toupper(key)]; }
-bool vdb_io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }
-bool vdb_io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }

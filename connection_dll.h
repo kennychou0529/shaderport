@@ -187,8 +187,7 @@ void ScriptUpdateAndDraw(frame_input_t input)
         }
         else
         {
-            // todo: display error message
-            printf("%s does not exist\n", script_cpp_path);
+            ConsoleMessage("Failed to compile script: %s does not exist\n", script_cpp_path);
         }
     }
 

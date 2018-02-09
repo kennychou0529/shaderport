@@ -4,9 +4,14 @@
 
 static int draw_string_id = 0;
 static ImDrawList *user_draw_list = NULL;
-static ImU32 vdb_current_color = IM_COL32(1.0f,1.0f,1.0f,1.0f);
+static ImU32 vdb_current_color = IM_COL32(255,255,255,255);
 static float vdb_current_line_width = 1.0f;
 static float vdb_current_point_size = 1.0f;
+
+static ImU32 vdb_current_text_background = 0;
+static bool  vdb_current_text_shadow = true;
+static float vdb_current_text_x_align = -0.5f;
+static float vdb_current_text_y_align = -0.5f;
 
 // todo: optimize, store inverse width
 struct vdb_view_t { float left,right,bottom,top; };
@@ -26,7 +31,7 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
 
     draw_string_id = 0;
 
-    vdb_current_color = IM_COL32(1.0f,1.0f,1.0f,1.0f);
+    vdb_current_color = IM_COL32(255,255,255,255);
     vdb_current_line_width = 1.0f;
     vdb_current_point_size = 1.0f;
 
@@ -34,6 +39,11 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_view.right = +1.0f;
     vdb_current_view.bottom = -1.0f;
     vdb_current_view.top = +1.0f;
+
+    vdb_current_text_background = 0;
+    vdb_current_text_shadow = true;
+    vdb_current_text_x_align = -0.5f;
+    vdb_current_text_y_align = -0.5f;
 }
 
 ImVec2 ConvertCoordinates(float x, float y)
@@ -53,15 +63,34 @@ void vdb_view(float left, float right, float bottom, float top)
     vdb_current_view.top = top;
 }
 
+void vdb_text_background(int r, int g, int b, int a) { vdb_current_text_background = IM_COL32(r,g,b,a); }
+void vdb_text_no_background() { vdb_current_text_background = 0; }
+void vdb_text_shadow(bool enabled) { vdb_current_text_shadow = enabled; }
+void vdb_text_x_left()   { vdb_current_text_x_align =  0.0f; }
+void vdb_text_x_center() { vdb_current_text_x_align = -0.5f; }
+void vdb_text_x_right()  { vdb_current_text_x_align = -1.0f; }
+void vdb_text_y_top()    { vdb_current_text_y_align =  0.0f; }
+void vdb_text_y_center() { vdb_current_text_y_align = -0.5f; }
+void vdb_text_y_bottom() { vdb_current_text_y_align = -1.0f; }
+
 // todo: are x,y screen or framebuffer coordinates?
 void vdb_text(float x, float y, const char *text, int length)
 {
     ImVec2 pos = ConvertCoordinates(x,y);
     ImVec2 text_size = ImGui::CalcTextSize(text);
-    pos.x -= text_size.x*0.5f;
-    pos.y -= text_size.y*0.5f;
-    user_draw_list->AddText(ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
-    user_draw_list->AddText(pos, IM_COL32(255,255,255,255), text, text+length);
+    pos.x += text_size.x * vdb_current_text_x_align;
+    pos.y += text_size.y * vdb_current_text_y_align;
+    if (vdb_current_text_background)
+    {
+        const float xpad = 4.0f;
+        const float ypad = 2.0f;
+        ImVec2 a = ImVec2(pos.x-xpad,pos.y-ypad);
+        ImVec2 b = ImVec2(pos.x+2.0f*xpad+text_size.x, pos.y+2.0f*ypad+text_size.y);
+        user_draw_list->AddRectFilled(a, b, vdb_current_text_background, 8.0f);
+    }
+    if (vdb_current_text_shadow)
+        user_draw_list->AddText(ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
+    user_draw_list->AddText(pos, vdb_current_color, text, text+length);
 }
 
 void vdb_text_formatted(float x, float y, const char *fmt, ...)

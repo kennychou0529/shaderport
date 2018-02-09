@@ -267,6 +267,16 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw.circle = vdb_circle;
         draw.circle_filled = vdb_circle_filled;
 
+        draw.text_background = vdb_text_background;
+        draw.text_no_background = vdb_text_no_background;
+        draw.text_shadow = vdb_text_shadow;
+        draw.text_x_left = vdb_text_x_left;
+        draw.text_x_center = vdb_text_x_center;
+        draw.text_x_right = vdb_text_x_right;
+        draw.text_y_top = vdb_text_y_top;
+        draw.text_y_center = vdb_text_y_center;
+        draw.text_y_bottom = vdb_text_y_bottom;
+
         io_t io = {0};
         io.key_down = io_key_down;
         io.key_press = io_key_press;

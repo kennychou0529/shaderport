@@ -50,6 +50,16 @@ struct draw_t
     void (*rect_filled)(float x, float y, float w, float h);
     void (*circle)(float x, float y, float r);
     void (*circle_filled)(float x, float y, float r);
+
+    void (*text_background)(int r, int g, int b, int a);
+    void (*text_no_background)();
+    void (*text_shadow)(bool enabled);
+    void (*text_x_left)();
+    void (*text_x_center)();
+    void (*text_x_right)();
+    void (*text_y_top)();
+    void (*text_y_center)();
+    void (*text_y_bottom)();
 };
 
 struct gui_t

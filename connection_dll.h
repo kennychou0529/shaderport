@@ -54,14 +54,12 @@ struct expanding_string_t
     char buffer[1024*1024];
     size_t used;
     void clear() { used = 0; buffer[0] = 0; }
-    void append(const char *s)
+    void append(const char *fmt, ...)
     {
-        size_t len = strlen(s);
-        if (used + len <= sizeof(buffer))
-        {
-            strcpy(buffer+used, s);
-            used += len;
-        }
+        va_list args;
+        va_start(args, fmt);
+        used += vsnprintf(buffer, sizeof(buffer)-used, fmt, args);
+        va_end(args);
     }
 };
 
@@ -97,9 +95,6 @@ bool CompileScript()
         return false;
     }
 
-    // todo: check if cl failed and only display console message if it did
-    // (don't spam user if it compiled successfully)
-
     compiler_messages.clear();
     int lines = 0;
     char buffer[1024];
@@ -131,10 +126,10 @@ typedef void script_loop_t(io_t, draw_t draw, gui_t);
 static script_loop_t *ScriptLoop = NULL;
 bool ReloadScriptDLL()
 {
+    compiler_messages.clear();
     if (!FileExists(script_dll_path))
     {
-        // todo: display error message?
-        printf("Failed to reload script: could not find dll %s\n", script_dll_path);
+        compiler_messages.append("Failed to reload script: could not find DLL (%s)", script_dll_path);
         return false;
     }
 
@@ -165,7 +160,7 @@ bool ReloadScriptDLL()
     handle = LoadLibrary(script_dll_temp_path);
     if (!handle)
     {
-        printf("Failed to reload script: LoadLibrary failed\n");
+        compiler_messages.append("Failed to reload script: LoadLibrary failed");
         return false;
     }
 
@@ -173,7 +168,7 @@ bool ReloadScriptDLL()
 
     if (!ScriptLoop)
     {
-        printf("Failed to reload script: could not find routine 'loop'\n");
+        compiler_messages.append("Failed to reload script: Could not find routine 'loop'");
         return false;
     }
 
@@ -283,8 +278,8 @@ void ScriptUpdateAndDraw(frame_input_t input)
 
     if (compile_done)
     {
-        if (compile_success)
-            ReloadScriptDLL();
+        if (compile_success && ReloadScriptDLL())
+            ;// celebrate!
         else
             ConsoleSetMessage(5.0f, compiler_messages.buffer);
         compile_done = false;

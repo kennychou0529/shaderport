@@ -60,6 +60,19 @@ struct draw_t
     void (*text_y_top)();
     void (*text_y_center)();
     void (*text_y_bottom)();
+
+    int (*load_image_file)(const char *filename, int *width, int *height, int *components);
+    int (*load_image_u08)(const void *data, int width, int height, int components);
+    int (*load_image_f32)(const void *data, int width, int height, int components);
+    void (*image)(int handle);
+
+    // enum draw_image_mode_t
+    // {
+    //     mode_rgb = 0,
+    //     mode_gray = 1,
+    //     mode_inferno = 2
+    // };
+    // void (*draw_image)(int handle, draw_image_mode_t mode, float *selector=NULL, float range_min=0.0f, float range_max=0.0f, float *gain=NULL, float *bias=NULL);
 };
 
 struct gui_t

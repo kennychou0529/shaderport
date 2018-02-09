@@ -175,6 +175,49 @@ bool ReloadScriptDLL()
     return true;
 }
 
+int draw_load_image_u08(const void *data, int width, int height, int components)
+{
+    if (components == 1)
+        return TexImage2D(data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 2)
+        return TexImage2D(data, width, height, GL_RG, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 3)
+        return TexImage2D(data, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 4)
+        return TexImage2D(data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else
+        return 0; // todo: error
+}
+int draw_load_image_f32(const void *data, int width, int height, int components)
+{
+    if (components == 1)
+        return TexImage2D(data, width, height, GL_LUMINANCE, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 2)
+        return TexImage2D(data, width, height, GL_RG, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 3)
+        return TexImage2D(data, width, height, GL_RGB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 4)
+        return TexImage2D(data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else
+        return 0; // todo: error
+}
+int draw_load_image_file(const char *filename, int *width, int *height, int *components)
+{
+    unsigned char *data = stbi_load(filename, width, height, components, 3);
+    if (!data)
+    {
+        printf("Failed to load image %s\n", filename);
+        return 0; // todo: error
+    }
+    int handle = TexImage2D(data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    free(data);
+    return handle;
+}
+void draw_image(int handle)
+{
+    DrawTextureFancy(handle);
+}
+
 void gui_begin(const char *label) { ImGui::Begin(label); }
 void gui_begin_no_title(const char *label) { ImGui::Begin(label, NULL, ImGuiWindowFlags_NoTitleBar); }
 void gui_end() { ImGui::End(); }
@@ -277,6 +320,11 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw.text_y_center = vdb_text_y_center;
         draw.text_y_bottom = vdb_text_y_bottom;
 
+        draw.load_image_file = draw_load_image_file;
+        draw.load_image_u08 = draw_load_image_u08;
+        draw.load_image_f32 = draw_load_image_f32;
+        draw.image = draw_image;
+
         io_t io = {0};
         io.key_down = io_key_down;
         io.key_press = io_key_press;
@@ -312,7 +360,7 @@ void ScriptUpdateAndDraw(frame_input_t input)
         ScriptLoop(io, draw, gui);
     }
 
-    #if 1
+    #if 0
     {
         static unsigned char *data = NULL;
         static int x,y,n;

@@ -142,7 +142,7 @@ enum texture_colormap_t
     texture_colormap_inferno
 };
 
-void DrawTextureFancy(GLuint texture, texture_colormap_t mode, float *selector=NULL, float range_min=0.0f, float range_max=1.0f, float *gain=NULL, float *bias=NULL)
+void DrawTextureFancy(GLuint texture, texture_colormap_t mode=texture_colormap_rgb, float *selector=NULL, float range_min=0.0f, float range_max=1.0f, float *gain=NULL, float *bias=NULL)
 {
     static bool loaded = false;
     static GLuint program = 0;

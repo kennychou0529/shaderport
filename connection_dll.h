@@ -1,47 +1,23 @@
 #pragma once
+#include <stdio.h>
+#include <string.h>
 #include "dll.h"
 #include "3rdparty/tinycthread.h"
 #include "console.h"
-#include "format.h"
+#include "file.h"
 
 static char script_cpp_path[1024] = {0};
+static char script_cpp_folder[1024] = {0};
 static char script_build_folder[1024] = {0};
 static char script_dll_path[1024] = {0};
 static char script_dll_temp_path[1024] = {0};
-void ScriptSetPaths(const char *cpp_path, const char *build_folder)
+void ScriptSetPaths(const char *cpp_path, const char *cpp_folder, const char *build_folder)
 {
     sprintf(script_cpp_path, cpp_path);
+    sprintf(script_cpp_folder, cpp_folder);
     sprintf(script_build_folder, build_folder);
     sprintf(script_dll_path, "%s/script.dll", build_folder);
     sprintf(script_dll_temp_path, "%s/script_in_use.dll", build_folder);
-}
-
-bool FileExists(const char *filename)
-{
-    WIN32_FIND_DATA data;
-    HANDLE handle = FindFirstFileA(filename, &data);
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        FindClose(handle);
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-FILETIME FileLastWriteTime(const char *filename)
-{
-    FILETIME t = {};
-    WIN32_FIND_DATA fd;
-    HANDLE h = FindFirstFileA(filename, &fd);
-    if (h != INVALID_HANDLE_VALUE)
-    {
-        t = fd.ftLastWriteTime;
-        FindClose(h);
-    }
-    return t;
 }
 
 struct expanding_string_t

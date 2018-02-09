@@ -217,6 +217,9 @@ void ResetGLState(frame_input_t input)
 
     glLineWidth(1.0f);
     glPointSize(1.0f);
+
+    // Assuming user uploads images that are one-byte packed?
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 static frame_input_t frame_input = {0};
@@ -238,29 +241,45 @@ void AfterUpdateAndDraw(frame_input_t input)
 
 void UpdateAndDraw(frame_input_t input)
 {
-
+    ImGui::ShowDemoWindow();
 }
 
 int main(int argc, char **argv)
 {
     assert(id_count <= 256 && "I limit the ID to 1 byte for now, so there can only be 256 unique draw commands.");
 
-    // Parse commandline arguments and see if we should compile and run a .cpp file
-    const char *script_cpp_path = NULL;
-    const char *script_build_folder = NULL;
+    if (argc == 3)
     {
-        // todo: replace with actual arg parsing
-        if (argc == 3)
+        // todo: set working directory (for screenshots, loading script, loading images, ...)
+        static char script_cpp_folder[1024] = {0};
+        const char *script_cpp_path = argv[1];
+        const char *script_build_folder = argv[2];
         {
-            script_cpp_path = argv[1];
-            script_build_folder = argv[2];
-            ScriptSetPaths(script_cpp_path, script_build_folder);
+            // extract directory that contains the cpp file
+            const char *last_slash = NULL;
+            const char *c = script_cpp_path;
+            while (*c)
+            {
+                if (*c == '/' || *c == '\\')
+                    last_slash = c;
+                c++;
+            }
+            if (!last_slash)
+            {
+                snprintf(script_cpp_folder, sizeof(script_cpp_folder), "");
+            }
+            else
+            {
+                snprintf(script_cpp_folder, sizeof(script_cpp_folder)-1, script_cpp_path);
+                script_cpp_folder[1+last_slash-script_cpp_path] = 0;
+            }
         }
-        else
-        {
-            printf("usage: shaderport.exe <path/to/script.cpp> <path/to/build/directory>\n");
-            return 0;
-        }
+        ScriptSetPaths(script_cpp_path, script_cpp_folder, script_build_folder);
+    }
+    else
+    {
+        printf("usage: shaderport.exe <path/to/script.cpp> <path/to/build/directory>\n");
+        return 0;
     }
 
     unsigned int command_buffer_allocation_size = 1024*1024*10;
@@ -329,7 +348,7 @@ int main(int argc, char **argv)
         OneTimeEvent(reload_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
         bool escape_eaten = false;
 
-        #if 0
+        #if 1
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
         UpdateAndDraw(input);

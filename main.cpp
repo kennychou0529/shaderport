@@ -89,6 +89,16 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
 
     glfwPollEvents();
 
+    static bool key_down[256] = {0};
+    for (int i = 0; i < 256; i++)
+    {
+        bool is_down = glfwGetKey(window, i) == GLFW_PRESS;
+        if (!key_down[i] && is_down)
+            input.key_press[i] = true;
+        input.key_down[i] = is_down;
+        key_down[i] = is_down;
+    }
+
     input.lost_focus = lost_focus;
     input.regained_focus = regained_focus;
 

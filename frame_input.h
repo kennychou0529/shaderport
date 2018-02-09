@@ -2,6 +2,9 @@
 
 struct frame_input_t
 {
+    bool key_down[256];
+    bool key_press[256];
+
     // Note: for retina displays screen coordinates != framebuffer coordinates
     int window_x,window_y; // This is the position of the window's client area in screen coordinates
     int window_w,window_h; // This is the size of the window's client area in screen coordinates

@@ -348,7 +348,7 @@ int main(int argc, char **argv)
         OneTimeEvent(reload_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
         bool escape_eaten = false;
 
-        #if 1
+        #if 0
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
         UpdateAndDraw(input);

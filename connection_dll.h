@@ -311,4 +311,17 @@ void ScriptUpdateAndDraw(frame_input_t input)
 
         ScriptLoop(io, draw, gui);
     }
+
+    #if 1
+    {
+        static unsigned char *data = NULL;
+        static int x,y,n;
+        if (!data)
+        {
+            data = stbi_load("C:/Temp/dummy.png", &x,&y,&n,3);
+            SetTexture(0, data, x, y);
+        }
+        DrawTextureFancy(0);
+    }
+    #endif
 }

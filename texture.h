@@ -37,7 +37,7 @@ void BindTexture(int slot); // Enable a texture for custom drawing
 //
 
 GLuint TexImage2D(
-    void *data,
+    const void *data,
     int width,
     int height,
     GLenum data_format,
@@ -132,18 +132,23 @@ void DrawTexture(int slot)
 
 #include "shader.h"
 #include "render_texture.h"
+#include "colormap_inferno.h"
 
 void DrawTextureFancy(int slot)
 {
     static bool loaded = false;
     static GLuint program = 0;
+    static GLuint colormap = 0;
     static GLint attrib_in_position = 0;
     static GLint uniform_mode = 0;
     static GLint uniform_gain = 0;
     static GLint uniform_bias = 0;
     static GLint uniform_channel0 = 0;
+    static GLint uniform_channel1 = 0;
     if (!loaded)
     {
+        colormap = TexImage2D(colormap_inferno, colormap_inferno_length, 1, GL_RGB, GL_FLOAT, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
+
         #define SHADER(S) "#version 150\n" #S
 
         const char *vs = SHADER(
@@ -162,14 +167,10 @@ void DrawTextureFancy(int slot)
         uniform vec4 gain;
         uniform vec4 bias;
         uniform sampler2D channel0;
+        uniform sampler2D channel1;
         out vec4 color;
         void main()
         {
-            const vec3 colormap[3] = vec3[](
-                vec3(1.46159096e-03,   4.66127766e-04,   1.38655200e-02),
-                vec3(2.25764007e-03,   1.29495431e-03,   1.83311461e-02),
-                vec3(3.27943222e-03,   2.30452991e-03,   2.37083291e-02));
-
             vec4 sample = texture(channel0, texel);
             sample = gain*(sample + bias);
 
@@ -177,12 +178,7 @@ void DrawTextureFancy(int slot)
             const vec4 selector = vec4(1.0, 0.0, 0.0, 0.0);
             const float range_min = 0.0;
             const float range_max = 1.0;
-            float f = (dot(sample,selector) - range_min) / (range_max - range_min);
-            f = clamp(f, 0.0, 1.0);
-            f = f*float(colormap.length());
-            int n = clamp(int(f), 0, colormap.length()-1);
-            color.rgb = colormap[n];
-            color.a = 1.0;
+            color = texture(channel1, vec2((dot(sample,selector) - range_min) / (range_max - range_min), 0.0));
 
             // mode == gray
             // color = vec4(sample.r*2.0 + sample.b + sample.g*3.0)/6.0;
@@ -196,6 +192,7 @@ void DrawTextureFancy(int slot)
         program = LoadShaderFromMemory(vs, fs);
         attrib_in_position = glGetAttribLocation(program, "in_position");
         uniform_channel0 = glGetUniformLocation(program, "channel0");
+        uniform_channel1 = glGetUniformLocation(program, "channel1");
         uniform_gain = glGetUniformLocation(program, "gain");
         uniform_bias = glGetUniformLocation(program, "bias");
         // uniform_mode = glGetUniformLocation(program, "mode");
@@ -224,8 +221,11 @@ void DrawTextureFancy(int slot)
     glUseProgram(program);
     glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
-    BindTexture(slot);
+    glBindTexture(GL_TEXTURE_2D, GetTextureSlotHandle(slot));
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, colormap);
     glUniform1i(uniform_channel0, 0);
+    glUniform1i(uniform_channel1, 1);
     glUniform4fv(uniform_gain, 1, gain);
     glUniform4fv(uniform_bias, 1, bias);
     glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
@@ -236,6 +236,7 @@ void DrawTextureFancy(int slot)
     glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
     glUseProgram(0);
     // rt.Disable();

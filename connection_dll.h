@@ -3,6 +3,7 @@
 #include <string.h>
 #include "dll.h"
 #include "3rdparty/tinycthread.h"
+#include "vdb_implementation.h"
 #include "console.h"
 
 #ifdef _WIN32
@@ -158,72 +159,6 @@ bool ReloadScriptDLL()
     return true;
 }
 
-int draw_load_image_u08(const void *data, int width, int height, int components)
-{
-    if (components == 1)
-        return TexImage2D(data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 2)
-        return TexImage2D(data, width, height, GL_RG, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 3)
-        return TexImage2D(data, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 4)
-        return TexImage2D(data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else
-    {
-        ConsoleMessage("'components' must be 1,2,3 or 4");
-        return 0;
-    }
-}
-int draw_load_image_f32(const void *data, int width, int height, int components)
-{
-    if (components == 1)
-        return TexImage2D(data, width, height, GL_LUMINANCE, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 2)
-        return TexImage2D(data, width, height, GL_RG, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 3)
-        return TexImage2D(data, width, height, GL_RGB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 4)
-        return TexImage2D(data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else
-    {
-        ConsoleMessage("'components' must be 1,2,3 or 4");
-        return 0;
-    }
-}
-int draw_load_image_file(const char *filename, int *width, int *height, int *components)
-{
-    unsigned char *data = stbi_load(filename, width, height, components, 3);
-    if (!data)
-    {
-        ConsoleMessage("Failed to load image %s", filename);
-        return 0;
-    }
-    int handle = TexImage2D(data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    free(data);
-    return handle;
-}
-void draw_image(int handle) { DrawTextureFancy(handle); }
-void draw_image_mono(int handle, float r, float g, float b, float a, float range_min, float range_max)
-{
-    float selector[4] = { r, g, b, a };
-    DrawTextureFancy(handle, texture_colormap_inferno, selector, range_min, range_max);
-}
-
-void gui_begin(const char *label) { ImGui::Begin(label); }
-void gui_begin_no_title(const char *label) { ImGui::Begin(label, NULL, ImGuiWindowFlags_NoTitleBar); }
-void gui_end() { ImGui::End(); }
-bool gui_slider1f(const char* label, float* v, float v_min, float v_max) { return ImGui::SliderFloat(label, v, v_min, v_max); }
-bool gui_slider1i(const char* label, int* v, int v_min, int v_max) { return ImGui::SliderInt(label, v, v_min, v_max); }
-bool gui_button(const char *label) { return ImGui::Button(label); }
-bool gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
-bool gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
-
-// todo: keys
-bool io_key_down(char key) { return frame_input.key_down[toupper(key)]; }
-bool io_key_press(char key) { return frame_input.key_press[toupper(key)]; }
-bool io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }
-bool io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }
-
 void ScriptUpdateAndDraw(frame_input_t input)
 {
     bool should_check_write_time = false;
@@ -322,17 +257,17 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw.text_y_center = vdb_text_y_center;
         draw.text_y_bottom = vdb_text_y_bottom;
 
-        draw.load_image_file = draw_load_image_file;
-        draw.load_image_u08 = draw_load_image_u08;
-        draw.load_image_f32 = draw_load_image_f32;
-        draw.image = draw_image;
-        draw.image_mono = draw_image_mono;
+        draw.load_image_file = vdb_load_image_file;
+        draw.load_image_u08 = vdb_load_image_u08;
+        draw.load_image_f32 = vdb_load_image_f32;
+        draw.image = vdb_draw_image;
+        draw.image_mono = vdb_draw_image_mono;
 
         io_t io = {0};
-        io.key_down = io_key_down;
-        io.key_press = io_key_press;
-        io.mouse_down = io_mouse_down;
-        io.mouse_click = io_mouse_click;
+        io.key_down = vdb_io_key_down;
+        io.key_press = vdb_io_key_press;
+        io.mouse_down = vdb_io_mouse_down;
+        io.mouse_click = vdb_io_mouse_click;
 
         io.window_x = input.window_x;
         io.window_y = input.window_y;
@@ -351,14 +286,14 @@ void ScriptUpdateAndDraw(frame_input_t input)
         io.regained_focus = input.regained_focus;
 
         gui_t gui = {0};
-        gui.begin = gui_begin;
-        gui.begin_no_title = gui_begin_no_title;
-        gui.end = gui_end;
-        gui.slider1f = gui_slider1f;
-        gui.slider1i = gui_slider1i;
-        gui.button = gui_button;
-        gui.checkbox = gui_checkbox;
-        gui.radio = gui_radio;
+        gui.begin = vdb_gui_begin;
+        gui.begin_no_title = vdb_gui_begin_no_title;
+        gui.end = vdb_gui_end;
+        gui.slider1f = vdb_gui_slider1f;
+        gui.slider1i = vdb_gui_slider1i;
+        gui.button = vdb_gui_button;
+        gui.checkbox = vdb_gui_checkbox;
+        gui.radio = vdb_gui_radio;
 
         ScriptLoop(io, draw, gui);
     }

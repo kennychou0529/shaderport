@@ -1,6 +1,7 @@
 #pragma once
 #include "3rdparty/imgui.h"
 #include "frame_input.h"
+#include "console.h"
 
 static int draw_string_id = 0;
 static ImDrawList *user_draw_list = NULL;
@@ -199,3 +200,73 @@ void vdb_circle_filled(float x, float y, float r)
     float r_display = r/(vdb_current_view.right-vdb_current_view.left); // could also do y-axis... ideally we do an ellipse?
     user_draw_list->AddCircleFilled(ConvertCoordinates(x, y), r_display, vdb_current_color, 12);
 }
+
+//
+// These functions are currently only used in DLL scripts
+//
+
+int vdb_load_image_u08(const void *data, int width, int height, int components)
+{
+    if (components == 1)
+        return TexImage2D(data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 2)
+        return TexImage2D(data, width, height, GL_RG, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 3)
+        return TexImage2D(data, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 4)
+        return TexImage2D(data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else
+    {
+        ConsoleMessage("'components' must be 1,2,3 or 4");
+        return 0;
+    }
+}
+int vdb_load_image_f32(const void *data, int width, int height, int components)
+{
+    if (components == 1)
+        return TexImage2D(data, width, height, GL_LUMINANCE, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 2)
+        return TexImage2D(data, width, height, GL_RG, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 3)
+        return TexImage2D(data, width, height, GL_RGB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 4)
+        return TexImage2D(data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else
+    {
+        ConsoleMessage("'components' must be 1,2,3 or 4");
+        return 0;
+    }
+}
+int vdb_load_image_file(const char *filename, int *width, int *height, int *components)
+{
+    unsigned char *data = stbi_load(filename, width, height, components, 3);
+    if (!data)
+    {
+        ConsoleMessage("Failed to load image %s", filename);
+        return 0;
+    }
+    int handle = TexImage2D(data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    free(data);
+    return handle;
+}
+void vdb_draw_image(int handle) { DrawTextureFancy(handle); }
+void vdb_draw_image_mono(int handle, float r, float g, float b, float a, float range_min, float range_max)
+{
+    float selector[4] = { r, g, b, a };
+    DrawTextureFancy(handle, texture_colormap_inferno, selector, range_min, range_max);
+}
+
+void vdb_gui_begin(const char *label) { ImGui::Begin(label); }
+void vdb_gui_begin_no_title(const char *label) { ImGui::Begin(label, NULL, ImGuiWindowFlags_NoTitleBar); }
+void vdb_gui_end() { ImGui::End(); }
+bool vdb_gui_slider1f(const char* label, float* v, float v_min, float v_max) { return ImGui::SliderFloat(label, v, v_min, v_max); }
+bool vdb_gui_slider1i(const char* label, int* v, int v_min, int v_max) { return ImGui::SliderInt(label, v, v_min, v_max); }
+bool vdb_gui_button(const char *label) { return ImGui::Button(label); }
+bool vdb_gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
+bool vdb_gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
+
+// todo: keys
+bool vdb_io_key_down(char key) { return frame_input.key_down[toupper(key)]; }
+bool vdb_io_key_press(char key) { return frame_input.key_press[toupper(key)]; }
+bool vdb_io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }
+bool vdb_io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }

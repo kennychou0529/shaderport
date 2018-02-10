@@ -13,6 +13,7 @@ static ImU32 vdb_current_text_background = 0;
 static bool  vdb_current_text_shadow = true;
 static float vdb_current_text_x_align = -0.5f;
 static float vdb_current_text_y_align = -0.5f;
+static float vdb_current_text_font_size = -1.0f;
 
 // todo: optimize, store inverse width
 struct vdb_view_t { float left,right,bottom,top; };
@@ -45,6 +46,8 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_text_shadow = true;
     vdb_current_text_x_align = -0.5f;
     vdb_current_text_y_align = -0.5f;
+
+    vdb_current_text_font_size = -1.0f;
 }
 
 // Converts user's coordinates into OpenGL normalized device coordinates
@@ -84,6 +87,7 @@ void vdb_text_x_right()  { vdb_current_text_x_align = -1.0f; }
 void vdb_text_y_top()    { vdb_current_text_y_align =  0.0f; }
 void vdb_text_y_center() { vdb_current_text_y_align = -0.5f; }
 void vdb_text_y_bottom() { vdb_current_text_y_align = -1.0f; }
+void vdb_text_font_size(float size) { vdb_current_text_font_size = size; }
 
 void vdb_text(float x, float y, const char *text, int length)
 {
@@ -99,9 +103,10 @@ void vdb_text(float x, float y, const char *text, int length)
         ImVec2 b = ImVec2(pos.x+2.0f*xpad+text_size.x, pos.y+2.0f*ypad+text_size.y);
         user_draw_list->AddRectFilled(a, b, vdb_current_text_background, 8.0f);
     }
+    float font_size = (vdb_current_text_font_size < 0.0f) ? ImGui::GetFontSize() : vdb_current_text_font_size;
     if (vdb_current_text_shadow)
-        user_draw_list->AddText(ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
-    user_draw_list->AddText(pos, vdb_current_color, text, text+length);
+        user_draw_list->AddText(ImGui::GetFont(), font_size, ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
+    user_draw_list->AddText(ImGui::GetFont(), font_size, pos, vdb_current_color, text, text+length);
 }
 
 void vdb_text_formatted(float x, float y, const char *fmt, ...)
@@ -214,6 +219,10 @@ void vdb_circle_filled(float x, float y, float r)
 //
 // These functions are currently only used in DLL scripts
 //
+
+int vdb_load_font(const char *filename, float size) { return GetFont(filename, size); }
+void vdb_push_font(int font) { PushFont(font); }
+void vdb_pop_font() { PopFont(); }
 
 // ImGui wrappers
 void vdb_gui_begin(const char *label) { ImGui::Begin(label); }

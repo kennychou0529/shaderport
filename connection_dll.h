@@ -255,6 +255,11 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw.text_y_top = vdb_text_y_top;
         draw.text_y_center = vdb_text_y_center;
         draw.text_y_bottom = vdb_text_y_bottom;
+        draw.text_font_size = vdb_text_font_size;
+
+        draw.load_font = vdb_load_font;
+        draw.push_font = vdb_push_font;
+        draw.pop_font = vdb_pop_font;
 
         draw.load_image_file = vdb_load_image_file;
         draw.load_image_u08 = vdb_load_image_u08;

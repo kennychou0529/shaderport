@@ -60,6 +60,11 @@ struct draw_t
     void (*text_y_top)();
     void (*text_y_center)();
     void (*text_y_bottom)();
+    void (*text_font_size)(float size);
+
+    int (*load_font)(const char *filename, float size);
+    void (*push_font)(int font);
+    void (*pop_font)();
 
     void (*load_image_file)(int slot, const char *filename, int *width, int *height, int *components);
     void (*load_image_u08)(int slot, const void *data, int width, int height, int components);

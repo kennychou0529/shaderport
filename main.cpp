@@ -18,7 +18,7 @@
 #include "3rdparty/imgui.cpp"
 #include "3rdparty/imgui_draw.cpp"
 #include "3rdparty/imgui_impl_glfw.cpp"
-#include "fonts/source_sans_pro.h"
+#include "imfonts.h"
 
 #include "log.h"
 #include "frame_input.h"
@@ -122,15 +122,7 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
 
 void AfterImGuiInit()
 {
-    // Add the cool extra fonts we want here
-    ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF(
-        (const char*)source_sans_pro_compressed_data,
-        source_sans_pro_compressed_size, 18.0f);
-    // ImGui::GetIO().Fonts->AddFontDefault();
-
-    // Adding fonts should be done before this is called
-    // (it's called automatically on first frame)
-    // ImGui_ImplGlfw_CreateDeviceObjects();
+    AddDefaultFont(18.0f);
 
     ImGui::GetIO().MouseDrawCursor = true;
     ImGui::StyleColorsDark();
@@ -323,6 +315,7 @@ int main(int argc, char **argv)
         OneTimeEvent(reload_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
         bool escape_eaten = false;
 
+        LoadUnloadedFonts();
         #if 0
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);

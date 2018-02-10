@@ -107,7 +107,7 @@ int StartCompileScript(void *arg)
     return 0;
 }
 
-typedef void script_loop_t(io_t, draw_t draw, gui_t);
+typedef void script_loop_t(io_t, draw_t draw, gui_t, gl_t);
 static script_loop_t *ScriptLoop = NULL;
 bool ReloadScriptDLL()
 {
@@ -299,6 +299,28 @@ void ScriptUpdateAndDraw(frame_input_t input)
         gui.checkbox = vdb_gui_checkbox;
         gui.radio = vdb_gui_radio;
 
-        ScriptLoop(io, draw, gui);
+        gl_t gl = {0};
+        gl.clear_color = vdb_gl_clear_color;
+        gl.clear_depth = vdb_gl_clear_depth;
+        gl.point_size = vdb_gl_point_size;
+        gl.line_width = vdb_gl_line_width;
+        gl.projection = vdb_gl_projection;
+        gl.push_transform = vdb_gl_push_transform;
+        gl.pop_transform = vdb_gl_pop_transform;
+        gl.blend_alpha = vdb_gl_blend_alpha;
+        gl.blend_additive = vdb_gl_blend_additive;
+        gl.blend_disable = vdb_gl_blend_disable;
+        gl.depth_test = vdb_gl_depth_test;
+        gl.color = vdb_gl_color;
+        gl.vertex = vdb_gl_vertex;
+        gl.texel = vdb_gl_texel;
+        gl.texture = vdb_gl_texture;
+        gl.bind_texture = vdb_gl_bind_texture;
+        gl.begin_lines = vdb_gl_begin_lines;
+        gl.begin_triangles = vdb_gl_begin_triangles;
+        gl.begin_points = vdb_gl_begin_points;
+        gl.end = vdb_gl_end;
+
+        ScriptLoop(io, draw, gui, gl);
     }
 }

@@ -20,6 +20,12 @@ set CF=-Zi -MD -nologo -Od -WX -W3 -wd4100 -wd4189 -wd4996 -wd4055
 set LIBGLFW=../libglfw/lib-vc2010-64/glfw3.lib
 set LF=-debug %LIBGLFW% opengl32.lib user32.lib gdi32.lib shell32.lib
 
+del shaderport.pdb
+del vc110.pdb
+del shaderport.ilk
+del main.obj
+del shaderport.exe
+
 cl %CF% ../main.cpp /link %LF% -out:shaderport.exe
 
 :: if not errorlevel 1 shaderport.exe :: only run if we successfully compiled

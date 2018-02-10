@@ -394,3 +394,84 @@ void vdb_draw_image_mono(int slot, float r, float g, float b, float a, float ran
     float selector[4] = { r, g, b, a };
     DrawTextureFancy(GetTextureSlotHandle(slot), true, selector, range_min, range_max);
 }
+
+//
+// OpenGL wrapper
+// todo: GLES compatibility to run on tablets
+// todo: fixed pipeline deprecation
+//
+
+void vdb_gl_clear_color(float r, float g, float b, float a) { glClearColor(r,g,b,a); glClear(GL_COLOR_BUFFER_BIT); }
+void vdb_gl_clear_depth(float depth) { glClearDepth(depth); glClear(GL_DEPTH_BUFFER_BIT); }
+void vdb_gl_point_size(float size) { glPointSize(size); }
+void vdb_gl_line_width(float width) { glLineWidth(width); }
+
+void vdb_gl_projection(float *v)
+{
+    // todo: gl deprecation
+    glMatrixMode(GL_PROJECTION);
+    if (v) glLoadMatrixf(v);
+    else glLoadIdentity();
+}
+
+void vdb_gl_push_transform(float *v)
+{
+    // todo: gl deprecation
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    if (v) glLoadMatrixf(v);
+    else glLoadIdentity();
+}
+
+void vdb_gl_pop_transform()
+{
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void vdb_gl_blend_alpha()
+{
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+}
+
+void vdb_gl_blend_additive()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+}
+
+void vdb_gl_blend_disable()
+{
+    glDisable(GL_BLEND);
+}
+
+void vdb_gl_depth_test(bool enabled)
+{
+    if (enabled)
+    {
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+    }
+    else
+    {
+        glDisable(GL_DEPTH_TEST);
+    }
+}
+void vdb_gl_color(float r, float g, float b, float a) { glColor4f(r,g,b,a); }
+void vdb_gl_vertex(float x, float y, float z) { glVertex3f(x,y,z); }
+void vdb_gl_texel(float u, float v) { glTexCoord2f(u,v); }
+void vdb_gl_texture(bool enabled)
+{
+    if (enabled) glEnable(GL_TEXTURE_2D);
+    else glDisable(GL_TEXTURE_2D);
+}
+void vdb_gl_bind_texture(int slot)
+{
+    glBindTexture(GL_TEXTURE_2D, GetTextureSlotHandle(slot));
+}
+void vdb_gl_begin_lines() { glBegin(GL_LINES); }
+void vdb_gl_begin_triangles() { glBegin(GL_TRIANGLES); }
+void vdb_gl_begin_points() { glBegin(GL_POINTS); }
+void vdb_gl_end() { glEnd(); }

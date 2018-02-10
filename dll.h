@@ -81,3 +81,28 @@ struct gui_t
     bool (*checkbox)(const char *label, bool *v);
     bool (*radio)(const char *label, int *v, int v_button);
 };
+
+struct gl_t
+{
+    void (*clear_color)(float r, float g, float b, float a);
+    void (*clear_depth)(float depth);
+    void (*point_size)(float size);
+    void (*line_width)(float width);
+    void (*projection)(float *v); // v is a 4x4 matrix, pass NULL for NDC identity
+    void (*push_transform)(float *v); // v is a 4x4 matrix, pass NULL for identity
+    void (*pop_transform)();
+    void (*blend_alpha)();
+    void (*blend_additive)();
+    void (*blend_disable)();
+    void (*depth_test)(bool enabled);
+    void (*color)(float r, float g, float b, float a);
+    void (*vertex)(float x, float y, float z);
+    void (*texel)(float u, float v);
+    void (*texture)(bool enabled);
+    void (*bind_texture)(int slot);
+    // todo: gl deprecation, change api, upload agnostically, then draw discriminative
+    void (*begin_lines)();
+    void (*begin_triangles)();
+    void (*begin_points)();
+    void (*end)();
+};

@@ -14,6 +14,7 @@ static bool  vdb_current_text_shadow = true;
 static float vdb_current_text_x_align = -0.5f;
 static float vdb_current_text_y_align = -0.5f;
 static float vdb_current_text_font_size = -1.0f;
+static int vdb_current_text_font = 0;
 
 // todo: optimize, store inverse width
 struct vdb_view_t { float left,right,bottom,top; };
@@ -48,6 +49,7 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_text_y_align = -0.5f;
 
     vdb_current_text_font_size = -1.0f;
+    vdb_current_text_font = 0;
 }
 
 // Converts user's coordinates into OpenGL normalized device coordinates
@@ -91,6 +93,9 @@ void vdb_text_font_size(float size) { vdb_current_text_font_size = size; }
 
 void vdb_text(float x, float y, const char *text, int length)
 {
+    ImFont *font = GetFontImGuiHandle(vdb_current_text_font);
+    ImGui::PushFont(font);
+
     ImVec2 pos = UserToDisplayCoordinates(x,y);
     ImVec2 text_size = ImGui::CalcTextSize(text);
     pos.x += text_size.x * vdb_current_text_x_align;
@@ -107,6 +112,8 @@ void vdb_text(float x, float y, const char *text, int length)
     if (vdb_current_text_shadow)
         user_draw_list->AddText(ImGui::GetFont(), font_size, ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
     user_draw_list->AddText(ImGui::GetFont(), font_size, pos, vdb_current_color, text, text+length);
+
+    ImGui::PopFont();
 }
 
 void vdb_text_formatted(float x, float y, const char *fmt, ...)
@@ -221,8 +228,7 @@ void vdb_circle_filled(float x, float y, float r)
 //
 
 int vdb_load_font(const char *filename, float size) { return GetFont(filename, size); }
-void vdb_push_font(int font) { PushFont(font); }
-void vdb_pop_font() { PopFont(); }
+void vdb_text_font(int font) { vdb_current_text_font = font; }
 
 // ImGui wrappers
 void vdb_gui_begin(const char *label) { ImGui::Begin(label); }

@@ -85,25 +85,10 @@ int GetFont(const char *filename, float size)
     }
 }
 
-void PushFont(int font_index)
+ImFont *GetFontImGuiHandle(int index)
 {
-    if (font_index < 0 || font_index >= num_fonts)
-    {
-        ImGui::PushFont(NULL);
-        return; // todo: display error message (invalid font index)
-    }
-    else if (fonts[font_index].imgui_handle)
-    {
-        ImGui::PushFont(fonts[font_index].imgui_handle);
-    }
+    if (index < 0 || index >= num_fonts)
+        return NULL; // default font
     else
-    {
-        ImGui::PushFont(NULL);
-        // font not loaded yet...
-    }
-}
-
-void PopFont()
-{
-    ImGui::PopFont();
+        return fonts[index].imgui_handle;
 }

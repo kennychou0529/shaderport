@@ -47,7 +47,18 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_text_y_align = -0.5f;
 }
 
-ImVec2 ConvertCoordinates(float x, float y)
+// Converts user's coordinates into OpenGL normalized device coordinates
+ImVec2 UserToOpenGLCoordinates(float x, float y)
+{
+    float x_ndc = -1.0f + 2.0f*(x-vdb_current_view.left)/(vdb_current_view.right-vdb_current_view.left);
+    float y_ndc = -1.0f + 2.0f*(y-vdb_current_view.bottom)/(vdb_current_view.top-vdb_current_view.bottom);
+    return ImVec2(x_ndc, y_ndc);
+}
+
+// ImGui uses display coordinates for drawing, which is different from framebuffer
+// coordinates, if DPI scaling is active: i.e. framebuffer resolution might be half
+// of the size of the window on the display.
+ImVec2 UserToDisplayCoordinates(float x, float y)
 {
     float x_normalized = (x-vdb_current_view.left)/(vdb_current_view.right-vdb_current_view.left);
     float y_normalized = (y-vdb_current_view.top)/(vdb_current_view.bottom-vdb_current_view.top);
@@ -74,10 +85,9 @@ void vdb_text_y_top()    { vdb_current_text_y_align =  0.0f; }
 void vdb_text_y_center() { vdb_current_text_y_align = -0.5f; }
 void vdb_text_y_bottom() { vdb_current_text_y_align = -1.0f; }
 
-// todo: are x,y screen or framebuffer coordinates?
 void vdb_text(float x, float y, const char *text, int length)
 {
-    ImVec2 pos = ConvertCoordinates(x,y);
+    ImVec2 pos = UserToDisplayCoordinates(x,y);
     ImVec2 text_size = ImGui::CalcTextSize(text);
     pos.x += text_size.x * vdb_current_text_x_align;
     pos.y += text_size.y * vdb_current_text_y_align;
@@ -113,7 +123,7 @@ void vdb_path_clear()
 }
 void vdb_path_to(float x, float y)
 {
-    user_draw_list->PathLineTo(ConvertCoordinates(x, y));
+    user_draw_list->PathLineTo(UserToDisplayCoordinates(x, y));
 }
 void vdb_path_fill()
 {
@@ -137,68 +147,68 @@ void vdb_point_size(float px)
 }
 void vdb_point(float x, float y)
 {
-    ImVec2 c = ConvertCoordinates(x, y);
+    ImVec2 c = UserToDisplayCoordinates(x, y);
     ImVec2 a = ImVec2(c.x - vdb_current_point_size, c.y - vdb_current_point_size);
     ImVec2 b = ImVec2(c.x + vdb_current_point_size, c.y + vdb_current_point_size);
     user_draw_list->AddRectFilled(a, b, vdb_current_color);
 }
 void vdb_line(float x1, float y1, float x2, float y2)
 {
-    ImVec2 a = ConvertCoordinates(x1,y1);
-    ImVec2 b = ConvertCoordinates(x2,y2);
+    ImVec2 a = UserToDisplayCoordinates(x1,y1);
+    ImVec2 b = UserToDisplayCoordinates(x2,y2);
     user_draw_list->AddLine(a, b, vdb_current_color, vdb_current_line_width);
 }
 void vdb_triangle(float x1, float y1, float x2, float y2, float x3, float y3)
 {
-    ImVec2 a = ConvertCoordinates(x1,y1);
-    ImVec2 b = ConvertCoordinates(x2,y2);
-    ImVec2 c = ConvertCoordinates(x3,y3);
+    ImVec2 a = UserToDisplayCoordinates(x1,y1);
+    ImVec2 b = UserToDisplayCoordinates(x2,y2);
+    ImVec2 c = UserToDisplayCoordinates(x3,y3);
     user_draw_list->AddTriangle(a, b, c, vdb_current_color, vdb_current_line_width);
 }
 void vdb_triangle_filled(float x1, float y1, float x2, float y2, float x3, float y3)
 {
-    ImVec2 a = ConvertCoordinates(x1,y1);
-    ImVec2 b = ConvertCoordinates(x2,y2);
-    ImVec2 c = ConvertCoordinates(x3,y3);
+    ImVec2 a = UserToDisplayCoordinates(x1,y1);
+    ImVec2 b = UserToDisplayCoordinates(x2,y2);
+    ImVec2 c = UserToDisplayCoordinates(x3,y3);
     user_draw_list->AddTriangleFilled(a, b, c, vdb_current_color);
 }
 void vdb_quad(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
-    ImVec2 a = ConvertCoordinates(x1,y1);
-    ImVec2 b = ConvertCoordinates(x2,y2);
-    ImVec2 c = ConvertCoordinates(x3,y3);
-    ImVec2 d = ConvertCoordinates(x4,y4);
+    ImVec2 a = UserToDisplayCoordinates(x1,y1);
+    ImVec2 b = UserToDisplayCoordinates(x2,y2);
+    ImVec2 c = UserToDisplayCoordinates(x3,y3);
+    ImVec2 d = UserToDisplayCoordinates(x4,y4);
     user_draw_list->AddQuad(a, b, c, d, vdb_current_color, vdb_current_line_width);
 }
 void vdb_quad_filled(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
 {
-    ImVec2 a = ConvertCoordinates(x1,y1);
-    ImVec2 b = ConvertCoordinates(x2,y2);
-    ImVec2 c = ConvertCoordinates(x3,y3);
-    ImVec2 d = ConvertCoordinates(x4,y4);
+    ImVec2 a = UserToDisplayCoordinates(x1,y1);
+    ImVec2 b = UserToDisplayCoordinates(x2,y2);
+    ImVec2 c = UserToDisplayCoordinates(x3,y3);
+    ImVec2 d = UserToDisplayCoordinates(x4,y4);
     user_draw_list->AddQuadFilled(a, b, c, d, vdb_current_color);
 }
 void vdb_rect(float x, float y, float w, float h)
 {
-    ImVec2 a = ConvertCoordinates(x,y);
-    ImVec2 b = ConvertCoordinates(x+w,y+h);
+    ImVec2 a = UserToDisplayCoordinates(x,y);
+    ImVec2 b = UserToDisplayCoordinates(x+w,y+h);
     user_draw_list->AddRect(a, b, vdb_current_color, 0.0f, 0, vdb_current_line_width);
 }
 void vdb_rect_filled(float x, float y, float w, float h)
 {
-    ImVec2 a = ConvertCoordinates(x,y);
-    ImVec2 b = ConvertCoordinates(x+w,y+h);
+    ImVec2 a = UserToDisplayCoordinates(x,y);
+    ImVec2 b = UserToDisplayCoordinates(x+w,y+h);
     user_draw_list->AddRectFilled(a, b, vdb_current_color);
 }
 void vdb_circle(float x, float y, float r)
 {
     float r_display = r/(vdb_current_view.right-vdb_current_view.left); // could also do y-axis... ideally we do an ellipse?
-    user_draw_list->AddCircle(ConvertCoordinates(x, y), r_display, vdb_current_color, 12, vdb_current_line_width);
+    user_draw_list->AddCircle(UserToDisplayCoordinates(x, y), r_display, vdb_current_color, 12, vdb_current_line_width);
 }
 void vdb_circle_filled(float x, float y, float r)
 {
     float r_display = r/(vdb_current_view.right-vdb_current_view.left); // could also do y-axis... ideally we do an ellipse?
-    user_draw_list->AddCircleFilled(ConvertCoordinates(x, y), r_display, vdb_current_color, 12);
+    user_draw_list->AddCircleFilled(UserToDisplayCoordinates(x, y), r_display, vdb_current_color, 12);
 }
 
 //
@@ -231,6 +241,7 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     static GLuint program = 0;
     static GLuint colormap = 0;
     static GLint attrib_in_position = 0;
+    static GLint attrib_in_texel = 0;
     static GLint uniform_gain = 0;
     static GLint uniform_bias = 0;
     static GLint uniform_selector = 0;
@@ -239,11 +250,15 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     static GLint uniform_range_max = 0;
     static GLint uniform_channel0 = 0;
     static GLint uniform_channel1 = 0;
+    static GLint uniform_projection = 0;
+    static GLuint quad_buffer = 0;
     if (!loaded)
     {
         colormap = TexImage2D(colormap_inferno, colormap_inferno_length, 1, GL_RGB, GL_FLOAT, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
         program = LoadShaderFromMemory(texture_shader_vs, texture_shader_fs);
         attrib_in_position = glGetAttribLocation(program, "in_position");
+        attrib_in_texel = glGetAttribLocation(program, "in_texel");
+        uniform_projection = glGetUniformLocation(program, "projection");
         uniform_channel0 = glGetUniformLocation(program, "channel0");
         uniform_channel1 = glGetUniformLocation(program, "channel1");
         uniform_gain = glGetUniformLocation(program, "gain");
@@ -252,6 +267,22 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
         uniform_blend = glGetUniformLocation(program, "blend");
         uniform_range_min = glGetUniformLocation(program, "range_min");
         uniform_range_max = glGetUniformLocation(program, "range_max");
+
+        // todo: buggy vertexattrib, do we need to create a standard VAO?
+        #if 0
+        static GLfloat quad_data[6*4] = {
+            -1,-1,0,0,
+            +1,-1,1,0,
+            +1,+1,1,1,
+            +1,+1,1,1,
+            -1,+1,0,1,
+            -1,-1,0,0
+        };
+        glGenBuffers(1, &quad_buffer);
+        glBindBuffer(GL_ARRAY_BUFFER, quad_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quad_data), quad_data, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        #endif
         loaded = true;
     }
 
@@ -263,6 +294,21 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     glBindTexture(GL_TEXTURE_2D, colormap);
     glUniform1i(uniform_channel0, 0);
     glUniform1i(uniform_channel1, 1);
+
+    {
+        float r = vdb_current_view.right;
+        float l = vdb_current_view.left;
+        float t = vdb_current_view.top;
+        float b = vdb_current_view.bottom;
+        GLfloat projection[4*4] = {
+            2.0f/(r-l), 0.0f, 0.0f, -1.0f-2.0f*l/(r-l),
+            0.0f, 2.0f/(t-b), 0.0f, -1.0f-2.0f*b/(t-b),
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        // todo: transpose?
+        glUniformMatrix4fv(uniform_projection, 1, GL_TRUE, projection);
+    }
 
     if (mono) glUniform1f(uniform_blend, 1.0f);
     else glUniform1f(uniform_blend, 0.0f);
@@ -280,12 +326,13 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     glUniform1f(uniform_range_min, range_min);
     glUniform1f(uniform_range_max, range_max);
 
-    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
-    glVertexAttrib2f(attrib_in_position, +1.0f, -1.0f);
-    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f);
-    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f);
-    glVertexAttrib2f(attrib_in_position, -1.0f, +1.0f);
-    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f);
+    // todo: this is buggy, for some reason the attribs are updated after a delay...
+    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f); glVertexAttrib2f(attrib_in_texel, 0.0f, 0.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, -1.0f); glVertexAttrib2f(attrib_in_texel, 1.0f, 0.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f); glVertexAttrib2f(attrib_in_texel, 1.0f, 1.0f);
+    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f); glVertexAttrib2f(attrib_in_texel, 1.0f, 1.0f);
+    glVertexAttrib2f(attrib_in_position, -1.0f, +1.0f); glVertexAttrib2f(attrib_in_texel, 0.0f, 1.0f);
+    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f); glVertexAttrib2f(attrib_in_texel, 0.0f, 0.0f);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);

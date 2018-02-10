@@ -61,6 +61,8 @@ struct draw_t
     void (*text_y_center)();
     void (*text_y_bottom)();
 
+    // todo: take handle as argument instead of generating texture and returning!
+    // don't want user to free textures!!
     int (*load_image_file)(const char *filename, int *width, int *height, int *components);
     int (*load_image_u08)(const void *data, int width, int height, int components);
     int (*load_image_f32)(const void *data, int width, int height, int components);

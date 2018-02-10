@@ -7,11 +7,13 @@
 #define SHADER(S) "#version 150\n" #S
 const char *texture_shader_vs = SHADER(
 in vec2 in_position;
+uniform mat4 projection;
+in vec2 in_texel;
 out vec2 texel;
 void main()
 {
-    texel = vec2(0.5)+0.5*in_position;
-    gl_Position = vec4(in_position, 0.0, 1.0);
+    texel = in_texel;
+    gl_Position = projection*vec4(in_position, 0.0, 1.0);
 }
 );
 

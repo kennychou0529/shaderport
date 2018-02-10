@@ -198,6 +198,7 @@ void ScriptUpdateAndDraw(frame_input_t input)
         // todo: thrd_detach?
     }
 
+    bool was_reload = false;
     if (compile_done)
     {
         if (compile_success)
@@ -205,6 +206,7 @@ void ScriptUpdateAndDraw(frame_input_t input)
             ConsoleClearMessage();
             if (ReloadScriptDLL())
             {
+                was_reload = true;
                 ConsoleHideMessage();
             }
             else
@@ -285,6 +287,7 @@ void ScriptUpdateAndDraw(frame_input_t input)
         io.frame_time = input.frame_time;
         io.lost_focus = input.lost_focus;
         io.regained_focus = input.regained_focus;
+        io.reload = was_reload;
 
         gui_t gui = {0};
         gui.begin = vdb_gui_begin;

@@ -24,6 +24,8 @@ struct io_t
                       // movement based on frame_time will explode...
     int lost_focus;
     int regained_focus;
+
+    bool reload; // true if this is the first frame after loading the script
 };
 
 struct draw_t

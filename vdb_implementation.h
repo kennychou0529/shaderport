@@ -89,7 +89,13 @@ void vdb_text_x_right()  { vdb_current_text_x_align = -1.0f; }
 void vdb_text_y_top()    { vdb_current_text_y_align =  0.0f; }
 void vdb_text_y_center() { vdb_current_text_y_align = -0.5f; }
 void vdb_text_y_bottom() { vdb_current_text_y_align = -1.0f; }
-void vdb_text_font_size(float size) { vdb_current_text_font_size = size; }
+void vdb_text_font_size_absolute(float height_in_pixels) { vdb_current_text_font_size = height_in_pixels; }
+
+void vdb_text_font_size(float ratio_of_framebuffer_height)
+{
+    // todo: use viewport height instead of framebuffer height?
+    vdb_current_text_font_size = ratio_of_framebuffer_height*frame_input.framebuffer_h;
+}
 
 void vdb_text(float x, float y, const char *text, int length)
 {

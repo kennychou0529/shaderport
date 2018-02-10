@@ -361,6 +361,7 @@ void FramegrabSaveOutput(unsigned char *data, int width, int height, int channel
         {
             framegrab.overlay_active = true;
             framegrab.overlay_timer = 1.0f;
+            // todo: this is freed in main, maybe we should take this out of the function?
             framegrab.overlay_tex = TexImage2D(data, width, height, format, GL_UNSIGNED_BYTE);
             framegrab.num_screenshots++;
             framegrab.active = false;

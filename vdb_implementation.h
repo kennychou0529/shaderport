@@ -472,8 +472,8 @@ void vdb_gl_vertex(float x, float y, float z) { glVertex3f(x,y,z); }
 void vdb_gl_texel(float u, float v) { glTexCoord2f(u,v); }
 void vdb_gl_texture(bool enabled)
 {
-    if (enabled) glEnable(GL_TEXTURE_2D);
-    else glDisable(GL_TEXTURE_2D);
+    if (enabled) { glEnable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D, 0); }
+    else { glDisable(GL_TEXTURE_2D); glBindTexture(GL_TEXTURE_2D, 0); }
 }
 void vdb_gl_bind_texture(int slot)
 {

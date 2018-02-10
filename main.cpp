@@ -205,6 +205,9 @@ void ResetGLState(frame_input_t input)
     glLineWidth(1.0f);
     glPointSize(1.0f);
 
+    // todo: gl deprecation
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // "default" color for gl draw commands. todo: is it legal to call this outside begin/end?
+
     // Assuming user uploads images that are one-byte packed?
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }

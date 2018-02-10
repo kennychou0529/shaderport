@@ -406,6 +406,11 @@ void vdb_gl_clear_depth(float depth) { glClearDepth(depth); glClear(GL_DEPTH_BUF
 void vdb_gl_point_size(float size) { glPointSize(size); }
 void vdb_gl_line_width(float width) { glLineWidth(width); }
 
+// This is reset to zero before running the user's draw commands
+// and checked if still zero afterwards. If it's not zero, it means
+// the user did not push and pop equal amounts, and we display an error.
+static int push_pop_transform_number = 0;
+
 void vdb_gl_projection(float *v)
 {
     // todo: gl deprecation
@@ -416,6 +421,7 @@ void vdb_gl_projection(float *v)
 
 void vdb_gl_push_transform(float *v)
 {
+    push_pop_transform_number++;
     // todo: gl deprecation
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -425,6 +431,7 @@ void vdb_gl_push_transform(float *v)
 
 void vdb_gl_pop_transform()
 {
+    push_pop_transform_number--;
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 }

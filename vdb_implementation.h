@@ -93,13 +93,15 @@ void vdb_text_font_size(float size) { vdb_current_text_font_size = size; }
 
 void vdb_text(float x, float y, const char *text, int length)
 {
-    ImFont *font = GetFontImGuiHandle(vdb_current_text_font);
-    ImGui::PushFont(font);
+    ImFont *font = GetFontImGuiHandleOrDefault(vdb_current_text_font);
+
+    float font_size = (vdb_current_text_font_size < 0.0f) ? font->FontSize : vdb_current_text_font_size;
+    ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, -1.0f, text, text+length);
 
     ImVec2 pos = UserToDisplayCoordinates(x,y);
-    ImVec2 text_size = ImGui::CalcTextSize(text);
     pos.x += text_size.x * vdb_current_text_x_align;
     pos.y += text_size.y * vdb_current_text_y_align;
+
     if (vdb_current_text_background)
     {
         const float xpad = 4.0f;
@@ -108,12 +110,11 @@ void vdb_text(float x, float y, const char *text, int length)
         ImVec2 b = ImVec2(pos.x+2.0f*xpad+text_size.x, pos.y+2.0f*ypad+text_size.y);
         user_draw_list->AddRectFilled(a, b, vdb_current_text_background, 8.0f);
     }
-    float font_size = (vdb_current_text_font_size < 0.0f) ? ImGui::GetFontSize() : vdb_current_text_font_size;
-    if (vdb_current_text_shadow)
-        user_draw_list->AddText(ImGui::GetFont(), font_size, ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
-    user_draw_list->AddText(ImGui::GetFont(), font_size, pos, vdb_current_color, text, text+length);
 
-    ImGui::PopFont();
+    if (vdb_current_text_shadow)
+        user_draw_list->AddText(font, font_size, ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
+
+    user_draw_list->AddText(font, font_size, pos, vdb_current_color, text, text+length);
 }
 
 void vdb_text_formatted(float x, float y, const char *fmt, ...)

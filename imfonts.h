@@ -85,10 +85,12 @@ int GetFont(const char *filename, float size)
     }
 }
 
-ImFont *GetFontImGuiHandle(int index)
+ImFont *GetFontImGuiHandleOrDefault(int index)
 {
     if (index < 0 || index >= num_fonts)
-        return NULL; // default font
-    else
+        return ImGui::GetFont(); // return default font, maybe assert error?
+    else if (fonts[index].imgui_handle)
         return fonts[index].imgui_handle;
+    else
+        return ImGui::GetFont();
 }

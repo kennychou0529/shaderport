@@ -339,37 +339,38 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     glDisable(GL_TEXTURE_2D);
     glUseProgram(0);
 }
-int vdb_load_image_u08(const void *data, int width, int height, int components)
+void vdb_load_image_u08(int slot, const void *data, int width, int height, int components)
 {
-    if (components == 1)      return TexImage2D(data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 2) return TexImage2D(data, width, height, GL_RG, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 3) return TexImage2D(data, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else if (components == 4) return TexImage2D(data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    else { ConsoleMessage("'components' must be 1,2,3 or 4"); return 0; }
+    if (components == 1)      SetTexture(slot, data, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 2) SetTexture(slot, data, width, height, GL_RG, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 3) SetTexture(slot, data, width, height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else if (components == 4) SetTexture(slot, data, width, height, GL_RGBA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+    else                      ConsoleMessage("'components' must be 1,2,3 or 4");
 }
-int vdb_load_image_f32(const void *data, int width, int height, int components)
+void vdb_load_image_f32(int slot, const void *data, int width, int height, int components)
 {
-    if (components == 1)      return TexImage2D(data, width, height, GL_LUMINANCE, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 2) return TexImage2D(data, width, height, GL_RG, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 3) return TexImage2D(data, width, height, GL_RGB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else if (components == 4) return TexImage2D(data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
-    else { ConsoleMessage("'components' must be 1,2,3 or 4"); return 0; }
+    if (components == 1)      SetTexture(slot, data, width, height, GL_LUMINANCE, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 2) SetTexture(slot, data, width, height, GL_RG, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 3) SetTexture(slot, data, width, height, GL_RGB, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else if (components == 4) SetTexture(slot, data, width, height, GL_RGBA, GL_FLOAT, GL_NEAREST, GL_NEAREST);
+    else                      ConsoleMessage("'components' must be 1,2,3 or 4");
 }
-int vdb_load_image_file(const char *filename, int *width, int *height, int *components)
+void vdb_load_image_file(int slot, const char *filename, int *width, int *height, int *components)
 {
     unsigned char *data = stbi_load(filename, width, height, components, 3);
-    if (!data)
+    if (data)
+    {
+        SetTexture(slot, data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+        free(data);
+    }
+    else
     {
         ConsoleMessage("Failed to load image %s", filename);
-        return 0;
     }
-    int handle = TexImage2D(data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
-    free(data);
-    return handle;
 }
-void vdb_draw_image(int handle) { DrawTextureFancy(handle); }
-void vdb_draw_image_mono(int handle, float r, float g, float b, float a, float range_min, float range_max)
+void vdb_draw_image(int slot) { DrawTextureFancy(GetTextureSlotHandle(slot)); }
+void vdb_draw_image_mono(int slot, float r, float g, float b, float a, float range_min, float range_max)
 {
     float selector[4] = { r, g, b, a };
-    DrawTextureFancy(handle, true, selector, range_min, range_max);
+    DrawTextureFancy(GetTextureSlotHandle(slot), true, selector, range_min, range_max);
 }

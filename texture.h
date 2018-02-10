@@ -19,7 +19,7 @@
 //   RGB        8 bit  char: GL_RGB        GL_UNSIGNED_BYTE
 void SetTexture(
     int slot,
-    void *data,
+    const void *data,
     int width,
     int height,
     GLenum data_format = GL_RGB,
@@ -79,7 +79,7 @@ GLuint GetTextureSlotHandle(int slot)
 
 void SetTexture(
     int slot,
-    void *data,
+    const void *data,
     int width,
     int height,
     GLenum data_format,
@@ -96,9 +96,11 @@ void SetTexture(
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
-    // glGenerateMipmap(GL_TEXTURE_2D); // todo
     if (min_filter == GL_LINEAR_MIPMAP_LINEAR)
+    {
+        glGenerateMipmap(GL_TEXTURE_2D); // todo
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    }
     glTexImage2D(GL_TEXTURE_2D, 0,
                  internal_format,
                  width,

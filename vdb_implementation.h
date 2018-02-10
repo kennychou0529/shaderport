@@ -306,7 +306,6 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f
         };
-        // todo: transpose?
         glUniformMatrix4fv(uniform_projection, 1, GL_TRUE, projection);
     }
 
@@ -326,14 +325,20 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     glUniform1f(uniform_range_min, range_min);
     glUniform1f(uniform_range_max, range_max);
 
-    // todo: this is buggy, for some reason the attribs are updated after a delay...
-    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f); glVertexAttrib2f(attrib_in_texel, 0.0f, 0.0f);
-    glVertexAttrib2f(attrib_in_position, +1.0f, -1.0f); glVertexAttrib2f(attrib_in_texel, 1.0f, 0.0f);
-    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f); glVertexAttrib2f(attrib_in_texel, 1.0f, 1.0f);
-    glVertexAttrib2f(attrib_in_position, +1.0f, +1.0f); glVertexAttrib2f(attrib_in_texel, 1.0f, 1.0f);
-    glVertexAttrib2f(attrib_in_position, -1.0f, +1.0f); glVertexAttrib2f(attrib_in_texel, 0.0f, 1.0f);
-    glVertexAttrib2f(attrib_in_position, -1.0f, -1.0f); glVertexAttrib2f(attrib_in_texel, 0.0f, 0.0f);
+    {
+        static float position[] = { -1,-1, +1,-1, +1,+1, +1,+1, -1,+1, -1,-1 };
+        static float texel[] = { 0,0, 1,0, 1,1, 1,1, 0,1, 0,0 };
+        glVertexAttribPointer(attrib_in_position, 2, GL_FLOAT, GL_FALSE, 0, position);
+        glEnableVertexAttribArray(attrib_in_position);
+        glVertexAttribPointer(attrib_in_texel, 2, GL_FLOAT, GL_FALSE, 0, texel);
+        glEnableVertexAttribArray(attrib_in_texel);
+    }
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    {
+        glDisableVertexAttribArray(attrib_in_position);
+        glDisableVertexAttribArray(attrib_in_texel);
+    }
+
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);

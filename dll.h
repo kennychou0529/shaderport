@@ -24,9 +24,6 @@ struct io_t
                       // movement based on frame_time will explode...
     int lost_focus;
     int regained_focus;
-
-    int recording_video;
-    // todo: int video_frame_index;
 };
 
 struct draw_t

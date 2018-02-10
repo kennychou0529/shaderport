@@ -115,8 +115,6 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
     input.frame_time = (float)(glfwGetTime() - last_elapsed_time);
     last_elapsed_time = glfwGetTime();
 
-    input.recording_video = framegrab.active;
-
     return input;
 }
 

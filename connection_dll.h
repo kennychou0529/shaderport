@@ -283,7 +283,6 @@ void ScriptUpdateAndDraw(frame_input_t input)
         io.mouse_v = input.mouse_v;
         io.elapsed_time = input.elapsed_time;
         io.frame_time = input.frame_time;
-        io.recording_video = input.recording_video;
         io.lost_focus = input.lost_focus;
         io.regained_focus = input.regained_focus;
 

@@ -27,6 +27,7 @@ static int vdb_transform_stack_index = 0;
 vdb_transform_t vdb_current_transform = { 0 };
 
 static int vdb_gl_transform_stack_index = 0;
+static bool vdb_pop_clip_rect = false;
 
 void vdbBeforeUpdateAndDraw(frame_input_t input)
 {
@@ -71,10 +72,14 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
 
     vdb_current_text_font_size = -1.0f;
     vdb_current_text_font = 0;
+
+    vdb_pop_clip_rect = false;
 }
 
 bool vdbAfterUpdateAndDraw(frame_input_t input)
 {
+    if (vdb_pop_clip_rect)
+        user_draw_list->PopClipRect();
     if (vdb_transform_stack_index != 0)
     {
         ConsoleMessage("Push/Pop transform pair not matched");
@@ -123,6 +128,12 @@ bool vdb_viewport(float x, float y, float w, float h)
     vdb_current_viewport.y = y;
     vdb_current_viewport.w = w;
     vdb_current_viewport.h = h;
+    ImVec2 clip_rect_min = ImVec2(x*frame_input.window_w, y*frame_input.window_h);
+    ImVec2 clip_rect_max = ImVec2((x+w)*frame_input.window_w, (y+h)*frame_input.window_h);
+    if (vdb_pop_clip_rect)
+        user_draw_list->PopClipRect();
+    user_draw_list->PushClipRect(clip_rect_min, clip_rect_max, true);
+    vdb_pop_clip_rect = true;
     #if 1
     // for OpenGL legacy rendering
     // glViewport is reset on ResetGLState
@@ -137,6 +148,7 @@ bool vdb_viewport(float x, float y, float w, float h)
         // if (gl_x < 0) gl_x = 0; if (gl_x > fbw) gl_x = fbw;
         // if (gl_y < 0) gl_y = 0; if (gl_y > fbh) gl_y = fbh;
         // if (gl_w > fbw) gl_w = fbw;
+        // todo: use glScissor instead?
         glViewport(gl_x, gl_y, gl_w, gl_h);
     }
     #endif

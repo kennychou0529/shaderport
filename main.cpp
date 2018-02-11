@@ -191,6 +191,8 @@ void ResetGLState(frame_input_t input)
 {
     glUseProgram(0);
 
+    glDisable(GL_SCISSOR_TEST);
+
     glEnable(GL_BLEND);
     glBlendEquation(GL_FUNC_ADD);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);

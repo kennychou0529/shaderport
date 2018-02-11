@@ -226,8 +226,6 @@ void BeforeUpdateAndDraw(frame_input_t input)
     ResetGLState(input);
     glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    vdbBeforeUpdateAndDraw(input);
 }
 
 void AfterUpdateAndDraw(frame_input_t input)

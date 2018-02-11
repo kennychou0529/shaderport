@@ -324,13 +324,12 @@ void ScriptUpdateAndDraw(frame_input_t input)
         gl.begin_points = vdb_gl_begin_points;
         gl.end = vdb_gl_end;
 
-        push_pop_transform_number = 0;
+        vdbBeforeUpdateAndDraw(input);
 
         ScriptLoop(io, draw, gui, gl);
 
-        if (push_pop_transform_number != 0)
+        if (!vdbAfterUpdateAndDraw(input))
         {
-            ConsoleMessage("Push/Pop transform not matched");
             ScriptLoop = NULL;
         }
     }

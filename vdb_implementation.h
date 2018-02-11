@@ -19,8 +19,13 @@ static int vdb_current_text_font = 0;
 // todo: optimize, store inverse width
 struct vdb_viewport_t { float x,y,w,h; };
 struct vdb_transform_t { float left,right,bottom,top; };
-vdb_viewport_t vdb_current_viewport = { 0 };
+static vdb_viewport_t vdb_current_viewport = { 0 };
+
+static vdb_transform_t vdb_transform_stack[1024];
+static int vdb_transform_stack_index = 0;
 vdb_transform_t vdb_current_transform = { 0 };
+
+static int vdb_gl_transform_stack_index = 0;
 
 void vdbBeforeUpdateAndDraw(frame_input_t input)
 {
@@ -45,10 +50,13 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_line_width = 1.0f;
     vdb_current_point_size = 1.0f;
 
-    vdb_current_transform.left = -1.0f;
-    vdb_current_transform.right = +1.0f;
-    vdb_current_transform.bottom = -1.0f;
-    vdb_current_transform.top = +1.0f;
+    vdb_transform_stack_index = 0;
+    vdb_gl_transform_stack_index = 0;
+    vdb_transform_stack[0].left = -1.0f;
+    vdb_transform_stack[0].right = +1.0f;
+    vdb_transform_stack[0].bottom = -1.0f;
+    vdb_transform_stack[0].top = +1.0f;
+    vdb_current_transform = vdb_transform_stack[0];
 
     vdb_current_viewport.x = 0.0f;
     vdb_current_viewport.y = 0.0f;
@@ -62,6 +70,21 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
 
     vdb_current_text_font_size = -1.0f;
     vdb_current_text_font = 0;
+}
+
+bool vdbAfterUpdateAndDraw(frame_input_t input)
+{
+    if (vdb_transform_stack_index != 0)
+    {
+        ConsoleMessage("Push/Pop transform pair not matched");
+        return false;
+    }
+    if (vdb_gl_transform_stack_index != 0)
+    {
+        ConsoleMessage("Push/Pop transform pair not matched");
+        return false;
+    }
+    return true;
 }
 
 // ImGui uses display coordinates for drawing, which is different from framebuffer
@@ -127,6 +150,19 @@ void vdb_transform(float left, float right, float bottom, float top)
     vdb_current_transform.right = right;
     vdb_current_transform.bottom = bottom;
     vdb_current_transform.top = top;
+}
+
+void vdb_push_transform(float left, float right, float bottom, float top)
+{
+    vdb_current_transform.left = left;
+    vdb_current_transform.right = right;
+    vdb_current_transform.bottom = bottom;
+    vdb_current_transform.top = top;
+}
+
+void vdb_pop_transform()
+{
+
 }
 
 void vdb_text_background(int r, int g, int b, int a) { vdb_current_text_background = IM_COL32(r,g,b,a); }
@@ -463,11 +499,6 @@ void vdb_gl_clear_depth(float depth) { glClearDepth(depth); glClear(GL_DEPTH_BUF
 void vdb_gl_point_size(float size) { glPointSize(size); }
 void vdb_gl_line_width(float width) { glLineWidth(width); }
 
-// This is reset to zero before running the user's draw commands
-// and checked if still zero afterwards. If it's not zero, it means
-// the user did not push and pop equal amounts, and we display an error.
-static int push_pop_transform_number = 0;
-
 void vdb_gl_projection(float *v)
 {
     // todo: gl deprecation
@@ -478,7 +509,7 @@ void vdb_gl_projection(float *v)
 
 void vdb_gl_push_transform(float *v)
 {
-    push_pop_transform_number++;
+    vdb_gl_transform_stack_index++;
     // todo: gl deprecation
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -488,7 +519,7 @@ void vdb_gl_push_transform(float *v)
 
 void vdb_gl_pop_transform()
 {
-    push_pop_transform_number--;
+    vdb_gl_transform_stack_index--;
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 }

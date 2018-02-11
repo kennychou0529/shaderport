@@ -44,13 +44,24 @@ void LoadFontsIfNecessary(int framebuffer_height)
             source_sans_pro_compressed_size, default_font_size_pixels);
         fonts[0].filename = "default";
     }
+
     for (int i = 1; i < num_fonts; i++)
     {
         if (fonts[i].failed) // we already tried to load it, but it didn't work
             continue;
         const char *filename = fonts[i].filename;
         float pixel_height = (float)(int)(fonts[i].size*framebuffer_height);
-        fonts[i].imgui_handle = ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, pixel_height);
+
+        ImFontConfig config;
+        config.OversampleH = 3;
+        config.OversampleV = 1;
+        if (pixel_height > 32.0f)
+        {
+            config.OversampleH = 1;
+            config.OversampleV = 1;
+        }
+
+        fonts[i].imgui_handle = ImGui::GetIO().Fonts->AddFontFromFileTTF(filename, pixel_height, &config);
         // todo: for some reason imgui can successfully load a font with size 21888.0...
         if (!fonts[i].imgui_handle)
         {

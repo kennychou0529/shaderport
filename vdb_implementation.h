@@ -26,7 +26,12 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
     ImGui::SetNextWindowPos(ImVec2(0,0));
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-    ImGui::Begin("##UserDrawWindow", NULL, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoInputs|ImGuiWindowFlags_NoSavedSettings);
+    ImGuiWindowFlags flags =
+        ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoResize|
+        ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoInputs|
+        ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoFocusOnAppearing|
+        ImGuiWindowFlags_NoBringToFrontOnFocus;
+    ImGui::Begin("##UserDrawWindow", NULL, flags);
     user_draw_list = ImGui::GetWindowDrawList();
     ImGui::End();
     ImGui::PopStyleVar();

@@ -30,6 +30,8 @@ void LoadFontsIfNecessary(int framebuffer_height)
 {
     if (fonts_loaded)
         return;
+    if (framebuffer_height == 0)
+        return;
     fonts_loaded = true;
     ImGui_ImplGlfw_InvalidateDeviceObjects();
     ImGui::GetIO().Fonts->Clear();

@@ -304,13 +304,15 @@ int main(int argc, char **argv)
     glfwSetTime(0.0);
     while (!glfwWindowShouldClose(window))
     {
+        frame_input_t input = PollFrameEvents(window);
+
+        // This must be called after polling frame events
+        // because is_iconified is updated in glfw callbacks
         if (is_iconified && !framegrab.active)
         {
             glfwWaitEvents();
             continue;
         }
-
-        frame_input_t input = PollFrameEvents(window);
 
         settings.window_x = input.window_x;
         settings.window_y = input.window_y;

@@ -17,8 +17,10 @@ static float vdb_current_text_font_size = -1.0f;
 static int vdb_current_text_font = 0;
 
 // todo: optimize, store inverse width
-struct vdb_view_t { float left,right,bottom,top; };
-vdb_view_t vdb_current_view = { 0 };
+struct vdb_viewport_t { float x,y,w,h; };
+struct vdb_transform_t { float left,right,bottom,top; };
+vdb_viewport_t vdb_current_viewport = { 0 };
+vdb_transform_t vdb_current_transform = { 0 };
 
 void vdbBeforeUpdateAndDraw(frame_input_t input)
 {
@@ -43,10 +45,15 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_line_width = 1.0f;
     vdb_current_point_size = 1.0f;
 
-    vdb_current_view.left = -1.0f;
-    vdb_current_view.right = +1.0f;
-    vdb_current_view.bottom = -1.0f;
-    vdb_current_view.top = +1.0f;
+    vdb_current_transform.left = -1.0f;
+    vdb_current_transform.right = +1.0f;
+    vdb_current_transform.bottom = -1.0f;
+    vdb_current_transform.top = +1.0f;
+
+    vdb_current_viewport.x = 0.0f;
+    vdb_current_viewport.y = 0.0f;
+    vdb_current_viewport.w = 1.0f;
+    vdb_current_viewport.h = 1.0f;
 
     vdb_current_text_background = 0;
     vdb_current_text_shadow = true;
@@ -57,32 +64,69 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_text_font = 0;
 }
 
-// Converts user's coordinates into OpenGL normalized device coordinates
-ImVec2 UserToOpenGLCoordinates(float x, float y)
-{
-    float x_ndc = -1.0f + 2.0f*(x-vdb_current_view.left)/(vdb_current_view.right-vdb_current_view.left);
-    float y_ndc = -1.0f + 2.0f*(y-vdb_current_view.bottom)/(vdb_current_view.top-vdb_current_view.bottom);
-    return ImVec2(x_ndc, y_ndc);
-}
-
 // ImGui uses display coordinates for drawing, which is different from framebuffer
 // coordinates, if DPI scaling is active: i.e. framebuffer resolution might be half
 // of the size of the window on the display.
 ImVec2 UserToDisplayCoordinates(float x, float y)
 {
-    float x_normalized = (x-vdb_current_view.left)/(vdb_current_view.right-vdb_current_view.left);
-    float y_normalized = (y-vdb_current_view.top)/(vdb_current_view.bottom-vdb_current_view.top);
-    float x_display = frame_input.window_w*x_normalized;
-    float y_display = frame_input.window_h*y_normalized;
+    // todo: optimize, store inverses
+    float x_normalized = (x-vdb_current_transform.left)/(vdb_current_transform.right-vdb_current_transform.left);
+    float y_normalized = (y-vdb_current_transform.top)/(vdb_current_transform.bottom-vdb_current_transform.top);
+
+    float vx = vdb_current_viewport.x;
+    float vy = vdb_current_viewport.y;
+    float vw = vdb_current_viewport.w;
+    float vh = vdb_current_viewport.h;
+
+    float x_display = frame_input.window_w*(vx + x_normalized*vw);
+    float y_display = frame_input.window_h*(vy + y_normalized*vh);
     return ImVec2(x_display, y_display);
 }
 
-void vdb_view(float left, float right, float bottom, float top)
+bool vdb_viewport(float x, float y, float w, float h)
 {
-    vdb_current_view.left = left;
-    vdb_current_view.right = right;
-    vdb_current_view.bottom = bottom;
-    vdb_current_view.top = top;
+    if (w < 0.0f)
+    {
+        x += w;
+        w = -w;
+    }
+    if (h < 0.0f)
+    {
+        y += h;
+        h = -h;
+    }
+    vdb_current_viewport.x = x;
+    vdb_current_viewport.y = y;
+    vdb_current_viewport.w = w;
+    vdb_current_viewport.h = h;
+    #if 1
+    // for OpenGL legacy rendering
+    // glViewport is reset on ResetGLState
+    {
+        int fbw = frame_input.framebuffer_w;
+        int fbh = frame_input.framebuffer_h;
+        int gl_w = (int)(w*fbw);
+        int gl_h = (int)(h*fbh);
+        int gl_x = (int)(x*fbw);
+        int gl_y = fbh - (int)(y*fbh) - gl_h;
+        // todo: clamp?
+        // if (gl_x < 0) gl_x = 0; if (gl_x > fbw) gl_x = fbw;
+        // if (gl_y < 0) gl_y = 0; if (gl_y > fbh) gl_y = fbh;
+        // if (gl_w > fbw) gl_w = fbw;
+        glViewport(gl_x, gl_y, gl_w, gl_h);
+    }
+    #endif
+    if (x+w < 0.0f || x > 1.0f || y+h < 0.0f || y > 1.0f)
+        return false;
+    return true;
+}
+
+void vdb_transform(float left, float right, float bottom, float top)
+{
+    vdb_current_transform.left = left;
+    vdb_current_transform.right = right;
+    vdb_current_transform.bottom = bottom;
+    vdb_current_transform.top = top;
 }
 
 void vdb_text_background(int r, int g, int b, int a) { vdb_current_text_background = IM_COL32(r,g,b,a); }
@@ -96,10 +140,9 @@ void vdb_text_y_center() { vdb_current_text_y_align = -0.5f; }
 void vdb_text_y_bottom() { vdb_current_text_y_align = -1.0f; }
 void vdb_text_font_size_absolute(float height_in_pixels) { vdb_current_text_font_size = height_in_pixels; }
 
-void vdb_text_font_size(float ratio_of_framebuffer_height)
+void vdb_text_font_size(float ratio_of_viewport_height)
 {
-    // todo: use viewport height instead of framebuffer height?
-    vdb_current_text_font_size = ratio_of_framebuffer_height*frame_input.framebuffer_h;
+    vdb_current_text_font_size = ratio_of_viewport_height*vdb_current_viewport.h*frame_input.framebuffer_h;
 }
 
 void vdb_text(float x, float y, const char *text, int length)
@@ -226,13 +269,15 @@ void vdb_rect_filled(float x, float y, float w, float h)
 }
 void vdb_circle(float x, float y, float r)
 {
-    float r_display = r/(vdb_current_view.right-vdb_current_view.left); // could also do y-axis... ideally we do an ellipse?
-    user_draw_list->AddCircle(UserToDisplayCoordinates(x, y), r_display, vdb_current_color, 12, vdb_current_line_width);
+    ImVec2 pos = UserToDisplayCoordinates(x, y);
+    float r_display = UserToDisplayCoordinates(x, y+r).y - pos.y;
+    user_draw_list->AddCircle(pos, r_display, vdb_current_color, 12, vdb_current_line_width);
 }
 void vdb_circle_filled(float x, float y, float r)
 {
-    float r_display = r/(vdb_current_view.right-vdb_current_view.left); // could also do y-axis... ideally we do an ellipse?
-    user_draw_list->AddCircleFilled(UserToDisplayCoordinates(x, y), r_display, vdb_current_color, 12);
+    ImVec2 pos = UserToDisplayCoordinates(x, y);
+    float r_display = UserToDisplayCoordinates(x, y+r).y - pos.y;
+    user_draw_list->AddCircleFilled(pos, r_display, vdb_current_color, 12);
 }
 
 //
@@ -323,10 +368,10 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     glUniform1i(uniform_channel1, 1);
 
     {
-        float r = vdb_current_view.right;
-        float l = vdb_current_view.left;
-        float t = vdb_current_view.top;
-        float b = vdb_current_view.bottom;
+        float r = vdb_current_transform.right;
+        float l = vdb_current_transform.left;
+        float t = vdb_current_transform.top;
+        float b = vdb_current_transform.bottom;
         GLfloat projection[4*4] = {
             2.0f/(r-l), 0.0f, 0.0f, -1.0f-2.0f*l/(r-l),
             0.0f, 2.0f/(t-b), 0.0f, -1.0f-2.0f*b/(t-b),

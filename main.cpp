@@ -24,7 +24,7 @@
 #include "frame_input.h"
 #include "frame_grab.h"
 #include "vdb_implementation.h"
-#include "command_buffer.h"
+// #include "command_buffer.h"
 #include "settings.h"
 
 #include "connection_dll.h"
@@ -242,8 +242,6 @@ void UpdateAndDraw(frame_input_t input)
 
 int main(int argc, char **argv)
 {
-    assert(id_count <= 256 && "I limit the ID to 1 byte for now, so there can only be 256 unique draw commands.");
-
     if (argc == 3)
     {
         const char *script_cpp_path = argv[1];
@@ -256,12 +254,16 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    // todo: temporarily disabled for now
+    #if 0
+    assert(id_count <= 256 && "I limit the ID to 1 byte for now, so there can only be 256 unique draw commands.");
     unsigned int command_buffer_allocation_size = 1024*1024*10;
     if (!AllocateCommandBuffers(command_buffer_allocation_size))
     {
         printf("Did not have enough memory to allocate draw command buffers. Lower the allocation size by passing the command-line argument -buffer_size <your size in bytes>\n");
         return 1;
     }
+    #endif
 
     const char *settings_filename = "shaderport.ini";
     settings_t settings = LoadSettingsOrDefault(settings_filename);

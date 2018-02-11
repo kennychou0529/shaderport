@@ -19,6 +19,7 @@ struct frame_input_t
                       // movement based on frame_time will explode...
     bool lost_focus;
     bool regained_focus;
+    bool framebuffer_size_changed;
 };
 
 // Global variable for convenience. It gets updated inside BeforeUpdateAndDraw.

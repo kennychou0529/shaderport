@@ -75,6 +75,12 @@ void WindowIconifyChanged(GLFWwindow *window, int iconified)
         is_iconified = false;
 }
 
+bool framebuffer_size_changed = false; // this must be reset to false inside PollFrameEvents
+void FramebufferSizeChanged(GLFWwindow *window, int width, int height)
+{
+    framebuffer_size_changed = true;
+}
+
 frame_input_t PollFrameEvents(GLFWwindow *window)
 {
     frame_input_t input = {0};
@@ -98,6 +104,8 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
 
     input.lost_focus = lost_focus;
     input.regained_focus = regained_focus;
+    input.framebuffer_size_changed = framebuffer_size_changed;
+    framebuffer_size_changed = false;
 
     glfwGetWindowPos(window, &input.window_x, &input.window_y);
     glfwGetWindowSize(window, &input.window_w, &input.window_h);
@@ -120,8 +128,6 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
 
 void AfterImGuiInit()
 {
-    AddDefaultFont(18.0f);
-
     ImGui::GetIO().MouseDrawCursor = true;
     ImGui::StyleColorsDark();
     ImGui::GetStyle().FrameRounding = 5.0f;
@@ -287,6 +293,7 @@ int main(int argc, char **argv)
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     gladLoadGL();
 
+    glfwSetFramebufferSizeCallback(window, FramebufferSizeChanged);
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
     glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
     ImGui_ImplGlfw_Init(window, true);
@@ -316,7 +323,10 @@ int main(int argc, char **argv)
         OneTimeEvent(reload_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
         bool escape_eaten = false;
 
-        LoadUnloadedFonts();
+        if (input.framebuffer_size_changed)
+            InvalidateAllFonts();
+
+        LoadFontsIfNecessary(input.framebuffer_h);
         #if 0
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);

@@ -30,7 +30,8 @@ struct io_t
 
 struct draw_t
 {
-    void (*transform)(float left, float right, float bottom, float top); // remap x,y coordinates inside viewport
+    void (*push_transform)(float left, float right, float bottom, float top); // remap x,y coordinates inside viewport
+    void (*pop_transform)();
     bool (*viewport)(float x, float y, float w, float h); // [0,1] normalized coordinates. Returns true if viewport is (atleast partially) visible
 
     void (*path_clear)();

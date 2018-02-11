@@ -21,7 +21,8 @@ struct vdb_viewport_t { float x,y,w,h; };
 struct vdb_transform_t { float left,right,bottom,top; };
 static vdb_viewport_t vdb_current_viewport = { 0 };
 
-static vdb_transform_t vdb_transform_stack[1024];
+#define vdb_max_transform_stack_count 1024
+static vdb_transform_t vdb_transform_stack[vdb_max_transform_stack_count];
 static int vdb_transform_stack_index = 0;
 vdb_transform_t vdb_current_transform = { 0 };
 
@@ -144,25 +145,27 @@ bool vdb_viewport(float x, float y, float w, float h)
     return true;
 }
 
-void vdb_transform(float left, float right, float bottom, float top)
-{
-    vdb_current_transform.left = left;
-    vdb_current_transform.right = right;
-    vdb_current_transform.bottom = bottom;
-    vdb_current_transform.top = top;
-}
-
 void vdb_push_transform(float left, float right, float bottom, float top)
 {
-    vdb_current_transform.left = left;
-    vdb_current_transform.right = right;
-    vdb_current_transform.bottom = bottom;
-    vdb_current_transform.top = top;
+    if (vdb_transform_stack_index >= 0 && vdb_transform_stack_index < vdb_max_transform_stack_count)
+    {
+        vdb_transform_stack[vdb_transform_stack_index].left = left;
+        vdb_transform_stack[vdb_transform_stack_index].right = right;
+        vdb_transform_stack[vdb_transform_stack_index].bottom = bottom;
+        vdb_transform_stack[vdb_transform_stack_index].top = top;
+        vdb_current_transform = vdb_transform_stack[vdb_transform_stack_index];
+        vdb_transform_stack_index++;
+    }
+    else
+    {
+        // todo: error
+        ConsoleMessage("Pushed more than %d transforms, ignoring...", vdb_max_transform_stack_count);
+    }
 }
 
 void vdb_pop_transform()
 {
-
+    vdb_transform_stack_index--;
 }
 
 void vdb_text_background(int r, int g, int b, int a) { vdb_current_text_background = IM_COL32(r,g,b,a); }
@@ -201,6 +204,7 @@ void vdb_text(float x, float y, const char *text, int length)
         user_draw_list->AddRectFilled(a, b, vdb_current_text_background, 8.0f);
     }
 
+    // todo: reuse alpha from current color
     if (vdb_current_text_shadow)
         user_draw_list->AddText(font, font_size, ImVec2(pos.x+1,pos.y+1), IM_COL32(0,0,0,255), text, text+length);
 

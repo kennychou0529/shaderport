@@ -13,7 +13,7 @@ static ImU32 vdb_current_text_background = 0;
 static bool  vdb_current_text_shadow = true;
 static float vdb_current_text_x_align = -0.5f;
 static float vdb_current_text_y_align = -0.5f;
-static float vdb_current_text_font_size = -1.0f;
+static float vdb_current_text_size = -1.0f;
 static int vdb_current_text_font = 0;
 
 // todo: optimize, store inverse width
@@ -65,7 +65,7 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_text_x_align = -0.5f;
     vdb_current_text_y_align = -0.5f;
 
-    vdb_current_text_font_size = -1.0f;
+    vdb_current_text_size = -1.0f;
     vdb_current_text_font = 0;
 
     vdb_pop_clip_rect = false;
@@ -164,18 +164,18 @@ void vdb_text_x_right()  { vdb_current_text_x_align = -1.0f; }
 void vdb_text_y_top()    { vdb_current_text_y_align =  0.0f; }
 void vdb_text_y_center() { vdb_current_text_y_align = -0.5f; }
 void vdb_text_y_bottom() { vdb_current_text_y_align = -1.0f; }
-void vdb_text_font_size_absolute(float height_in_pixels) { vdb_current_text_font_size = height_in_pixels; }
+void vdb_text_size_absolute(float height_in_pixels) { vdb_current_text_size = height_in_pixels; }
 
-void vdb_text_font_size(float ratio_of_viewport_height)
+void vdb_text_size(float ratio_of_viewport_height)
 {
-    vdb_current_text_font_size = ratio_of_viewport_height*vdb_current_viewport.h*frame_input.framebuffer_h;
+    vdb_current_text_size = ratio_of_viewport_height*vdb_current_viewport.h*frame_input.framebuffer_h;
 }
 
 void vdb_text(float x, float y, const char *text, int length)
 {
     ImFont *font = GetFontImGuiHandleOrDefault(vdb_current_text_font);
 
-    float font_size = (vdb_current_text_font_size < 0.0f) ? font->FontSize : vdb_current_text_font_size;
+    float font_size = (vdb_current_text_size < 0.0f) ? font->FontSize : vdb_current_text_size;
     ImVec2 text_size = font->CalcTextSizeA(font_size, FLT_MAX, -1.0f, text, text+length);
 
     ImVec2 pos = UserToDisplayCoordinates(x,y);

@@ -61,8 +61,8 @@ struct draw_t
     void (*text_y_top)();
     void (*text_y_center)();
     void (*text_y_bottom)();
-    void (*text_font_size)(float ratio_of_viewport_height);
-    void (*text_font_size_absolute)(float height_in_pixels);
+    void (*text_size)(float ratio_of_viewport_height);
+    void (*text_size_absolute)(float height_in_pixels);
     void (*text_font)(int font);
     int (*load_font)(const char *filename, float size);
 

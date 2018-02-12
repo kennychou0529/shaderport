@@ -479,18 +479,27 @@ void vdb_gl_projection(float *v)
 void vdb_gl_push_transform(float *v)
 {
     vdb_gl_transform_stack_index++;
-    // todo: gl deprecation
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    if (v) glLoadMatrixf(v);
-    else glLoadIdentity();
+    if (v)
+    {
+        // todo: gl deprecation
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glMultMatrixf(v);
+    }
 }
 
 void vdb_gl_pop_transform()
 {
     vdb_gl_transform_stack_index--;
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+    if (vdb_gl_transform_stack_index >= 0)
+    {
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+    }
+    else
+    {
+        // error is reported at the end of frame
+    }
 }
 
 void vdb_gl_blend_alpha()

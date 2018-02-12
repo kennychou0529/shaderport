@@ -80,6 +80,12 @@ void LoadFontsIfNecessary(int framebuffer_height)
 
 int GetFont(const char *filename, float size)
 {
+    if (size > 1.0f)
+    {
+        ConsoleMessage("The font size is relative framebuffer height, but you requested a size greater than 1.0. Using default font instead.");
+        return 0;
+    }
+
     // find existing font at specified size...
     for (int i = 0; i < num_fonts; i++)
     {

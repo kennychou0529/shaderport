@@ -334,7 +334,7 @@ bool vdb_io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }
 #include "shader.h"
 #include "colormap_inferno.h"
 #include "texture_shader.h"
-void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, float range_min=0.0f, float range_max=1.0f, float *gain=NULL, float *bias=NULL)
+void DrawTextureFancy(GLuint texture, float user_x, float user_y, float user_w, float user_h, bool mono=false, float *selector=NULL, float range_min=0.0f, float range_max=1.0f, float *gain=NULL, float *bias=NULL)
 {
     static bool loaded = false;
     static GLuint program = 0;
@@ -399,12 +399,21 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
         float l = vdb_current_transform.left;
         float t = vdb_current_transform.top;
         float b = vdb_current_transform.bottom;
+        #if 1
+        GLfloat projection[4*4] = {
+            2.0f*user_w/(r-l), 0.0f, 0.0f, -1.0f+2.0f*(user_x-l)/(r-l),
+            0.0f, 2.0f*user_h/(t-b), 0.0f, -1.0f+2.0f*(user_y-b)/(t-b),
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        };
+        #else
         GLfloat projection[4*4] = {
             2.0f/(r-l), 0.0f, 0.0f, -1.0f-2.0f*l/(r-l),
             0.0f, 2.0f/(t-b), 0.0f, -1.0f-2.0f*b/(t-b),
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f
         };
+        #endif
         glUniformMatrix4fv(uniform_projection, 1, GL_TRUE, projection);
     }
 
@@ -425,7 +434,7 @@ void DrawTextureFancy(GLuint texture, bool mono=false, float *selector=NULL, flo
     glUniform1f(uniform_range_max, range_max);
 
     {
-        static float position[] = { -1,-1, +1,-1, +1,+1, +1,+1, -1,+1, -1,-1 };
+        static float position[] = { 0,0, 1,0, 1,1, 1,1, 0,1, 0,0 };
         static float texel[] = { 0,0, 1,0, 1,1, 1,1, 0,1, 0,0 };
         glVertexAttribPointer(attrib_in_position, 2, GL_FLOAT, GL_FALSE, 0, position);
         glEnableVertexAttribArray(attrib_in_position);
@@ -464,7 +473,7 @@ void vdb_load_image_file(int slot, const char *filename, int *width, int *height
     unsigned char *data = stbi_load(filename, width, height, components, 3);
     if (data)
     {
-        SetTexture(slot, data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST);
+        SetTexture(slot, data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR);
         free(data);
     }
     else
@@ -472,11 +481,12 @@ void vdb_load_image_file(int slot, const char *filename, int *width, int *height
         ConsoleMessage("Failed to load image %s", filename);
     }
 }
-void vdb_draw_image(int slot) { DrawTextureFancy(GetTextureSlotHandle(slot)); }
-void vdb_draw_image_mono(int slot, float r, float g, float b, float a, float range_min, float range_max)
+void vdb_draw_image(int slot, float x, float y, float w, float h) { DrawTextureFancy(GetTextureSlotHandle(slot), x, y, w, h); }
+void vdb_draw_image_mono(int slot, float x, float y, float w, float h,
+                         float r, float g, float b, float a, float range_min, float range_max)
 {
     float selector[4] = { r, g, b, a };
-    DrawTextureFancy(GetTextureSlotHandle(slot), true, selector, range_min, range_max);
+    DrawTextureFancy(GetTextureSlotHandle(slot), x, y, w, h, true, selector, range_min, range_max);
 }
 
 //

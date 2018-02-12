@@ -189,6 +189,13 @@ bool ImGui_ImplGlfw_CreateDeviceObjects()
     // Restore state
     glBindTexture(GL_TEXTURE_2D, last_texture);
 
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR)
+    {
+        printf("Failed to upload font atlas texture to GPU\n");
+        return false;
+    }
+
     return true;
 }
 

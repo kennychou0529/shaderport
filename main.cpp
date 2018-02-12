@@ -330,7 +330,9 @@ int main(int argc, char **argv)
         if (input.framebuffer_size_changed)
             InvalidateAllFonts();
 
-        LoadFontsIfNecessary(input.framebuffer_h);
+        if (!LoadFontsIfNecessary(input.framebuffer_h))
+            glfwSetWindowShouldClose(window, true);
+
         #if 0
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);

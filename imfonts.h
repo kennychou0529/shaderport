@@ -26,15 +26,16 @@ void InvalidateAllFonts()
 }
 
 // This should be called before ImGui NewFrame
-void LoadFontsIfNecessary(int framebuffer_height)
+bool LoadFontsIfNecessary(int framebuffer_height)
 {
     if (fonts_loaded)
-        return;
+        return true;
     if (framebuffer_height == 0)
-        return;
+        return true;
     fonts_loaded = true;
     ImGui_ImplGlfw_InvalidateDeviceObjects();
     ImGui::GetIO().Fonts->Clear();
+    ImGui::GetIO().Fonts->TexDesiredWidth = 4096; // todo: verify that machine supports 4k textures?
     {
         // hard-code the size for this font... maybe we want it to be relative?
         const float default_font_size_pixels = 18.0f;
@@ -72,10 +73,12 @@ void LoadFontsIfNecessary(int framebuffer_height)
         }
         else
         {
-            printf("loaded %s at %.2f pixels\n", filename, pixel_height);
+            printf("Loaded %s at %.2f pixels\n", filename, pixel_height);
         }
     }
-    ImGui_ImplGlfw_CreateDeviceObjects();
+    if (!ImGui_ImplGlfw_CreateDeviceObjects())
+        return false;
+    return true;
 }
 
 int GetFont(const char *filename, float size)

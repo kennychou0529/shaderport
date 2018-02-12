@@ -21,6 +21,10 @@ static bool fonts_loaded = false;
 
 void InvalidateAllFonts()
 {
+    // todo: remove this if we want font 0 to resize based on framebuffer height
+    if (num_fonts == 1)
+        return;
+
     printf("Invalidating fonts\n");
     fonts_loaded = false;
 }

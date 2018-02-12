@@ -229,8 +229,7 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw_t draw = {0};
 
         draw.viewport = vdb_viewport;
-        draw.push_transform = vdb_push_transform;
-        draw.pop_transform = vdb_pop_transform;
+        draw.transform = vdb_transform;
 
         draw.path_clear = vdb_path_clear;
         draw.path_to = vdb_path_to;

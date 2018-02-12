@@ -20,11 +20,7 @@ static int vdb_current_text_font = 0;
 struct vdb_viewport_t { float x,y,w,h; };
 struct vdb_transform_t { float left,right,bottom,top; };
 static vdb_viewport_t vdb_current_viewport = { 0 };
-
-#define vdb_max_transform_stack_count 1024
-static vdb_transform_t vdb_transform_stack[vdb_max_transform_stack_count];
-static int vdb_transform_stack_index = 0;
-vdb_transform_t vdb_current_transform = { 0 };
+static vdb_transform_t vdb_current_transform = { 0 };
 
 static int vdb_gl_transform_stack_index = 0;
 static bool vdb_pop_clip_rect = false;
@@ -52,13 +48,12 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_line_width = 1.0f;
     vdb_current_point_size = 1.0f;
 
-    vdb_transform_stack_index = 0;
     vdb_gl_transform_stack_index = 0;
-    vdb_transform_stack[0].left = -1.0f;
-    vdb_transform_stack[0].right = +1.0f;
-    vdb_transform_stack[0].bottom = -1.0f;
-    vdb_transform_stack[0].top = +1.0f;
-    vdb_current_transform = vdb_transform_stack[0];
+
+    vdb_current_transform.left = -1.0f;
+    vdb_current_transform.right = +1.0f;
+    vdb_current_transform.bottom = -1.0f;
+    vdb_current_transform.top = +1.0f;
 
     vdb_current_viewport.x = 0.0f;
     vdb_current_viewport.y = 0.0f;
@@ -80,11 +75,6 @@ bool vdbAfterUpdateAndDraw(frame_input_t input)
 {
     if (vdb_pop_clip_rect)
         user_draw_list->PopClipRect();
-    if (vdb_transform_stack_index != 0)
-    {
-        ConsoleMessage("Push/Pop transform pair not matched");
-        return false;
-    }
     if (vdb_gl_transform_stack_index != 0)
     {
         ConsoleMessage("Push/Pop transform pair not matched");
@@ -157,27 +147,12 @@ bool vdb_viewport(float x, float y, float w, float h)
     return true;
 }
 
-void vdb_push_transform(float left, float right, float bottom, float top)
+void vdb_transform(float left, float right, float bottom, float top)
 {
-    if (vdb_transform_stack_index >= 0 && vdb_transform_stack_index < vdb_max_transform_stack_count)
-    {
-        vdb_transform_stack[vdb_transform_stack_index].left = left;
-        vdb_transform_stack[vdb_transform_stack_index].right = right;
-        vdb_transform_stack[vdb_transform_stack_index].bottom = bottom;
-        vdb_transform_stack[vdb_transform_stack_index].top = top;
-        vdb_current_transform = vdb_transform_stack[vdb_transform_stack_index];
-        vdb_transform_stack_index++;
-    }
-    else
-    {
-        // todo: error
-        ConsoleMessage("Pushed more than %d transforms, ignoring...", vdb_max_transform_stack_count);
-    }
-}
-
-void vdb_pop_transform()
-{
-    vdb_transform_stack_index--;
+    vdb_current_transform.left = left;
+    vdb_current_transform.right = right;
+    vdb_current_transform.bottom = bottom;
+    vdb_current_transform.top = top;
 }
 
 void vdb_text_background(int r, int g, int b, int a) { vdb_current_text_background = IM_COL32(r,g,b,a); }

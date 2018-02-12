@@ -182,6 +182,9 @@ void vdb_text(float x, float y, const char *text, int length)
     pos.x += text_size.x * vdb_current_text_x_align;
     pos.y += text_size.y * vdb_current_text_y_align;
 
+    pos.x = (float)(int)(pos.x+0.5f);
+    pos.y = (float)(int)(pos.y+0.5f);
+
     if (vdb_current_text_background)
     {
         const float xpad = 4.0f;

@@ -8,11 +8,10 @@
 const char *texture_shader_vs = SHADER(
 in vec2 in_position;
 uniform mat4 projection;
-in vec2 in_texel;
 out vec2 texel;
 void main()
 {
-    texel = in_texel;
+    texel = in_position;
     gl_Position = projection*vec4(in_position, 0.0, 1.0);
 }
 );

@@ -340,7 +340,6 @@ void DrawTextureFancy(GLuint texture, float user_x, float user_y, float user_w, 
     static GLuint program = 0;
     static GLuint colormap = 0;
     static GLint attrib_in_position = 0;
-    static GLint attrib_in_texel = 0;
     static GLint uniform_gain = 0;
     static GLint uniform_bias = 0;
     static GLint uniform_selector = 0;
@@ -356,7 +355,6 @@ void DrawTextureFancy(GLuint texture, float user_x, float user_y, float user_w, 
         colormap = TexImage2D(colormap_inferno, colormap_inferno_length, 1, GL_RGB, GL_FLOAT, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
         program = LoadShaderFromMemory(texture_shader_vs, texture_shader_fs);
         attrib_in_position = glGetAttribLocation(program, "in_position");
-        attrib_in_texel = glGetAttribLocation(program, "in_texel");
         uniform_projection = glGetUniformLocation(program, "projection");
         uniform_channel0 = glGetUniformLocation(program, "channel0");
         uniform_channel1 = glGetUniformLocation(program, "channel1");
@@ -366,22 +364,6 @@ void DrawTextureFancy(GLuint texture, float user_x, float user_y, float user_w, 
         uniform_blend = glGetUniformLocation(program, "blend");
         uniform_range_min = glGetUniformLocation(program, "range_min");
         uniform_range_max = glGetUniformLocation(program, "range_max");
-
-        // todo: buggy vertexattrib, do we need to create a standard VAO?
-        #if 0
-        static GLfloat quad_data[6*4] = {
-            -1,-1,0,0,
-            +1,-1,1,0,
-            +1,+1,1,1,
-            +1,+1,1,1,
-            -1,+1,0,1,
-            -1,-1,0,0
-        };
-        glGenBuffers(1, &quad_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, quad_buffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quad_data), quad_data, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        #endif
         loaded = true;
     }
 
@@ -399,21 +381,12 @@ void DrawTextureFancy(GLuint texture, float user_x, float user_y, float user_w, 
         float l = vdb_current_transform.left;
         float t = vdb_current_transform.top;
         float b = vdb_current_transform.bottom;
-        #if 1
         GLfloat projection[4*4] = {
             2.0f*user_w/(r-l), 0.0f, 0.0f, -1.0f+2.0f*(user_x-l)/(r-l),
             0.0f, 2.0f*user_h/(t-b), 0.0f, -1.0f+2.0f*(user_y-b)/(t-b),
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f
         };
-        #else
-        GLfloat projection[4*4] = {
-            2.0f/(r-l), 0.0f, 0.0f, -1.0f-2.0f*l/(r-l),
-            0.0f, 2.0f/(t-b), 0.0f, -1.0f-2.0f*b/(t-b),
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f
-        };
-        #endif
         glUniformMatrix4fv(uniform_projection, 1, GL_TRUE, projection);
     }
 
@@ -433,19 +406,11 @@ void DrawTextureFancy(GLuint texture, float user_x, float user_y, float user_w, 
     glUniform1f(uniform_range_min, range_min);
     glUniform1f(uniform_range_max, range_max);
 
-    {
-        static float position[] = { 0,0, 1,0, 1,1, 1,1, 0,1, 0,0 };
-        static float texel[] = { 0,0, 1,0, 1,1, 1,1, 0,1, 0,0 };
-        glVertexAttribPointer(attrib_in_position, 2, GL_FLOAT, GL_FALSE, 0, position);
-        glEnableVertexAttribArray(attrib_in_position);
-        glVertexAttribPointer(attrib_in_texel, 2, GL_FLOAT, GL_FALSE, 0, texel);
-        glEnableVertexAttribArray(attrib_in_texel);
-    }
+    static const float position[] = { 0,0, 1,0, 1,1, 1,1, 0,1, 0,0 };
+    glVertexAttribPointer(attrib_in_position, 2, GL_FLOAT, GL_FALSE, 0, position);
+    glEnableVertexAttribArray(attrib_in_position);
     glDrawArrays(GL_TRIANGLES, 0, 6);
-    {
-        glDisableVertexAttribArray(attrib_in_position);
-        glDisableVertexAttribArray(attrib_in_texel);
-    }
+    glDisableVertexAttribArray(attrib_in_position);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);

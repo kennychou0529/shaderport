@@ -31,7 +31,7 @@ void ConsoleShowMessage()
 
 void ConsoleAppendMessageV(const char *fmt, va_list args)
 {
-    console_buffer_used += vsnprintf(console_buffer, sizeof(console_buffer)-console_buffer_used, fmt, args);
+    console_buffer_used += vsnprintf(console_buffer+console_buffer_used, sizeof(console_buffer)-console_buffer_used, fmt, args);
 }
 
 void ConsoleAppendMessage(const char *fmt, ...)

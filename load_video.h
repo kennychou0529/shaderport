@@ -201,10 +201,10 @@ void LoadVideoTest(frame_input_t input)
     if (first)
     {
         first = false;
-        // video = LoadVideo("C:/Temp/images/animation1.gif", 500, 288);
-        video = LoadVideo("C:/Temp/images/animation2.gif", 500, 281);
+        video = LoadVideo("C:/Temp/images/animation1.gif", 500, 288);
+        // video = LoadVideo("C:/Temp/images/animation2.gif", 500*2, 281*2);
 
-        size_t bytes_per_frame = video.width*video.height*3;
+        size_t bytes_per_frame = video.width*video.height*4;
         glGenBuffers(2, pbo);
 
         // PREPARE SECOND PBO
@@ -223,7 +223,7 @@ void LoadVideoTest(frame_input_t input)
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         // PREPARE TEXTURE STORAGE
-        tex = TexImage2D(NULL, video.width, video.height, GL_RGB, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
+        tex = TexImage2D(NULL, video.width, video.height, GL_BGRA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA);
     }
 
     static int frame = 0;
@@ -236,7 +236,7 @@ void LoadVideoTest(frame_input_t input)
     {
         glBindTexture(GL_TEXTURE_2D, tex);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[use_index]);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, video.width, video.height, GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, video.width, video.height, GL_BGRA, GL_UNSIGNED_BYTE, 0);
     }
     #endif
 
@@ -260,7 +260,7 @@ void LoadVideoTest(frame_input_t input)
     // SCHEDULE A DMA UPLOAD OF NEXT VIDEO FRAME INTO GPU BUFFER
     #if 1
     {
-        int bytes_per_frame = video.width*video.height*3;
+        int bytes_per_frame = video.width*video.height*4;
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo[upload_index]);
         glBufferData(GL_PIXEL_UNPACK_BUFFER, bytes_per_frame, video.frames[next_frame], GL_STREAM_DRAW);
         // unsigned char* ptr = (unsigned char*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);

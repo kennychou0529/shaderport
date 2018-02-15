@@ -173,7 +173,7 @@ void LoadVideoTest(frame_input_t input)
 
     static int frame = 0;
     glBindTexture(GL_TEXTURE_2D, tex);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, video.width, video.height, GL_BGRA, GL_UNSIGNED_BYTE, video.frames[frame]);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, video.width, video.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, video.frames[frame]);
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, tex);

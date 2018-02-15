@@ -165,7 +165,7 @@ void LoadVideoTest(frame_input_t input)
     if (first)
     {
         first = false;
-        video = LoadVideo("C:/Temp/images/animation1.gif", 500, 288);
+        video = LoadVideo("C:/Temp/images/animation1.gif", 500*2, 288*2);
         // video = LoadVideo("C:/Writing/portfolio/4035.c5445c4f5165c_particles.mp4", 360, 240);
         // video = LoadVideo("C:/Temp/images/animation2.gif", 500, 281);
         tex = TexImage2D(NULL, video.width, video.height, GL_BGRA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA8);

@@ -235,11 +235,9 @@ void AfterUpdateAndDraw(frame_input_t input)
     ResetGLState(input);
 }
 
-#include "load_video.h"
-
 void UpdateAndDraw(frame_input_t input)
 {
-    LoadVideoTest(input);
+
 }
 
 int main(int argc, char **argv)
@@ -335,7 +333,7 @@ int main(int argc, char **argv)
         if (!LoadFontsIfNecessary(input.framebuffer_h))
             glfwSetWindowShouldClose(window, true);
 
-        #if 1
+        #if 0
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
         UpdateAndDraw(input);

@@ -1,38 +1,55 @@
 #pragma once
 #include <stdio.h>
 #include <stdlib.h>
+#include "texture.h"
 
 struct video_t
 {
+    char *filename;
     int width;
     int height;
     int num_frames;
+    int bytes_per_frame;
     char **frames;
-    int *cached_gpu_texture;
+    GLuint tex;
 };
 
-video_t LoadVideo(const char *filename, int width, int height)
+#define max_videos 1024
+static video_t videos[max_videos];
+static int num_videos = 0;
+const int invalid_video = -1;
+
+int LoadVideo(const char *filename, int width, int height)
 {
-    const int num_channels = 4;
+    if (num_videos == max_videos)
+    {
+        printf("Reached maximum number of videos that can be loaded (%d), %s was not loaded.", max_videos, filename);
+        return invalid_video;
+    }
+
+    for (int i = 0; i < num_videos; i++)
+    {
+        // todo: compare width,height and reload possibly
+        if (strcmp(filename, videos[i].filename) == 0)
+            return i;
+    }
 
     video_t video = {0};
     FILE *proc = NULL;
     {
         static char cmd[1024];
-        if (num_channels == 4)
-            sprintf(cmd, "ffmpeg -i %s -f image2pipe -pix_fmt bgra -vcodec rawvideo -vf scale=%d:%d - ", filename, width, height);
-        else
-            sprintf(cmd, "ffmpeg -i %s -f image2pipe -pix_fmt rgb24 -vcodec rawvideo -vf scale=%d:%d - ", filename, width, height);
+        sprintf(cmd, "ffmpeg -i %s -f image2pipe -pix_fmt bgra -vcodec rawvideo -vf scale=%d:%d - ", filename, width, height);
         proc = _popen(cmd, "rb");
         if (!proc)
         {
             printf("Failed to load video %s (could not open pipe)\n", filename);
-            return video;
+            return invalid_video;
         }
     }
 
+    int components = 4;
     int max_frames = 10000;
-    int bytes_per_frame = width*height*num_channels;
+    int bytes_per_frame = width*height*components;
     int num_frames = 0;
 
     char **frames = (char**)malloc(max_frames*sizeof(char*));
@@ -75,17 +92,16 @@ video_t LoadVideo(const char *filename, int width, int height)
         goto free_memory_return_null;
     }
 
-    int *cached_gpu_texture = (int*)calloc(num_frames,sizeof(int)); // zero-initialized
-    if (!cached_gpu_texture)
-        goto free_memory_return_null;
-
     printf("Loaded video %s (%dx%d %.2f MB)\n", filename, width, height, num_frames*bytes_per_frame/(1024.0f*1024.0f));
+    video.filename = strdup(filename);
     video.width = width;
     video.height = height;
     video.frames = frames;
-    video.cached_gpu_texture = cached_gpu_texture;
     video.num_frames = num_frames;
-    return video;
+    video.bytes_per_frame = bytes_per_frame;
+    videos[num_videos] = video;
+    num_videos++;
+    return num_videos - 1;
 
     free_memory_return_null:
     if (frames)
@@ -97,66 +113,24 @@ video_t LoadVideo(const char *filename, int width, int height)
         }
         free(frames);
     }
-    return video;
+    return invalid_video;
 }
 
 #if 0
-void draw_video_frame(draw_t draw, video_t *video, int frame, float x, float y, float w, float h)
+void LoadVideoTest(frame_input_t input)
 {
-    if (!video)
-        return;
-    if (!video->frames || !video->num_frames)
-        return;
-
-    // wrap behaviour
-    frame = frame % video->num_frames;
-    // todo: mirror
-    // todo: clamp
-
-    int tex = video->cached_gpu_texture[frame];
-
-    #if 1
-    video->cached_gpu_texture[frame] = 1;
-    draw.load_image_u08(1, video->frames[frame], video->width, video->height, 3);
-    #else
-    if (!tex)
+    static video_t video = {0};
+    static bool first = true;
+    if (first)
     {
-        const int bytes_per_cache = 1024*1024*5; // todo: globally shared cache size?
-        // todo: a video should use the entirety of the cache if it can... maybe?
-        int bytes_per_frame = video->width*video->height*3;
-        int frames_per_cache = bytes_per_cache / bytes_per_frame;
-        if (frames_per_cache > video->num_frames)
-            frames_per_cache = video->num_frames;
-
-        for (int i = 0; i < frames_per_cache; i++)
-        {
-            int j = (frame-1-i) % video->num_frames;
-            video->cached_gpu_texture[j] = 0;
-            // todo: this can be sort of inefficient if wrapping around overlaps existing frames
-        }
-
-        // upload new frames to GPU
-        printf("caching ");
-        for (int i = 0; i < frames_per_cache; i++)
-        {
-            int j = (frame+i) % video->num_frames;
-            char *data = video->frames[j];
-            int slot = 1024 + i; // let's hope the user isn't using this range!
-                                 // todo: seperate slot range per video
-            video->cached_gpu_texture[j] = slot;
-            draw.load_image_u08(slot, data, video->width, video->height, 3);
-            printf("%d ", j);
-        }
-        printf("\n");
+        video = LoadVideo("C:/Temp/images/animation1.gif", 500*2, 288*2);
+        first = false;
     }
-    #endif
-
-    tex = video->cached_gpu_texture[frame];
-    draw.image(tex, x,y,w,h);
+    DrawVideoFrame(&video, (int)(input.elapsed_time*6.0f), -1,-1,2,2);
 }
 #endif
 
-#if 1
+#if 0
 void LoadVideoTest(frame_input_t input)
 {
     static video_t video = {0};

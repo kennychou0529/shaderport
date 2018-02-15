@@ -270,6 +270,9 @@ void ScriptUpdateAndDraw(frame_input_t input)
         draw.image = vdb_draw_image;
         draw.image_mono = vdb_draw_image_mono;
 
+        draw.video = vdb_draw_video;
+        draw.load_video = vdb_load_video;
+
         io_t io = {0};
         io.key_down = vdb_io_key_down;
         io.key_press = vdb_io_key_press;

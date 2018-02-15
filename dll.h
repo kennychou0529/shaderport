@@ -71,6 +71,10 @@ struct draw_t
     void (*load_image_f32)(int slot, const void *data, int width, int height, int components);
     void (*image)(int slot, float x, float y, float w, float h);
     void (*image_mono)(int slot, float x, float y, float w, float h, float r, float g, float b, float a, float range_min, float range_max);
+
+    int (*load_video)(const char *filename, int width, int height);
+    void (*video)(int video, int frame, float x, float y, float w, float h);
+
 };
 
 struct gui_t

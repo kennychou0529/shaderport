@@ -2,9 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "texture.h"
+#include "console.h"
 
 struct video_t
 {
+    bool failed;
     char *filename;
     int width;
     int height;
@@ -30,12 +32,12 @@ FILE *OpenVideoAndReadFirstFrame(const char *filename, int width, int height, ch
     FILE *proc = _popen(cmd, "rb");
     if (!proc)
     {
-        printf("Failed to load video %s (could not open pipe)\n", filename);
+        ConsoleMessage("Failed to load video %s (could not open pipe)\n", filename);
         return NULL;
     }
     if (fread(frame_buffer, width*height*load_video_components, 1, proc) == 0)
     {
-        printf("Failed to load video %s\n", filename);
+        ConsoleMessage("Failed to load video %s\n", filename);
         _pclose(proc); // optionally check the return value of this?
         return NULL;
     }
@@ -44,39 +46,39 @@ FILE *OpenVideoAndReadFirstFrame(const char *filename, int width, int height, ch
 
 int LoadVideo(const char *filename, int width, int height)
 {
-    if (num_videos == max_videos)
-    {
-        printf("Reached maximum number of videos that can be loaded (%d), %s was not loaded.", max_videos, filename);
-        return invalid_video;
-    }
-
+    // check if we have already (tried) loading it
     for (int i = 0; i < num_videos; i++)
     {
         if (strcmp(filename, videos[i].filename) == 0)
             return i;
     }
 
-    char *frame_buffer = (char*)malloc(width*height*load_video_components);
-    if (!frame_buffer)
+    // otherwise add a video if we can
+    if (num_videos == max_videos)
     {
-        printf("Ran out of memory loading video %s\n", filename);
+        ConsoleMessage("Reached maximum number of videos that can be loaded (%d), %s was not loaded.", max_videos, filename);
         return invalid_video;
     }
 
-    FILE *decode_proc = OpenVideoAndReadFirstFrame(filename, width, height, frame_buffer);
-    if (!decode_proc)
+    video_t *video = &videos[num_videos++];
+    video->filename = strdup(filename);
+    video->width = width;
+    video->height = height;
+    video->failed = true;
+    video->frame_buffer = (char*)malloc(width*height*load_video_components);
+    if (!video->frame_buffer)
+    {
+        ConsoleMessage("Ran out of memory loading video %s\n", filename);
         return invalid_video;
-
-    video_t video = {0};
-    video.filename = strdup(filename);
-    video.width = width;
-    video.height = height;
-    video.decode_proc = decode_proc;
-    video.frame_buffer = frame_buffer;
-    video.decoded_frame = 0;
-    videos[num_videos] = video;
-    num_videos++;
-    return num_videos - 1;
+    }
+    video->decode_proc = OpenVideoAndReadFirstFrame(filename, width, height, video->frame_buffer);
+    if (!video->decode_proc)
+    {
+        free(video->frame_buffer);
+        return invalid_video;
+    }
+    video->failed = false;
+    return num_videos-1;
 }
 
 GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
@@ -86,7 +88,8 @@ GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
         return 0;
     video_t *video = &videos[video_index];
     if (video->width <= 0 ||
-        video->height <= 0)
+        video->height <= 0 ||
+        video->failed)
         return 0;
 
     // wrap behaviour
@@ -108,15 +111,19 @@ GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
             video->decode_proc = NULL;
             if (status != 0)
             {
-                printf("Failed to decode video %s\n", video->filename);
+                ConsoleMessage("Failed to decode video %s\n", video->filename);
+                video->failed = true;
                 return 0;
             }
             else if (replay)
             {
-                printf("Reached end of video, replaying\n");
+                printf("Reached end of video, replaying\n"); // todo: remove
                 video->decode_proc = OpenVideoAndReadFirstFrame(video->filename, video->width, video->height, video->frame_buffer);
                 if (!video->decode_proc)
+                {
+                    video->failed = true;
                     return 0;
+                }
                 video->num_frames = video->decoded_frame+1;
                 video->decoded_frame = 0;
                 frame = frame % video->num_frames; // todo: wrap behaviour argument

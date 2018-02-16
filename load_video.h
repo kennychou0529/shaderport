@@ -99,7 +99,19 @@ GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
     // todo: mirror
     // todo: clamp
 
-    while (video->decoded_frame != frame)
+    if (frame < video->decoded_frame)
+    {
+        _pclose(video->decode_proc);
+        video->decode_proc = OpenVideoAndReadFirstFrame(video->filename, video->width, video->height, video->frame_buffer);
+        if (!video->decode_proc)
+        {
+            video->failed = true;
+            return 0;
+        }
+        video->decoded_frame = 0;
+    }
+
+    while (video->decoded_frame < frame)
     {
         if (fread(video->frame_buffer, video->width*video->height*load_video_components, 1, video->decode_proc))
         {
@@ -123,6 +135,10 @@ GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
                     video->failed = true;
                     return 0;
                 }
+                // todo: the way we get the number of frames in the video is kinda janky at the moment.
+                // We *could* parse the ffmpeg info stream, which would give us the number of frames at
+                // load time, but we're not doing that yet. Instead, we rely on detecting the end of the
+                // ffmpeg output stream when the user passes a frame index that exceeds the number of frames.
                 video->num_frames = video->decoded_frame+1;
                 video->decoded_frame = 0;
                 frame = frame % video->num_frames; // todo: wrap behaviour argument

@@ -9,7 +9,6 @@ struct video_t
     int width;
     int height;
     int num_frames;
-    int bytes_per_frame;
     char *frame_buffer;
     int decoded_frame;
     FILE *decode_proc;
@@ -17,9 +16,31 @@ struct video_t
 };
 
 #define max_videos 1024
+#define load_video_components 4
 static video_t videos[max_videos];
 static int num_videos = 0;
 const int invalid_video = -1;
+
+FILE *OpenVideoAndReadFirstFrame(const char *filename, int width, int height, char *frame_buffer)
+{
+    static char cmd[1024];
+    // -loglevel 0: don't print progress information
+    // (which would have gone to stderr but we don't want that stuff clogging up the user's console anyway)
+    sprintf(cmd, "ffmpeg -loglevel 0 -i %s -f image2pipe -pix_fmt bgra -vcodec rawvideo -vf scale=%d:%d - ", filename, width, height);
+    FILE *proc = _popen(cmd, "rb");
+    if (!proc)
+    {
+        printf("Failed to load video %s (could not open pipe)\n", filename);
+        return NULL;
+    }
+    if (fread(frame_buffer, width*height*load_video_components, 1, proc) == 0)
+    {
+        printf("Failed to load video %s\n", filename);
+        _pclose(proc); // optionally check the return value of this?
+        return NULL;
+    }
+    return proc;
+}
 
 int LoadVideo(const char *filename, int width, int height)
 {
@@ -35,42 +56,22 @@ int LoadVideo(const char *filename, int width, int height)
             return i;
     }
 
-    FILE *proc = NULL;
-    {
-        static char cmd[1024];
-        // -loglevel 0: don't print progress information
-        // (which would have gone to stderr but we don't want that stuff clogging up the user's console anyway)
-        sprintf(cmd, "ffmpeg -loglevel 0 -i %s -f image2pipe -pix_fmt bgra -vcodec rawvideo -vf scale=%d:%d - ", filename, width, height);
-        proc = _popen(cmd, "rb");
-        if (!proc)
-        {
-            printf("Failed to load video %s (could not open pipe)\n", filename);
-            return invalid_video;
-        }
-    }
-
-    int components = 4;
-    int bytes_per_frame = width*height*components;
-    char *frame_buffer = (char*)malloc(bytes_per_frame);
+    char *frame_buffer = (char*)malloc(width*height*load_video_components);
     if (!frame_buffer)
     {
         printf("Ran out of memory loading video %s\n", filename);
         return invalid_video;
     }
 
-    if (fread(frame_buffer, bytes_per_frame, 1, proc) == 0)
-    {
-        printf("Failed to load video %s\n", filename);
-        _pclose(proc);
+    FILE *decode_proc = OpenVideoAndReadFirstFrame(filename, width, height, frame_buffer);
+    if (!decode_proc)
         return invalid_video;
-    }
 
     video_t video = {0};
     video.filename = strdup(filename);
     video.width = width;
     video.height = height;
-    video.bytes_per_frame = bytes_per_frame;
-    video.decode_proc = proc;
+    video.decode_proc = decode_proc;
     video.frame_buffer = frame_buffer;
     video.decoded_frame = 0;
     videos[num_videos] = video;
@@ -85,8 +86,7 @@ void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float
         return;
     video_t *video = &videos[video_index];
     if (video->width <= 0 ||
-        video->height <= 0 ||
-        video->bytes_per_frame <= 0)
+        video->height <= 0)
         return;
 
     // wrap behaviour
@@ -98,7 +98,7 @@ void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float
 
     while (video->decoded_frame != frame)
     {
-        if (fread(video->frame_buffer, video->bytes_per_frame, 1, video->decode_proc))
+        if (fread(video->frame_buffer, video->width*video->height*load_video_components, 1, video->decode_proc))
         {
             video->decoded_frame++;
         }
@@ -114,22 +114,9 @@ void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float
             else if (replay)
             {
                 printf("Reached end of video, replaying\n");
-                static char cmd[1024];
-                // -loglevel 0: don't print progress information
-                // (which would have gone to stderr but we don't want that stuff clogging up the user's console anyway)
-                sprintf(cmd, "ffmpeg -loglevel 0 -i %s -f image2pipe -pix_fmt bgra -vcodec rawvideo -vf scale=%d:%d - ", video->filename, video->width, video->height);
-                video->decode_proc = _popen(cmd, "rb");
+                video->decode_proc = OpenVideoAndReadFirstFrame(video->filename, video->width, video->height, video->frame_buffer);
                 if (!video->decode_proc)
-                {
-                    printf("Failed to load video %s (could not open pipe)\n", video->filename);
                     return;
-                }
-                if (fread(video->frame_buffer, video->bytes_per_frame, 1, video->decode_proc) == 0)
-                {
-                    printf("Failed to load video %s\n", video->filename);
-                    _pclose(video->decode_proc);
-                    return;
-                }
                 video->num_frames = video->decoded_frame+1;
                 video->decoded_frame = 0;
                 frame = frame % video->num_frames; // todo: wrap behaviour argument

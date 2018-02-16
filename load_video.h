@@ -80,21 +80,23 @@ int LoadVideo(const char *filename, int width, int height)
 
 void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float h)
 {
+    bool replay = true; // argument? or check if frame wraps?
     if (video_index < 0 && video_index >= num_videos)
         return;
     video_t *video = &videos[video_index];
-    if (video->decode_proc == NULL ||  // todo: and !cached frames
-        video->width <= 0 ||
+    if (video->width <= 0 ||
         video->height <= 0 ||
         video->bytes_per_frame <= 0)
         return;
 
     // wrap behaviour
+    if (video->num_frames > 0)
+        frame = frame % video->num_frames;
     // frame = frame % video->num_frames;
     // todo: mirror
     // todo: clamp
 
-    while (video->decoded_frame < frame)
+    while (video->decoded_frame != frame)
     {
         if (fread(video->frame_buffer, video->bytes_per_frame, 1, video->decode_proc))
         {
@@ -103,14 +105,41 @@ void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float
         else
         {
             int status = _pclose(video->decode_proc);
+            video->decode_proc = NULL;
             if (status != 0)
             {
                 printf("Failed to decode video %s\n", video->filename);
                 return;
             }
-            video->decode_proc = NULL;
-            printf("Reached end of video\n");
-            return;
+            else if (replay)
+            {
+                printf("Reached end of video, replaying\n");
+                static char cmd[1024];
+                // -loglevel 0: don't print progress information
+                // (which would have gone to stderr but we don't want that stuff clogging up the user's console anyway)
+                sprintf(cmd, "ffmpeg -loglevel 0 -i %s -f image2pipe -pix_fmt bgra -vcodec rawvideo -vf scale=%d:%d - ", video->filename, video->width, video->height);
+                video->decode_proc = _popen(cmd, "rb");
+                if (!video->decode_proc)
+                {
+                    printf("Failed to load video %s (could not open pipe)\n", video->filename);
+                    return;
+                }
+                if (fread(video->frame_buffer, video->bytes_per_frame, 1, video->decode_proc) == 0)
+                {
+                    printf("Failed to load video %s\n", video->filename);
+                    _pclose(video->decode_proc);
+                    return;
+                }
+                video->num_frames = video->decoded_frame+1;
+                video->decoded_frame = 0;
+                frame = frame % video->num_frames; // todo: wrap behaviour argument
+            }
+            else
+            {
+                printf("Reached end of video\n");
+                video->num_frames = video->decoded_frame+1;
+                break; // todo: don't break if replay!
+            }
         }
     }
 

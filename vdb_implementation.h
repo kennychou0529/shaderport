@@ -460,7 +460,7 @@ void vdb_draw_image_mono(int slot, float x, float y, float w, float h,
 #include "load_video.h"
 
 int vdb_load_video(const char *filename, int width, int height) { return LoadVideo(filename, width, height); }
-void vdb_draw_video(int video, int frame, float x, float y, float w, float h) { DrawVideoFrame(video, frame, x, y, w, h); }
+void vdb_draw_video(int video, int frame, float x, float y, float w, float h) { DrawTextureFancy(GetAndBindVideoFrameTexture(video, frame), x, y, w, h); }
 
 //
 // OpenGL wrapper

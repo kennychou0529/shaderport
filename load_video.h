@@ -79,15 +79,15 @@ int LoadVideo(const char *filename, int width, int height)
     return num_videos - 1;
 }
 
-void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float h)
+GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
 {
     bool replay = true; // argument? or check if frame wraps?
     if (video_index < 0 && video_index >= num_videos)
-        return;
+        return 0;
     video_t *video = &videos[video_index];
     if (video->width <= 0 ||
         video->height <= 0)
-        return;
+        return 0;
 
     // wrap behaviour
     if (video->num_frames > 0)
@@ -109,14 +109,14 @@ void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float
             if (status != 0)
             {
                 printf("Failed to decode video %s\n", video->filename);
-                return;
+                return 0;
             }
             else if (replay)
             {
                 printf("Reached end of video, replaying\n");
                 video->decode_proc = OpenVideoAndReadFirstFrame(video->filename, video->width, video->height, video->frame_buffer);
                 if (!video->decode_proc)
-                    return;
+                    return 0;
                 video->num_frames = video->decoded_frame+1;
                 video->decoded_frame = 0;
                 frame = frame % video->num_frames; // todo: wrap behaviour argument
@@ -130,23 +130,9 @@ void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float
         }
     }
 
-    if (!video->tex)
-    {
-        video->tex = TexImage2D(NULL, video->width, video->height, GL_BGRA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA8);
-    }
-
+    if (!video->tex) video->tex = TexImage2D(NULL, video->width, video->height, GL_BGRA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA8);
     glBindTexture(GL_TEXTURE_2D, video->tex);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, video->width, video->height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, video->frame_buffer);
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, video->tex);
-    glBegin(GL_TRIANGLES);
-    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+1,-1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
+    return video->tex;
 }

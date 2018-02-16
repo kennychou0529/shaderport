@@ -458,46 +458,6 @@ void vdb_draw_image_mono(int slot, float x, float y, float w, float h,
 }
 
 #include "load_video.h"
-void DrawVideoFrame(int video_index, int frame, float x, float y, float w, float h)
-{
-    if (video_index < 0 && video_index >= num_videos)
-        return;
-    video_t *video = &videos[video_index];
-    if (video->num_frames <= 0 ||
-        video->frames == NULL ||
-        video->width <= 0 ||
-        video->height <= 0 ||
-        video->bytes_per_frame <= 0)
-        return;
-
-    // wrap behaviour
-    frame = frame % video->num_frames;
-    // todo: mirror
-    // todo: clamp
-
-    if (!video->tex)
-    {
-        video->tex = TexImage2D(NULL, video->width, video->height, GL_BGRA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA8);
-    }
-
-    glBindTexture(GL_TEXTURE_2D, video->tex);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, video->width, video->height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, video->frames[frame]);
-    #if 1
-    DrawTextureFancy(video->tex, x, y, w, h);
-    #else
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, video->tex);
-    glBegin(GL_TRIANGLES);
-    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,1); glVertex2f(+1,-1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(1,0); glVertex2f(+1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(0,0); glVertex2f(-1,+1);
-    glColor4f(1,1,1,1); glTexCoord2f(0,1); glVertex2f(-1,-1);
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-    #endif
-}
 
 int vdb_load_video(const char *filename, int width, int height) { return LoadVideo(filename, width, height); }
 void vdb_draw_video(int video, int frame, float x, float y, float w, float h) { DrawVideoFrame(video, frame, x, y, w, h); }

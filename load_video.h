@@ -117,7 +117,6 @@ GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
             }
             else if (replay)
             {
-                printf("Reached end of video, replaying\n"); // todo: remove
                 video->decode_proc = OpenVideoAndReadFirstFrame(video->filename, video->width, video->height, video->frame_buffer);
                 if (!video->decode_proc)
                 {
@@ -130,7 +129,6 @@ GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
             }
             else
             {
-                printf("Reached end of video\n");
                 video->num_frames = video->decoded_frame+1;
                 break; // todo: don't break if replay!
             }

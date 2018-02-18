@@ -438,10 +438,10 @@ void vdb_load_image_f32(int slot, const void *data, int width, int height, int c
 }
 void vdb_load_image_file(int slot, const char *filename, int *width, int *height, int *components)
 {
-    unsigned char *data = stbi_load(filename, width, height, components, 3);
+    unsigned char *data = stbi_load(filename, width, height, components, 4);
     if (data)
     {
-        SetTexture(slot, data, *width, *height, GL_RGB, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR);
+        SetTexture(slot, data, *width, *height, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR_MIPMAP_LINEAR);
         free(data);
     }
     else

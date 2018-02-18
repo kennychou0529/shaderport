@@ -151,7 +151,7 @@ GLuint GetAndBindVideoFrameTexture(int video_index, int frame)
         }
     }
 
-    if (!video->tex) video->tex = TexImage2D(NULL, video->width, video->height, GL_BGRA, GL_UNSIGNED_BYTE, GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA8);
+    if (!video->tex) video->tex = TexImage2D(NULL, video->width, video->height, GL_BGRA, GL_UNSIGNED_BYTE, GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_RGBA8);
     glBindTexture(GL_TEXTURE_2D, video->tex);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, video->width, video->height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, video->frame_buffer);
 

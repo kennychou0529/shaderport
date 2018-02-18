@@ -281,7 +281,7 @@ int main(int argc, char **argv)
     glfwWindowHint(GLFW_DEPTH_BITS,     24);
     glfwWindowHint(GLFW_STENCIL_BITS,   8);
     glfwWindowHint(GLFW_DOUBLEBUFFER,   1);
-    glfwWindowHint(GLFW_SAMPLES,        0);
+    glfwWindowHint(GLFW_SAMPLES,        4);
     glfwWindowHint(GLFW_VISIBLE,        0);
     GLFWwindow *window = glfwCreateWindow(1000, 600, "ShaderPort", NULL, NULL);
 
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
         #else
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
-        ScriptUpdateAndDraw(input);
+        ScriptUpdateAndDraw(input, reload_button);
         AfterUpdateAndDraw(input);
         #endif
 

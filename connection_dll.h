@@ -159,7 +159,7 @@ bool ReloadScriptDLL()
     return true;
 }
 
-void ScriptUpdateAndDraw(frame_input_t input)
+void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
 {
     bool should_check_write_time = false;
     {
@@ -173,6 +173,9 @@ void ScriptUpdateAndDraw(frame_input_t input)
     }
 
     bool should_recompile = false;
+    if (reload_button)
+        should_recompile = true;
+
     if (should_check_write_time)
     {
         static FILETIME last_write_time = {0};

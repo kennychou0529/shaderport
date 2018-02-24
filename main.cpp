@@ -65,15 +65,6 @@ void WindowFocusChanged(GLFWwindow *window, int focused)
     lost_focus = focused == GL_FALSE;
 }
 
-bool is_iconified = false;
-void WindowIconifyChanged(GLFWwindow *window, int iconified)
-{
-    if (iconified == GL_TRUE)
-        is_iconified = true;
-    else if (iconified == GL_FALSE)
-        is_iconified = false;
-}
-
 frame_input_t PollFrameEvents(frame_input_t prev_input, GLFWwindow *window)
 {
     frame_input_t input = {0};
@@ -127,6 +118,7 @@ GLFWwindow *RecreateWindow(GLFWwindow *old_window, int x, int y, int width, int 
     glfwWindowHint(GLFW_VISIBLE, 0);
     glfwWindowHint(GLFW_DECORATED, !borderless);
     glfwWindowHint(GLFW_FLOATING, topmost);
+    glfwWindowHint(GLFW_FOCUSED, true); // hope this fixes the bug where sometimes window appears in bg
     GLFWwindow *window = glfwCreateWindow(width,height,"ShaderPort",NULL,old_window);
     glfwDestroyWindow(old_window);
     glfwSetWindowPos(window, x, y);
@@ -136,7 +128,6 @@ GLFWwindow *RecreateWindow(GLFWwindow *old_window, int x, int y, int width, int 
     // todo: make a function that do all of these and replace with here and start of main
     glfwSwapInterval(1);
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
-    glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
     ImGui_ImplGlfw_Init(window, true);
 
     return window;
@@ -312,7 +303,6 @@ int main(int argc, char **argv)
     gladLoadGL();
 
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
-    glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
     ImGui_ImplGlfw_Init(window, true);
     AfterImGuiInit();
 
@@ -322,12 +312,13 @@ int main(int argc, char **argv)
     {
         input = PollFrameEvents(input, window);
 
-        // This must be called after polling frame events
-        // because is_iconified is updated in glfw callbacks
-        if (is_iconified && !framegrab.active)
         {
-            glfwWaitEvents();
-            continue;
+            bool iconified = glfwGetWindowAttrib(window, GLFW_ICONIFIED) == 1;
+            if (iconified && !framegrab.active)
+            {
+                glfwWaitEvents();
+                continue;
+            }
         }
 
         settings.window_x = input.window_x;

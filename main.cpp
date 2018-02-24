@@ -74,13 +74,7 @@ void WindowIconifyChanged(GLFWwindow *window, int iconified)
         is_iconified = false;
 }
 
-bool framebuffer_size_changed = false; // this must be reset to false inside PollFrameEvents
-void FramebufferSizeChanged(GLFWwindow *window, int width, int height)
-{
-    framebuffer_size_changed = true;
-}
-
-frame_input_t PollFrameEvents(GLFWwindow *window)
+frame_input_t PollFrameEvents(frame_input_t prev_input, GLFWwindow *window)
 {
     frame_input_t input = {0};
 
@@ -91,6 +85,15 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
 
     glfwPollEvents();
 
+    glfwGetWindowPos(window, &input.window_x, &input.window_y);
+    glfwGetWindowSize(window, &input.window_w, &input.window_h);
+    glfwGetFramebufferSize(window, &input.framebuffer_w, &input.framebuffer_h);
+
+    if (input.framebuffer_w != prev_input.framebuffer_w ||
+        input.framebuffer_h != prev_input.framebuffer_h)
+        input.framebuffer_size_changed = true;
+
+    // todo: reuse imgui instead
     static bool key_down[256] = {0};
     for (int i = 0; i < 256; i++)
     {
@@ -103,12 +106,6 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
 
     input.lost_focus = lost_focus;
     input.regained_focus = regained_focus;
-    input.framebuffer_size_changed = framebuffer_size_changed;
-    framebuffer_size_changed = false;
-
-    glfwGetWindowPos(window, &input.window_x, &input.window_y);
-    glfwGetWindowSize(window, &input.window_w, &input.window_h);
-    glfwGetFramebufferSize(window, &input.framebuffer_w, &input.framebuffer_h);
 
     double mouse_x,mouse_y;
     glfwGetCursorPos(window, &mouse_x, &mouse_y);
@@ -138,7 +135,6 @@ GLFWwindow *RecreateWindow(GLFWwindow *old_window, int x, int y, int width, int 
 
     // todo: make a function that do all of these and replace with here and start of main
     glfwSwapInterval(1);
-    glfwSetFramebufferSizeCallback(window, FramebufferSizeChanged);
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
     glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
     ImGui_ImplGlfw_Init(window, true);
@@ -315,16 +311,16 @@ int main(int argc, char **argv)
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     gladLoadGL();
 
-    glfwSetFramebufferSizeCallback(window, FramebufferSizeChanged);
     glfwSetWindowFocusCallback(window, WindowFocusChanged);
     glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
     ImGui_ImplGlfw_Init(window, true);
     AfterImGuiInit();
 
     glfwSetTime(0.0);
+    frame_input_t input = {0};
     while (!glfwWindowShouldClose(window))
     {
-        frame_input_t input = PollFrameEvents(window);
+        input = PollFrameEvents(input, window);
 
         // This must be called after polling frame events
         // because is_iconified is updated in glfw callbacks
@@ -494,7 +490,7 @@ int main(int argc, char **argv)
             int w,h;
             glfwGetWindowPos(window, &x, &y);
             glfwGetWindowSize(window, &w, &h);
-            window = RecreateWindow(window, x,y,w,h, true, false);
+            window = RecreateWindow(window, x,y,400,400, true, false);
             // todo: Events may be lost when the window is destroyed. For example, if
             // a key is held down when the window is destroyed, releasing it will not
             // generate an event. It must be released, pressed again, and then released.

@@ -310,8 +310,6 @@ int main(int argc, char **argv)
     frame_input_t input = {0};
     while (!glfwWindowShouldClose(window))
     {
-        input = PollFrameEvents(input, window);
-
         {
             bool iconified = glfwGetWindowAttrib(window, GLFW_ICONIFIED) == 1;
             if (iconified && !framegrab.active)
@@ -320,6 +318,8 @@ int main(int argc, char **argv)
                 continue;
             }
         }
+
+        input = PollFrameEvents(input, window);
 
         settings.window_x = input.window_x;
         settings.window_y = input.window_y;

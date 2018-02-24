@@ -125,6 +125,27 @@ frame_input_t PollFrameEvents(GLFWwindow *window)
     return input;
 }
 
+GLFWwindow *RecreateWindow(GLFWwindow *old_window, int x, int y, int width, int height, bool borderless=false, bool topmost=false)
+{
+    glfwWindowHint(GLFW_VISIBLE, 0);
+    glfwWindowHint(GLFW_DECORATED, !borderless);
+    glfwWindowHint(GLFW_FLOATING, topmost);
+    GLFWwindow *window = glfwCreateWindow(width,height,"ShaderPort",NULL,old_window);
+    glfwDestroyWindow(old_window);
+    glfwSetWindowPos(window, x, y);
+    glfwShowWindow(window);
+    glfwMakeContextCurrent(window);
+
+    // todo: make a function that do all of these and replace with here and start of main
+    glfwSwapInterval(1);
+    glfwSetFramebufferSizeCallback(window, FramebufferSizeChanged);
+    glfwSetWindowFocusCallback(window, WindowFocusChanged);
+    glfwSetWindowIconifyCallback(window, WindowIconifyChanged);
+    ImGui_ImplGlfw_Init(window, true);
+
+    return window;
+}
+
 void AfterImGuiInit()
 {
     ImGui::GetIO().MouseDrawCursor = true;
@@ -236,7 +257,7 @@ void AfterUpdateAndDraw(frame_input_t input)
 
 void UpdateAndDraw(frame_input_t input)
 {
-
+    ImGui::ShowDemoWindow();
 }
 
 int main(int argc, char **argv)
@@ -319,11 +340,15 @@ int main(int argc, char **argv)
         settings.window_h = input.window_h;
 
         bool imgui_want_keyboard = ImGui::GetIO().WantCaptureKeyboard;
-        OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS);
-        OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS);
-        OneTimeEvent(screenshot_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
-        OneTimeEvent(window_size_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
-        OneTimeEvent(reload_button, glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
+        bool ctrl_down = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+        OneTimeEvent(escape_button, glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_RELEASE);
+        OneTimeEvent(enter_button, glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_RELEASE);
+        OneTimeEvent(s_button,  glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE);
+        OneTimeEvent(w_button, glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE);
+        OneTimeEvent(r_button, glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE);
+        bool screenshot_button = s_button && ctrl_down;
+        bool window_size_button = w_button && ctrl_down;
+        bool reload_button = r_button && ctrl_down;
         bool escape_eaten = false;
 
         if (input.framebuffer_size_changed)
@@ -332,7 +357,7 @@ int main(int argc, char **argv)
         if (!LoadFontsIfNecessary(input.framebuffer_h))
             glfwSetWindowShouldClose(window, true);
 
-        #if 0
+        #if 1
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
         UpdateAndDraw(input);
@@ -462,6 +487,19 @@ int main(int argc, char **argv)
         }
 
         glfwSwapBuffers(window);
+
+        if (enter_button)
+        {
+            int x,y;
+            int w,h;
+            glfwGetWindowPos(window, &x, &y);
+            glfwGetWindowSize(window, &w, &h);
+            window = RecreateWindow(window, x,y,w,h, true, false);
+            // todo: Events may be lost when the window is destroyed. For example, if
+            // a key is held down when the window is destroyed, releasing it will not
+            // generate an event. It must be released, pressed again, and then released.
+            // todo: sometimes the window appears in the background...
+        }
 
         GLenum error = glGetError();
         if (error != GL_NO_ERROR)

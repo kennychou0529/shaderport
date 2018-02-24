@@ -20,7 +20,6 @@
 #include "3rdparty/imgui_impl_glfw.cpp"
 #include "imfonts.h"
 
-#include "log.h"
 #include "frame_input.h"
 #include "frame_grab.h"
 #include "vdb_implementation.h"

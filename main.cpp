@@ -57,28 +57,16 @@ void SetWindowSize(GLFWwindow *window, int width, int height, bool topmost=false
     #endif
 }
 
-bool lost_focus = false;
-bool regained_focus = false;
-void WindowFocusChanged(GLFWwindow *window, int focused)
-{
-    regained_focus = focused == GL_TRUE;
-    lost_focus = focused == GL_FALSE;
-}
-
 frame_input_t PollFrameEvents(frame_input_t prev_input, GLFWwindow *window)
 {
     frame_input_t input = {0};
-
-    // These global variables are set in the callback WindowFocusChanged,
-    // which is called by glfwPollEvents if their corresponding events occur.
-    lost_focus = false;
-    regained_focus = false;
 
     glfwPollEvents();
 
     glfwGetWindowPos(window, &input.window_x, &input.window_y);
     glfwGetWindowSize(window, &input.window_w, &input.window_h);
     glfwGetFramebufferSize(window, &input.framebuffer_w, &input.framebuffer_h);
+    input.is_focused = glfwGetWindowAttrib(window, GLFW_FOCUSED) == 1;
 
     if (input.framebuffer_w != prev_input.framebuffer_w ||
         input.framebuffer_h != prev_input.framebuffer_h)
@@ -95,8 +83,10 @@ frame_input_t PollFrameEvents(frame_input_t prev_input, GLFWwindow *window)
         key_down[i] = is_down;
     }
 
-    input.lost_focus = lost_focus;
-    input.regained_focus = regained_focus;
+    if (prev_input.is_focused && !input.is_focused)
+        input.lost_focus = true;
+    if (!prev_input.is_focused && input.is_focused)
+        input.regained_focus = true;
 
     double mouse_x,mouse_y;
     glfwGetCursorPos(window, &mouse_x, &mouse_y);
@@ -127,7 +117,6 @@ GLFWwindow *RecreateWindow(GLFWwindow *old_window, int x, int y, int width, int 
 
     // todo: make a function that do all of these and replace with here and start of main
     glfwSwapInterval(1);
-    glfwSetWindowFocusCallback(window, WindowFocusChanged);
     ImGui_ImplGlfw_Init(window, true);
 
     return window;
@@ -302,7 +291,6 @@ int main(int argc, char **argv)
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     gladLoadGL();
 
-    glfwSetWindowFocusCallback(window, WindowFocusChanged);
     ImGui_ImplGlfw_Init(window, true);
     AfterImGuiInit();
 

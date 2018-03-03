@@ -294,6 +294,15 @@ int main(int argc, char **argv)
     ImGui_ImplGlfw_Init(window, true);
     AfterImGuiInit();
 
+    {
+        GLenum error = glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            printf("OpenGL error: %x (%x)\n", error);
+            return 1;
+        }
+    }
+
     glfwSetTime(0.0);
     frame_input_t input = {0};
     while (!glfwWindowShouldClose(window))
@@ -332,7 +341,7 @@ int main(int argc, char **argv)
         if (!LoadFontsIfNecessary(input.framebuffer_h))
             glfwSetWindowShouldClose(window, true);
 
-        #if 1
+        #if 0
         ImGui_ImplGlfw_NewFrame();
         BeforeUpdateAndDraw(input);
         UpdateAndDraw(input);
@@ -466,8 +475,9 @@ int main(int argc, char **argv)
         GLenum error = glGetError();
         if (error != GL_NO_ERROR)
         {
-            printf("OpenGL error: %x (%x)\n", error);
-            glfwSetWindowShouldClose(window, true);
+            ConsoleMessage("OpenGL error: %x (%x)\n", error);
+            // printf("OpenGL error: %x (%x)\n", error);
+            // glfwSetWindowShouldClose(window, true);
         }
     }
 

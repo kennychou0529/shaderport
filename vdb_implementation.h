@@ -97,9 +97,9 @@ ImVec2 UserToDisplayCoordinates(float x, float y)
     float vw = vdb_current_viewport.w;
     float vh = vdb_current_viewport.h;
 
-    float x_display = frame_input.window_w*(vx + x_normalized*vw);
-    float y_display = frame_input.window_h*(vy + y_normalized*vh);
-    return ImVec2(x_display, y_display);
+    int x_display = (int)(frame_input.window_w*(vx + x_normalized*vw));
+    int y_display = (int)(frame_input.window_h*(vy + y_normalized*vh));
+    return ImVec2((float)x_display, (float)y_display);
 }
 
 bool vdb_viewport(float x, float y, float w, float h)
@@ -118,12 +118,21 @@ bool vdb_viewport(float x, float y, float w, float h)
     vdb_current_viewport.y = y;
     vdb_current_viewport.w = w;
     vdb_current_viewport.h = h;
-    ImVec2 clip_rect_min = ImVec2(x*frame_input.window_w, y*frame_input.window_h);
-    ImVec2 clip_rect_max = ImVec2((x+w)*frame_input.window_w, (y+h)*frame_input.window_h);
-    if (vdb_pop_clip_rect)
-        user_draw_list->PopClipRect();
-    user_draw_list->PushClipRect(clip_rect_min, clip_rect_max, true);
-    vdb_pop_clip_rect = true;
+
+    // add clipping rectangles for ImGui primitives
+    {
+        int min_x = (int)(x*frame_input.window_w - 1);
+        int min_y = (int)(y*frame_input.window_h - 1);
+        int max_x = (int)((x+w)*frame_input.window_w + 2);
+        int max_y = (int)((y+h)*frame_input.window_h + 2);
+        ImVec2 clip_rect_min = ImVec2((float)min_x,(float)min_y);
+        ImVec2 clip_rect_max = ImVec2((float)max_x,(float)max_y);
+        if (vdb_pop_clip_rect)
+            user_draw_list->PopClipRect();
+        user_draw_list->PushClipRect(clip_rect_min, clip_rect_max, true);
+        vdb_pop_clip_rect = true;
+    }
+
     #if 1
     // for OpenGL legacy rendering
     // glViewport is reset on ResetGLState

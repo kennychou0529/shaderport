@@ -329,6 +329,8 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         gl.begin_triangles = vdb_gl_begin_triangles;
         gl.begin_points = vdb_gl_begin_points;
         gl.end = vdb_gl_end;
+        gl.load_points = vdb_gl_load_points;
+        gl.draw_points = vdb_gl_draw_points;
 
         vdbBeforeUpdateAndDraw(input);
 

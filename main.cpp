@@ -231,12 +231,8 @@ void AfterUpdateAndDraw(frame_input_t input)
     ResetGLState(input);
 }
 
-#include "draw_points_test.h"
-
 void UpdateAndDraw(frame_input_t input)
 {
-    DrawPointsTest(input);
-
     ImGui::ShowDemoWindow();
 }
 

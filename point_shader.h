@@ -7,14 +7,16 @@ in vec4 instance_color;
 uniform mat4 projection;
 uniform mat4 model_to_view;
 uniform float point_size;
-uniform float reflection;
+// uniform float reflection; // I used this once to spin the point around every frame
+                             // to make it look like a circle
 out vec4 vertex_color;
 out vec2 quad_position;
 void main()
 {
     quad_position = in_position;
     vertex_color = instance_color;
-    vec4 position = model_to_view*vec4(instance_position,1.0) + reflection*point_size*vec4(in_position,0.0,0.0);
+    vec4 position = model_to_view*vec4(instance_position,1.0) + point_size*vec4(in_position,0.0,0.0);
+    // vec4 position = model_to_view*vec4(instance_position,1.0) + reflection*point_size*vec4(in_position,0.0,0.0);
     gl_Position = projection*position;
 }
 );

@@ -112,4 +112,6 @@ struct gl_t
     void (*begin_triangles)();
     void (*begin_points)();
     void (*end)();
+    void (*load_points)(int slot, void *positions, void *colors, int num_points);
+    void (*draw_points)(int slot, float point_size, int circle_segments);
 };

@@ -563,7 +563,6 @@ void vdb_gl_begin_triangles() { glBegin(GL_TRIANGLES); }
 void vdb_gl_begin_points() { glBegin(GL_POINTS); }
 void vdb_gl_end() { glEnd(); }
 
-#include "point_shader.h"
 struct gl_point_buffer_t
 {
     GLuint position;
@@ -596,6 +595,12 @@ void vdb_gl_load_points(int slot, void *position, void *color, int num_points)
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*num_points, color, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+#define POINT_SHADER_QUAD 1
+#if POINT_SHADER_QUAD==1
+#include "point_shader_quad.h"
+#else
+#include "point_shader.h"
+#endif
 void vdb_gl_draw_points(int slot, float point_size, int circle_segments)
 {
     typedef void (*vertex_attrib_divisor_t)(GLuint, GLuint);
@@ -612,6 +617,7 @@ void vdb_gl_draw_points(int slot, float point_size, int circle_segments)
     static bool shader_loaded = false;
     static GLuint program = 0;
     static GLint attrib_in_position = 0;
+    static GLint attrib_in_color = 0;
     static GLint attrib_instance_position = 0;
     static GLint attrib_instance_color = 0;
     // static GLint uniform_reflection = 0;
@@ -622,6 +628,7 @@ void vdb_gl_draw_points(int slot, float point_size, int circle_segments)
     {
         program = LoadShaderFromMemory(point_shader_vs, point_shader_fs);
         attrib_in_position = glGetAttribLocation(program, "in_position");
+        attrib_in_color = glGetAttribLocation(program, "in_color");
         attrib_instance_position = glGetAttribLocation(program, "instance_position");
         attrib_instance_color = glGetAttribLocation(program, "instance_color");
         // uniform_reflection = glGetUniformLocation(program, "reflection");
@@ -638,14 +645,22 @@ void vdb_gl_draw_points(int slot, float point_size, int circle_segments)
     glUniformMatrix4fv(uniform_model_to_view, 1, GL_FALSE, model_to_view);
     glUniform1f(uniform_point_size, point_size);
 
+    #if POINT_SHADER_QUAD==1
+    static const float quad_position[] = { -1,-1, 1,-1, 1,1, 1,1, -1,1, -1,-1 };
+    static const float quad_color[] = { 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1 };
+    glVertexAttribPointer(attrib_in_position, 2, GL_FLOAT, GL_FALSE, 0, quad_position);
+    glEnableVertexAttribArray(attrib_in_position);
+    glVertexAttribPointer(attrib_in_color, 4, GL_FLOAT, GL_FALSE, 0, quad_color);
+    glEnableVertexAttribArray(attrib_in_color);
+    #else
     const int max_circle_segments = 128;
     if (circle_segments > max_circle_segments)
         circle_segments = max_circle_segments;
     static float circle[max_circle_segments*3*2];
     for (int i = 0; i < circle_segments; i++)
     {
-        float t1 = 2.0f*3.1415926f*(i/(float)(circle_segments));
-        float t2 = 2.0f*3.1415926f*((i+1)/(float)(circle_segments));
+        float t1 = 2.0f*3.1415926f*(0.125f + i/(float)(circle_segments));
+        float t2 = 2.0f*3.1415926f*(0.125f + (i+1)/(float)(circle_segments));
         circle[6*i+0] = 0.0f;
         circle[6*i+1] = 0.0f;
         circle[6*i+2] = cosf(t1);
@@ -655,6 +670,7 @@ void vdb_gl_draw_points(int slot, float point_size, int circle_segments)
     }
     glVertexAttribPointer(attrib_in_position, 2, GL_FLOAT, GL_FALSE, 0, circle);
     glEnableVertexAttribArray(attrib_in_position);
+    #endif
 
     gl_point_buffer_t buffer = point_buffers[slot];
     glBindBuffer(GL_ARRAY_BUFFER, buffer.position);

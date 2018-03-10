@@ -1,7 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <string.h>
-#include "dll.h"
+#include "connection_dll_api.h"
 #include "3rdparty/tinycthread.h"
 #include "vdb_implementation.h"
 #include "console.h"

@@ -26,7 +26,7 @@ del shaderport.ilk
 del main.obj
 del shaderport.exe
 
-cl %CF% ../main.cpp /link %LF% -out:shaderport.exe
+cl %CF% ../src/main.cpp /link %LF% -out:shaderport.exe
 
 :: if not errorlevel 1 shaderport.exe :: only run if we successfully compiled
 

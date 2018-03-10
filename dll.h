@@ -17,6 +17,7 @@ struct io_t
 
     float mouse_x,mouse_y; // The position of the mouse in the client area in screen coordinates where (0,0):top-left
     float mouse_u,mouse_v; // -||- in normalized mouse coordinates where (-1,-1):bottom-left (+1,+1):top-right
+    float mouse_wheel;
 
     float elapsed_time;
     float frame_time; // Note: When recording video you probably want to use your own animation timer

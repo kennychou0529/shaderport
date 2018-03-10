@@ -281,6 +281,7 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         io.key_press = vdb_io_key_press;
         io.mouse_down = vdb_io_mouse_down;
         io.mouse_click = vdb_io_mouse_click;
+        io.mouse_wheel = input.mouse_wheel;
 
         io.window_x = input.window_x;
         io.window_y = input.window_y;

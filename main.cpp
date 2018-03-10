@@ -94,6 +94,7 @@ frame_input_t PollFrameEvents(frame_input_t prev_input, GLFWwindow *window)
     input.mouse_y = (float)mouse_y;
     input.mouse_u = -1.0f + 2.0f*input.mouse_x/input.window_w;
     input.mouse_v = +1.0f - 2.0f*input.mouse_y/input.window_h;
+    input.mouse_wheel = g_MouseWheel; // todo: defined in imgui_impl_glfw.
 
     static double last_elapsed_time = 0.0;
     input.elapsed_time = (float)glfwGetTime();

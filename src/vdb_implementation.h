@@ -595,7 +595,7 @@ void vdb_gl_load_points(int slot, void *position, void *color, int num_points)
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*num_points, color, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
-#define POINT_SHADER_QUAD 1
+#define POINT_SHADER_QUAD 0
 #if POINT_SHADER_QUAD==1
 #include "point_shader_quad.h"
 #else

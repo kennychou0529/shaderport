@@ -32,6 +32,6 @@ cl %CF% ../src/main.cpp /link %LF% -out:shaderport.exe
 
 :: Temporary: testing live C++ code reloading
 ::                                 >file to run      >place to store .dll trash
-if not errorlevel 1 shaderport.exe C:/Programming/shaderport/script/script.cpp C:/Temp/build/
+if not errorlevel 1 shaderport.exe C:/Programming/scripts/script.cpp C:/Temp/build/
 
 popd

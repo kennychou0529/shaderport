@@ -4,8 +4,15 @@
 #include "console.h"
 #include "video.h"
 #include "shader.h"
+#include "shader_draw_texture.h"
 #include "colormap_inferno.h"
-#include "texture_shader.h"
+
+#define POINT_SHADER_QUAD 0
+#if POINT_SHADER_QUAD==1
+#include "shader_draw_point_cloud_quad.h"
+#else
+#include "shader_draw_point_cloud.h"
+#endif
 
 static int draw_string_id = 0;
 static ImDrawList *user_draw_list = NULL;
@@ -591,12 +598,7 @@ void vdb_gl_load_points(int slot, void *position, void *color, int num_points)
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*num_points, color, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
-#define POINT_SHADER_QUAD 0
-#if POINT_SHADER_QUAD==1
-#include "point_shader_quad.h"
-#else
-#include "point_shader.h"
-#endif
+
 void vdb_gl_draw_points(int slot, float point_size, int circle_segments)
 {
     typedef void (*vertex_attrib_divisor_t)(GLuint, GLuint);

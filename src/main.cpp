@@ -18,7 +18,7 @@
 #include "3rdparty/imgui.cpp"
 #include "3rdparty/imgui_draw.cpp"
 #include "3rdparty/imgui_impl_glfw.cpp"
-#include "imfonts.h"
+#include "font.h"
 
 #include "frame_input.h"
 #include "frame_grab.h"

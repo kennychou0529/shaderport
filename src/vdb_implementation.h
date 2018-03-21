@@ -137,9 +137,7 @@ bool vdb_viewport(float x, float y, float w, float h)
         vdb_pop_clip_rect = true;
     }
 
-    #if 1
-    // for OpenGL legacy rendering
-    // glViewport is reset on ResetGLState
+    // for opengl rendering
     {
         int fbw = frame_input.framebuffer_w;
         int fbh = frame_input.framebuffer_h;
@@ -154,9 +152,10 @@ bool vdb_viewport(float x, float y, float w, float h)
         // todo: use glScissor instead?
         glViewport(gl_x, gl_y, gl_w, gl_h);
     }
-    #endif
+
     if (x+w < 0.0f || x > 1.0f || y+h < 0.0f || y > 1.0f)
         return false;
+
     return true;
 }
 

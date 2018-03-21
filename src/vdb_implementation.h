@@ -2,6 +2,10 @@
 #include "3rdparty/imgui.h"
 #include "frame_input.h"
 #include "console.h"
+#include "video.h"
+#include "shader.h"
+#include "colormap_inferno.h"
+#include "texture_shader.h"
 
 static int draw_string_id = 0;
 static ImDrawList *user_draw_list = NULL;
@@ -341,11 +345,6 @@ bool vdb_io_key_press(char key) { return frame_input.key_press[toupper(key)]; }
 bool vdb_io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }
 bool vdb_io_mouse_click(int button) { return ImGui::IsMouseClicked(button); }
 
-// Additional draw functions
-
-#include "shader.h"
-#include "colormap_inferno.h"
-#include "texture_shader.h"
 void DrawTextureFancy(GLuint texture, float user_x, float user_y, float user_w, float user_h, bool mono=false, float *selector=NULL, float range_min=0.0f, float range_max=1.0f, float *gain=NULL, float *bias=NULL)
 {
     static bool loaded = false;
@@ -465,8 +464,6 @@ void vdb_draw_image_mono(int slot, float x, float y, float w, float h,
     float selector[4] = { r, g, b, a };
     DrawTextureFancy(GetTextureSlotHandle(slot), x, y, w, h, true, selector, range_min, range_max);
 }
-
-#include "load_video.h"
 
 int vdb_load_video(const char *filename, int width, int height) { return LoadVideo(filename, width, height); }
 void vdb_draw_video(int video, int frame, float x, float y, float w, float h) { DrawTextureFancy(GetAndBindVideoFrameTexture(video, frame), x, y, w, h); }

@@ -333,6 +333,16 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         gl.load_points = vdb_gl_load_points;
         gl.draw_points = vdb_gl_draw_points;
 
+        gl.load_shader = vdb_gl_load_shader;
+        gl.begin_shader = vdb_gl_begin_shader;
+        gl.end_shader = vdb_gl_end_shader;
+        gl.shader_uniform1f = vdb_gl_shader_uniform1f;
+        gl.shader_uniform2f = vdb_gl_shader_uniform2f;
+        gl.shader_uniform3f = vdb_gl_shader_uniform3f;
+        gl.shader_uniform4f = vdb_gl_shader_uniform4f;
+        gl.shader_uniform3x3f = vdb_gl_shader_uniform3x3f;
+        gl.shader_uniform4x4f = vdb_gl_shader_uniform4x4f;
+
         vdbBeforeUpdateAndDraw(input);
 
         ScriptLoop(io, draw, gui, gl);

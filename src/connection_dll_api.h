@@ -115,4 +115,15 @@ struct gl_t
     void (*end)();
     void (*load_points)(int slot, void *positions, void *colors, int num_points);
     void (*draw_points)(int slot, float point_size, int circle_segments);
+
+    // full-screen pixel shaders
+    void (*load_shader)(int slot, const char *fragment_shader_string);
+    void (*begin_shader)(int slot);
+    void (*end_shader)();
+    void (*shader_uniform1f)(const char *name, float x);
+    void (*shader_uniform2f)(const char *name, float x, float y);
+    void (*shader_uniform3f)(const char *name, float x, float y, float z);
+    void (*shader_uniform4f)(const char *name, float x, float y, float z, float w);
+    void (*shader_uniform3x3f)(const char *name, float *x);
+    void (*shader_uniform4x4f)(const char *name, float *x);
 };

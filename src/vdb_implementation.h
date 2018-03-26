@@ -690,3 +690,52 @@ void vdb_gl_draw_points(int slot, float point_size, int circle_segments)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glUseProgram(0);
 }
+
+GLuint vdb_gl_current_program = 0;
+#define max_shaders 1000
+static GLuint vdb_gl_shaders[max_shaders];
+void vdb_gl_load_shader(int slot, const char *fragment_shader_string)
+{
+    if (slot < 0 || slot >= max_shaders)
+    {
+        ConsoleMessage("You are trying to set pixel shader slot %d. You can only load shaders to slot 0 up to %d.", slot, max_point_buffers-1);
+        return;
+    }
+
+    const char *vertex_shader_string =
+    "#version 150\n"
+    "in vec2 in_position;\n"
+    "void main()\n"
+    "{\n"
+    "    gl_Position = vec4(in_position, 0.0, 1.0);\n"
+    "}\n"
+    ;
+    vdb_gl_shaders[slot] = LoadShaderFromMemory(vertex_shader_string, fragment_shader_string);
+    if (!vdb_gl_shaders[slot])
+    {
+        ConsoleMessage("Failed to load shader at slot %d\n", slot);
+        return;
+    }
+}
+void vdb_gl_begin_shader(int slot)
+{
+    vdb_gl_current_program = vdb_gl_shaders[slot];
+    glUseProgram(vdb_gl_shaders[slot]);
+}
+void vdb_gl_end_shader()
+{
+    GLint attrib_in_position = glGetAttribLocation(vdb_gl_current_program, "in_position");
+    static const float quad_position[] = { -1,-1, 1,-1, 1,1, 1,1, -1,1, -1,-1 };
+    glVertexAttribPointer(attrib_in_position, 2, GL_FLOAT, GL_FALSE, 0, quad_position);
+    glEnableVertexAttribArray(attrib_in_position);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableVertexAttribArray(attrib_in_position);
+    glUseProgram(0);
+    vdb_gl_current_program = 0;
+}
+void vdb_gl_shader_uniform1f(const char *name, float x) { glUniform1f(glGetUniformLocation(vdb_gl_current_program, name), x); }
+void vdb_gl_shader_uniform2f(const char *name, float x, float y) { glUniform2f(glGetUniformLocation(vdb_gl_current_program, name), x,y); }
+void vdb_gl_shader_uniform3f(const char *name, float x, float y, float z) { glUniform3f(glGetUniformLocation(vdb_gl_current_program, name), x,y,z); }
+void vdb_gl_shader_uniform4f(const char *name, float x, float y, float z, float w) { glUniform4f(glGetUniformLocation(vdb_gl_current_program, name), x,y,z,w); }
+void vdb_gl_shader_uniform3x3f(const char *name, float *x) { glUniformMatrix3fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }
+void vdb_gl_shader_uniform4x4f(const char *name, float *x) { glUniformMatrix4fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }

@@ -702,6 +702,9 @@ void vdb_gl_load_shader(int slot, const char *fragment_shader_string)
         return;
     }
 
+    if (vdb_gl_shaders[slot])
+        glDeleteProgram(vdb_gl_shaders[slot]);
+
     const char *vertex_shader_string =
     "#version 150\n"
     "in vec2 in_position;\n"

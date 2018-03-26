@@ -233,18 +233,9 @@ void vdb_text_formatted(float x, float y, const char *fmt, ...)
     va_end(args);
 }
 
-void vdb_color(float r, float g, float b, float a)
-{
-    vdb_current_color = IM_COL32(r,g,b,a);
-}
-void vdb_line_width(float px)
-{
-    vdb_current_line_width = px;
-}
-void vdb_point_size(float px)
-{
-    vdb_current_point_size = px;
-}
+void vdb_color(float r, float g, float b, float a) { vdb_current_color = IM_COL32(r,g,b,a); }
+void vdb_line_width(float px) { vdb_current_line_width = px; }
+void vdb_point_size(float px) { vdb_current_point_size = px; }
 void vdb_point(float x, float y)
 {
     ImVec2 c = UserToDisplayCoordinates(x, y);
@@ -313,14 +304,9 @@ void vdb_circle_filled(float x, float y, float r)
     user_draw_list->AddCircleFilled(pos, r_display, vdb_current_color, 12);
 }
 
-//
-// These functions are currently only used in DLL scripts
-//
-
 int vdb_load_font(const char *filename, float size) { return GetFont(filename, size); }
 void vdb_text_font(int font) { vdb_current_text_font = font; }
 
-// ImGui wrappers
 void vdb_gui_begin(const char *label) { ImGui::Begin(label); }
 void vdb_gui_begin_no_title(const char *label) { ImGui::Begin(label, NULL, ImGuiWindowFlags_NoTitleBar); }
 void vdb_gui_end() { ImGui::End(); }
@@ -329,7 +315,6 @@ bool vdb_gui_slider1i(const char* label, int* v, int v_min, int v_max) { return 
 bool vdb_gui_button(const char *label) { return ImGui::Button(label); }
 bool vdb_gui_checkbox(const char *label, bool *v) { return ImGui::Checkbox(label, v); }
 bool vdb_gui_radio(const char *label, int *v, int v_button) { return ImGui::RadioButton(label, v, v_button); }
-// Keyboard, mouse, screenshots, ...
 bool vdb_io_key_down(char key) { return frame_input.key_down[toupper(key)]; }
 bool vdb_io_key_press(char key) { return frame_input.key_press[toupper(key)]; }
 bool vdb_io_mouse_down(int button)  { return ImGui::IsMouseDown(button); }

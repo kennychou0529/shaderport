@@ -233,22 +233,6 @@ void vdb_text_formatted(float x, float y, const char *fmt, ...)
     va_end(args);
 }
 
-void vdb_path_clear()
-{
-    user_draw_list->PathClear();
-}
-void vdb_path_to(float x, float y)
-{
-    user_draw_list->PathLineTo(UserToDisplayCoordinates(x, y));
-}
-void vdb_path_fill()
-{
-    user_draw_list->PathFillConvex(vdb_current_color);
-}
-void vdb_path_stroke()
-{
-    user_draw_list->PathStroke(vdb_current_color, false, vdb_current_line_width);
-}
 void vdb_color(float r, float g, float b, float a)
 {
     vdb_current_color = IM_COL32(r,g,b,a);

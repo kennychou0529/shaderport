@@ -234,10 +234,6 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         draw.viewport = vdb_viewport;
         draw.transform = vdb_transform;
 
-        draw.path_clear = vdb_path_clear;
-        draw.path_to = vdb_path_to;
-        draw.path_fill = vdb_path_fill;
-        draw.path_stroke = vdb_path_stroke;
         draw.color = vdb_color;
         draw.line_width = vdb_line_width;
         draw.point_size = vdb_point_size;

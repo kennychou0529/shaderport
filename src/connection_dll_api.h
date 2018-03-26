@@ -34,10 +34,6 @@ struct draw_t
     void (*transform)(float left, float right, float bottom, float top); // remap x,y coordinates inside viewport
     bool (*viewport)(float x, float y, float w, float h); // [0,1] normalized coordinates. Returns true if viewport is (atleast partially) visible
 
-    void (*path_clear)();
-    void (*path_to)(float x, float y);
-    void (*path_fill)();
-    void (*path_stroke)();
     void (*color)(float r, float g, float b, float a);
     void (*line_width)(float pixel_width);
     void (*point_size)(float pixel_size);

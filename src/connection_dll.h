@@ -5,7 +5,6 @@
 #include "3rdparty/tinycthread.h"
 #include "vdb_implementation.h"
 #include "console.h"
-#include "temporal_blend.h"
 
 #ifdef _WIN32
 bool FileExists(const char *filename)
@@ -341,8 +340,9 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         gl.shader_uniform4f = vdb_gl_shader_uniform4f;
         gl.shader_uniform3x3f = vdb_gl_shader_uniform3x3f;
         gl.shader_uniform4x4f = vdb_gl_shader_uniform4x4f;
+        gl.enable_temporal_blend = vdb_gl_enable_temporal_blend;
+        gl.disable_temporal_blend = vdb_gl_disable_temporal_blend;
 
-        TemporalBlend::Begin();
         vdbBeforeUpdateAndDraw(input);
 
         ScriptLoop(io, draw, gui, gl);
@@ -351,9 +351,5 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         {
             ScriptLoop = NULL;
         }
-
-        TemporalBlend::End();
-        ResetGLState(input);
-        TemporalBlend::Draw();
     }
 }

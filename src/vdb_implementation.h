@@ -6,6 +6,8 @@
 #include "shader.h"
 #include "shader_draw_texture.h"
 #include "colormap_inferno.h"
+#include "temporal_blend.h"
+#include "reset_gl_state.h"
 
 #define POINT_SHADER_QUAD 0
 #if POINT_SHADER_QUAD==1
@@ -35,6 +37,9 @@ static vdb_transform_t vdb_current_transform = { 0 };
 
 static int vdb_gl_transform_stack_index = 0;
 static bool vdb_pop_clip_rect = false;
+static bool disable_temporal_blend = false;
+static bool enable_temporal_blend = false;
+static float temporal_blend_factor = 0.95f;
 
 void vdbBeforeUpdateAndDraw(frame_input_t input)
 {
@@ -80,6 +85,17 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
     vdb_current_text_font = 0;
 
     vdb_pop_clip_rect = false;
+
+    if (disable_temporal_blend)
+    {
+        enable_temporal_blend = false;
+        disable_temporal_blend = false;
+    }
+
+    if (enable_temporal_blend)
+    {
+        TemporalBlend::Begin();
+    }
 }
 
 bool vdbAfterUpdateAndDraw(frame_input_t input)
@@ -91,6 +107,15 @@ bool vdbAfterUpdateAndDraw(frame_input_t input)
         ConsoleMessage("Push/Pop transform pair not matched");
         return false;
     }
+
+    if (enable_temporal_blend)
+    {
+        // todo: don't reset GL state here?
+        TemporalBlend::End();
+        ResetGLState(input);
+        TemporalBlend::Draw(temporal_blend_factor);
+    }
+
     return true;
 }
 
@@ -711,3 +736,6 @@ void vdb_gl_shader_uniform3f(const char *name, float x, float y, float z) { glUn
 void vdb_gl_shader_uniform4f(const char *name, float x, float y, float z, float w) { glUniform4f(glGetUniformLocation(vdb_gl_current_program, name), x,y,z,w); }
 void vdb_gl_shader_uniform3x3f(const char *name, float *x) { glUniformMatrix3fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }
 void vdb_gl_shader_uniform4x4f(const char *name, float *x) { glUniformMatrix4fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }
+
+void vdb_gl_enable_temporal_blend(float factor) { enable_temporal_blend = true; temporal_blend_factor = factor; }
+void vdb_gl_disable_temporal_blend() { disable_temporal_blend = true; }

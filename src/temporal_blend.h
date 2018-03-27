@@ -31,10 +31,11 @@ namespace TemporalBlend
     {
         rt_frame.Disable();
     }
-    void Draw()
+    void Draw(float factor)
     {
         static GLuint program = 0;
         static GLint attrib_position = 0;
+        static GLint uniform_factor = 0;
         static GLint uniform_sampler0 = 0;
         static GLint uniform_sampler1 = 0;
         if (!program)
@@ -54,13 +55,14 @@ namespace TemporalBlend
             in vec2 texel;
             uniform sampler2D sampler0; // current frame
             uniform sampler2D sampler1; // last accumulator
+            uniform float factor;
             out vec4 out_color; // current accumulator
             void main()
             {
                 // out_color = texture(sampler0,texel);
                 vec4 current_frame = texture(sampler0,texel);
                 vec4 last_accumulator = texture(sampler1,texel);
-                vec4 current_accumulator = 0.2*last_accumulator + 0.8*current_frame;
+                vec4 current_accumulator = factor*last_accumulator + (1.0-factor)*current_frame;
                 out_color = current_accumulator;
 
                 // todo: alphablending, alpha buffers are kinda broken with this?
@@ -72,9 +74,11 @@ namespace TemporalBlend
             attrib_position = glGetAttribLocation(program, "position");
             uniform_sampler0 = glGetUniformLocation(program, "sampler0");
             uniform_sampler1 = glGetUniformLocation(program, "sampler1");
+            uniform_factor = glGetUniformLocation(program, "factor");
             assert(attrib_position >= 0 && "Unused or nonexistent attribute");
             assert(uniform_sampler0 >= 0 && "Unused or nonexistent uniform");
             assert(uniform_sampler1 >= 0 && "Unused or nonexistent uniform");
+            assert(uniform_factor >= 0 && "Unused or nonexistent uniform");
             assert(program && "Failed to compile TemporalBlend shader");
         }
 
@@ -92,6 +96,7 @@ namespace TemporalBlend
         glActiveTexture(GL_TEXTURE1);
         glUniform1i(uniform_sampler1, 1);
         rt_accumulator[back].Bind();
+        glUniform1f(uniform_factor, factor);
 
         static const float position[] = { -1,-1, 1,-1, 1,1, 1,1, -1,1, -1,-1 };
         glVertexAttribPointer(attrib_position, 2, GL_FLOAT, GL_FALSE, 0, position);

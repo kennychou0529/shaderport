@@ -40,6 +40,7 @@ static bool vdb_pop_clip_rect = false;
 static bool disable_temporal_blend = false;
 static bool enable_temporal_blend = false;
 static float temporal_blend_factor = 0.95f;
+static int temporal_blend_downsample = 0;
 
 void vdbBeforeUpdateAndDraw(frame_input_t input)
 {
@@ -94,7 +95,7 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
 
     if (enable_temporal_blend)
     {
-        TemporalBlend::Begin();
+        TemporalBlend::Begin(temporal_blend_downsample);
     }
 }
 
@@ -737,5 +738,10 @@ void vdb_gl_shader_uniform4f(const char *name, float x, float y, float z, float 
 void vdb_gl_shader_uniform3x3f(const char *name, float *x) { glUniformMatrix3fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }
 void vdb_gl_shader_uniform4x4f(const char *name, float *x) { glUniformMatrix4fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }
 
-void vdb_gl_enable_temporal_blend(float factor) { enable_temporal_blend = true; temporal_blend_factor = factor; }
 void vdb_gl_disable_temporal_blend() { disable_temporal_blend = true; }
+void vdb_gl_enable_temporal_blend(float factor, int downsample)
+{
+    enable_temporal_blend = true;
+    temporal_blend_factor = factor;
+    temporal_blend_downsample = downsample;
+}

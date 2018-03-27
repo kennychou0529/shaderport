@@ -123,6 +123,6 @@ struct gl_t
     void (*shader_uniform3x3f)(const char *name, float *x);
     void (*shader_uniform4x4f)(const char *name, float *x);
 
-    void (*enable_temporal_blend)(float factor);
+    void (*enable_temporal_blend)(float factor, int downsample);
     void (*disable_temporal_blend)();
 };

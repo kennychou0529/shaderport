@@ -160,6 +160,8 @@ bool ReloadScriptDLL()
     return true;
 }
 
+#include "reset_gl_state.h"
+
 void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
 {
     bool should_check_write_time = false;
@@ -225,6 +227,10 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         compile_done = false;
         compile_success = false;
     }
+
+    ResetGLState(input);
+    glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     ConsoleDraw();
 
@@ -350,6 +356,11 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
             ScriptLoop = NULL;
         }
 
+        ResetGLState(input);
         TemporalBlend::End();
+    }
+    else
+    {
+        ResetGLState(input);
     }
 }

@@ -5,6 +5,7 @@
 #include "3rdparty/tinycthread.h"
 #include "vdb_implementation.h"
 #include "console.h"
+#include "temporal_blend.h"
 
 #ifdef _WIN32
 bool FileExists(const char *filename)
@@ -341,11 +342,14 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
 
         vdbBeforeUpdateAndDraw(input);
 
+        TemporalBlend::Begin();
         ScriptLoop(io, draw, gui, gl);
 
         if (!vdbAfterUpdateAndDraw(input))
         {
             ScriptLoop = NULL;
         }
+
+        TemporalBlend::End();
     }
 }

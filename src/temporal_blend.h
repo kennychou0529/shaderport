@@ -62,6 +62,8 @@ namespace TemporalBlend
                 vec4 last_accumulator = texture(sampler1,texel);
                 vec4 current_accumulator = 0.2*last_accumulator + 0.8*current_frame;
                 out_color = current_accumulator;
+
+                // todo: alphablending, alpha buffers are kinda broken with this?
             }
             );
             #undef SHADER

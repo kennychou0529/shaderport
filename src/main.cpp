@@ -317,7 +317,9 @@ int main(int argc, char **argv)
         AfterUpdateAndDraw(input);
         #else
         ImGui_ImplGlfw_NewFrame();
+        BeforeUpdateAndDraw(input);
         ScriptUpdateAndDraw(input, reload_button);
+        AfterUpdateAndDraw(input);
         #endif
 
         SetWindowSizeDialog(&escape_eaten, window, input, window_size_button, enter_button, escape_button);

@@ -228,10 +228,6 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         compile_success = false;
     }
 
-    ResetGLState(input);
-    glClearColor(0.1f, 0.12f, 0.15f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
     ConsoleDraw();
 
     if (ScriptLoop)
@@ -358,9 +354,5 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
 
         ResetGLState(input);
         TemporalBlend::End();
-    }
-    else
-    {
-        ResetGLState(input);
     }
 }

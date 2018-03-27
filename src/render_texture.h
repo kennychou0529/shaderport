@@ -68,3 +68,18 @@ render_texture_t MakeRenderTexture(int width, int height, GLenum mag_filter=GL_L
     result.height = height;
     return result;
 }
+
+void FreeRenderTexture(render_texture_t *rt)
+{
+    if (rt->fbo)
+        glDeleteFramebuffers(1, &rt->fbo);
+    if (rt->color)
+        glDeleteTextures(1, &rt->color);
+    if (rt->depth)
+        glDeleteRenderbuffers(1, &rt->depth);
+    rt->width = 0;
+    rt->height = 0;
+    rt->fbo = 0;
+    rt->color = 0;
+    rt->depth = 0;
+}

@@ -342,9 +342,9 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         gl.shader_uniform3x3f = vdb_gl_shader_uniform3x3f;
         gl.shader_uniform4x4f = vdb_gl_shader_uniform4x4f;
 
+        TemporalBlend::Begin();
         vdbBeforeUpdateAndDraw(input);
 
-        TemporalBlend::Begin();
         ScriptLoop(io, draw, gui, gl);
 
         if (!vdbAfterUpdateAndDraw(input))
@@ -352,7 +352,8 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
             ScriptLoop = NULL;
         }
 
-        ResetGLState(input);
         TemporalBlend::End();
+        ResetGLState(input);
+        TemporalBlend::Draw();
     }
 }

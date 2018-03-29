@@ -21,7 +21,7 @@ namespace TemporalBlend
             FreeRenderTexture(&rt_frame);
             FreeRenderTexture(&rt_accumulator[0]);
             FreeRenderTexture(&rt_accumulator[1]);
-            rt_frame = MakeRenderTexture(w>>downsample, h>>downsample, GL_LINEAR, GL_LINEAR, true);
+            rt_frame = MakeRenderTexture(w>>downsample, h>>downsample, GL_NEAREST, GL_NEAREST, true);
             rt_accumulator[0] = MakeRenderTexture(w, h, GL_NEAREST, GL_NEAREST, false);
             rt_accumulator[1] = MakeRenderTexture(w, h, GL_NEAREST, GL_NEAREST, false);
 

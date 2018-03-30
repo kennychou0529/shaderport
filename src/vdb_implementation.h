@@ -37,11 +37,17 @@ static vdb_transform_t vdb_current_transform = { 0 };
 
 static int vdb_gl_transform_stack_index = 0;
 static bool vdb_pop_clip_rect = false;
-static bool disable_temporal_blend = false;
+static bool active_temporal_blend = false;
 static bool enable_temporal_blend = false;
 static float temporal_blend_factor = 0.95f;
 static int temporal_blend_downsample = 0;
 
+#include "supersample.h"
+static bool active_temporal_super_sample = false;
+static bool enable_temporal_super_sample = false;
+static int temporal_super_sample_w = 0;
+static int temporal_super_sample_h = 0;
+static int temporal_super_sample_n = 0;
 void vdbBeforeUpdateAndDraw(frame_input_t input)
 {
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0,0,0,0));
@@ -87,15 +93,21 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
 
     vdb_pop_clip_rect = false;
 
-    if (disable_temporal_blend)
-    {
-        enable_temporal_blend = false;
-        disable_temporal_blend = false;
-    }
+    if (!enable_temporal_blend)
+        active_temporal_blend = false;
 
-    if (enable_temporal_blend)
-    {
+    if (active_temporal_blend)
         TemporalBlend::Begin(temporal_blend_downsample);
+
+    if (!enable_temporal_super_sample)
+        active_temporal_super_sample = false;
+
+    if (active_temporal_super_sample)
+    {
+        int w = temporal_super_sample_w;
+        int h = temporal_super_sample_h;
+        int n = temporal_super_sample_n;
+        TemporalSuperSample::Begin(w,h,n);
     }
 }
 
@@ -109,7 +121,14 @@ bool vdbAfterUpdateAndDraw(frame_input_t input)
         return false;
     }
 
-    if (enable_temporal_blend)
+    if (active_temporal_super_sample)
+    {
+        TemporalSuperSample::End();
+        ResetGLState(input);
+        TemporalSuperSample::Draw();
+    }
+
+    if (active_temporal_blend)
     {
         // todo: don't reset GL state here?
         TemporalBlend::End();
@@ -738,10 +757,20 @@ void vdb_gl_shader_uniform4f(const char *name, float x, float y, float z, float 
 void vdb_gl_shader_uniform3x3f(const char *name, float *x) { glUniformMatrix3fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }
 void vdb_gl_shader_uniform4x4f(const char *name, float *x) { glUniformMatrix4fv(glGetUniformLocation(vdb_gl_current_program, name), 1, false, x); }
 
-void vdb_gl_disable_temporal_blend() { disable_temporal_blend = true; }
 void vdb_gl_enable_temporal_blend(float factor, int downsample)
 {
     enable_temporal_blend = true;
+    active_temporal_blend = true;
     temporal_blend_factor = factor;
     temporal_blend_downsample = downsample;
+}
+
+void vdb_gl_supersample(int w, int h, int n, float *dx, float *dy)
+{
+    enable_temporal_super_sample = true;
+    active_temporal_super_sample = true;
+    temporal_super_sample_w = w;
+    temporal_super_sample_h = h;
+    temporal_super_sample_n = n;
+    TemporalSuperSample::GetSubpixelOffset(w,h,n,dx,dy);
 }

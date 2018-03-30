@@ -124,5 +124,5 @@ struct gl_t
     void (*shader_uniform4x4f)(const char *name, float *x);
 
     void (*enable_temporal_blend)(float factor, int downsample);
-    void (*disable_temporal_blend)();
+    void (*supersample)(int w, int h, int n, float *dx, float *dy);
 };

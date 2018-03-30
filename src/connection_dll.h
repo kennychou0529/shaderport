@@ -341,7 +341,7 @@ void ScriptUpdateAndDraw(frame_input_t input, bool reload_button)
         gl.shader_uniform3x3f = vdb_gl_shader_uniform3x3f;
         gl.shader_uniform4x4f = vdb_gl_shader_uniform4x4f;
         gl.enable_temporal_blend = vdb_gl_enable_temporal_blend;
-        gl.disable_temporal_blend = vdb_gl_disable_temporal_blend;
+        gl.supersample = vdb_gl_supersample;
 
         vdbBeforeUpdateAndDraw(input);
 

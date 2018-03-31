@@ -95,14 +95,16 @@ void vdbBeforeUpdateAndDraw(frame_input_t input)
 
     if (!enable_temporal_blend)
         active_temporal_blend = false;
-
-    if (active_temporal_blend)
-        TemporalBlend::Begin(temporal_blend_downsample);
-
     if (!enable_temporal_super_sample)
         active_temporal_super_sample = false;
+    enable_temporal_blend = false;
+    enable_temporal_super_sample = false;
 
-    if (active_temporal_super_sample)
+    if (active_temporal_blend)
+    {
+        TemporalBlend::Begin(temporal_blend_downsample);
+    }
+    else if (active_temporal_super_sample)
     {
         int w = temporal_super_sample_w;
         int h = temporal_super_sample_h;

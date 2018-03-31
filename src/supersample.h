@@ -35,8 +35,17 @@ namespace TemporalSuperSample
     void GetSubpixelOffsetI(int w, int h, int n, int *idx, int *idy)
     {
         // todo: nicer sampling pattern for any upsampling factor
-        static const int remap[] = {10,5,16,14,12,2,1,11,3,7,9,15,4,8,13,6};
-        int i = (n == 2) ? remap[subpixel]-1 : subpixel;
+        int i = subpixel;
+        if (n == 2)
+        {
+            static const int remap[] = {10,5,16,14,12,2,1,11,3,7,9,15,4,8,13,6};
+            i = remap[subpixel]-1;
+        }
+        else if (n == 3)
+        {
+            static const int remap[] = {42, 3, 8, 34, 18, 38, 25, 61, 16, 48, 56, 7, 55, 32, 59, 41, 4, 36, 30, 1, 24, 50, 0, 12, 39, 45, 31, 10, 58, 14, 23, 43, 46, 44, 9, 40, 28, 6, 17, 15, 60, 27, 37, 52, 20, 53, 19, 62, 47, 33, 63, 13, 5, 49, 54, 26, 35, 22, 21, 57, 29, 2, 51, 11};
+            i = remap[subpixel];
+        }
         *idx = i % (1<<n);
         *idy = i / (1<<n);
     }

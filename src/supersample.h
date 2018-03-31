@@ -32,6 +32,14 @@ namespace TemporalSuperSample
     static render_texture_t lowres;
     static int subpixel;
     static int upsample;
+    void GetSubpixelOffsetI(int w, int h, int n, int *idx, int *idy)
+    {
+        // todo: nicer sampling pattern for any upsampling factor
+        static const int remap[] = {10,5,16,14,12,2,1,11,3,7,9,15,4,8,13,6};
+        int i = (n == 2) ? remap[subpixel]-1 : subpixel;
+        *idx = i % (1<<n);
+        *idy = i / (1<<n);
+    }
     // dx,dy = pixel offset to apply to projection matrix element (0,2) and (1,2)
     // . . dx 0
     // . . dy 0
@@ -40,8 +48,8 @@ namespace TemporalSuperSample
     //
     void GetSubpixelOffset(int w, int h, int n, float *dx, float *dy)
     {
-        int idx = subpixel % (1<<n);
-        int idy = subpixel / (1<<n);
+        int idx,idy;
+        GetSubpixelOffsetI(w,h,n,&idx,&idy);
         float pixel_width = 2.0f/(w<<n); // width in NDC [-1,+1] space
         float pixel_height = 2.0f/(h<<n); // width in NDC [-1,+1] space
         *dx = idx*pixel_width;
@@ -135,8 +143,10 @@ namespace TemporalSuperSample
         glUniform1i(uniform_sampler0, 0);
         glBindTexture(GL_TEXTURE_2D, lowres.color);
         glActiveTexture(GL_TEXTURE1);
-        glUniform1f(uniform_dx, (float)(subpixel % (1<<upsample)));
-        glUniform1f(uniform_dy, (float)(subpixel / (1<<upsample)));
+        int idx,idy;
+        GetSubpixelOffsetI(lowres.width,lowres.height,upsample,&idx,&idy);
+        glUniform1f(uniform_dx, (float)idx);
+        glUniform1f(uniform_dy, (float)idy);
         glUniform1f(uniform_tile_dim, (float)(1<<upsample));
 
         static const float position[] = { -1,-1, 1,-1, 1,1, 1,1, -1,1, -1,-1 };
